@@ -1,10 +1,12 @@
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import { login, register } from "@/features/auth/api";
 import { useAuthStore } from "@/lib/authStore";
 
 export function RegisterPage() {
+  const { t, i18n } = useTranslation("auth");
   const navigate = useNavigate();
   const setTokens = useAuthStore((state) => state.setTokens);
   const [email, setEmail] = useState("");
@@ -18,12 +20,13 @@ export function RegisterPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await register({ email, password, display_name: displayName || undefined });
+      const locale = i18n.language.startsWith("fr") ? "fr" : "en";
+      await register({ email, password, display_name: displayName || undefined, locale });
       const tokens = await login({ email, password });
       setTokens(tokens.access_token, tokens.refresh_token);
       navigate("/");
     } catch {
-      setError("Could not register. The email may already be in use.");
+      setError(t("register.error"));
     } finally {
       setSubmitting(false);
     }
@@ -35,9 +38,9 @@ export function RegisterPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm space-y-4 rounded-xl border border-slate-200 bg-white p-8 shadow-sm"
       >
-        <h1 className="text-xl font-semibold text-slate-900">Create your JpecLearner account</h1>
+        <h1 className="text-xl font-semibold text-slate-900">{t("register.title")}</h1>
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Display name</label>
+          <label className="text-sm font-medium text-slate-700">{t("register.displayName")}</label>
           <input
             type="text"
             value={displayName}
@@ -46,7 +49,7 @@ export function RegisterPage() {
           />
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Email</label>
+          <label className="text-sm font-medium text-slate-700">{t("register.email")}</label>
           <input
             type="email"
             required
@@ -56,7 +59,7 @@ export function RegisterPage() {
           />
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Password</label>
+          <label className="text-sm font-medium text-slate-700">{t("register.password")}</label>
           <input
             type="password"
             required
@@ -72,12 +75,12 @@ export function RegisterPage() {
           disabled={submitting}
           className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
         >
-          {submitting ? "Creating account…" : "Create account"}
+          {submitting ? t("register.submitting") : t("register.submit")}
         </button>
         <p className="text-center text-sm text-slate-500">
-          Already have an account?{" "}
+          {t("register.hasAccount")}{" "}
           <a href="/login" className="text-indigo-600 hover:underline">
-            Log in
+            {t("register.loginLink")}
           </a>
         </p>
       </form>

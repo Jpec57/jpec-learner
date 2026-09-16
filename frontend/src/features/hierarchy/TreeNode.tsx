@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { AddChildForm } from "@/features/hierarchy/AddChildForm";
@@ -30,6 +31,7 @@ export function TreeNode({
   setMovingNodeId: (id: string | null) => void;
   onMoveError: (message: string) => void;
 }) {
+  const { t } = useTranslation(["hierarchy", "common"]);
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
   const [adding, setAdding] = useState<NodeKind | null>(null);
@@ -78,7 +80,7 @@ export function TreeNode({
       invalidateTree(queryClient, categoryId);
     },
     onError: () => {
-      onMoveError("Can't move that node there.");
+      onMoveError(t("tree.moveError"));
       setMovingNodeId(null);
     },
   });
@@ -97,7 +99,7 @@ export function TreeNode({
           <button
             onClick={() => setExpanded((v) => !v)}
             className="w-4 text-slate-400"
-            aria-label={expanded ? "Collapse" : "Expand"}
+            aria-label={expanded ? t("tree.collapse") : t("tree.expand")}
           >
             {expanded ? "▾" : "▸"}
           </button>
@@ -119,10 +121,10 @@ export function TreeNode({
               onClick={() => rename.mutate()}
               className="text-xs font-medium text-indigo-600 hover:underline"
             >
-              Save
+              {t("common:actions.save")}
             </button>
             <button onClick={() => setEditing(false)} className="text-xs text-slate-400 hover:underline">
-              Cancel
+              {t("common:actions.cancel")}
             </button>
           </>
         ) : (
@@ -140,7 +142,7 @@ export function TreeNode({
 
         {node.is_public && (
           <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
-            Public
+            {t("common:status.public")}
           </span>
         )}
 
@@ -150,7 +152,7 @@ export function TreeNode({
               onClick={() => moveHere.mutate(node.id)}
               className="rounded-md bg-indigo-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-indigo-500"
             >
-              Move here
+              {t("tree.moveHere")}
             </button>
           )}
           {!editing && !isBeingMoved && movingNodeId === null && (
@@ -164,7 +166,7 @@ export function TreeNode({
                     }}
                     className="text-xs text-slate-400 hover:text-indigo-600"
                   >
-                    + group
+                    {t("tree.addGroupChild")}
                   </button>
                   <button
                     onClick={() => {
@@ -173,34 +175,34 @@ export function TreeNode({
                     }}
                     className="text-xs text-slate-400 hover:text-indigo-600"
                   >
-                    + lesson
+                    {t("tree.addLessonChild")}
                   </button>
                 </>
               )}
               <button onClick={() => setEditing(true)} className="text-xs text-slate-400 hover:text-indigo-600">
-                Rename
+                {t("common:actions.rename")}
               </button>
               <button
                 onClick={() => setMovingNodeId(node.id)}
                 className="text-xs text-slate-400 hover:text-indigo-600"
               >
-                Move
+                {t("tree.move")}
               </button>
               <button
                 onClick={() => {
-                  if (confirm(`Delete "${node.title}" and everything under it?`)) {
+                  if (confirm(t("tree.deleteConfirm", { title: node.title }))) {
                     remove.mutate();
                   }
                 }}
                 className="text-xs text-slate-400 hover:text-red-600"
               >
-                Delete
+                {t("common:actions.delete")}
               </button>
             </>
           )}
           {isBeingMoved && (
             <button onClick={() => setMovingNodeId(null)} className="text-xs text-indigo-600 hover:underline">
-              Cancel move
+              {t("tree.cancelMove")}
             </button>
           )}
         </div>
@@ -229,7 +231,7 @@ export function TreeNode({
             />
           ))}
           {children?.length === 0 && !adding && (
-            <p className="py-1 pl-6 text-xs text-slate-400">Empty — add a group or lesson above.</p>
+            <p className="py-1 pl-6 text-xs text-slate-400">{t("tree.empty")}</p>
           )}
         </div>
       )}

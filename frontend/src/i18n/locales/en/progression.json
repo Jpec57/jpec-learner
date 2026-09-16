@@ -1,0 +1,14 @@
+{
+  "title": "Progression",
+  "itemsTracked_one": "{{count}} item tracked",
+  "itemsTracked_other": "{{count}} items tracked",
+  "dueNow_one": "{{count}} due now",
+  "dueNow_other": "{{count}} due now",
+  "themes": "Themes",
+  "noThemesPrefix": "No themes yet — build out your hierarchy in",
+  "browse": "Browse",
+  "noStreak": "No streak yet — review something today to start one.",
+  "streak_one": "🔥 {{count}} day streak",
+  "streak_other": "🔥 {{count}} day streak",
+  "level": "Lv."
+}

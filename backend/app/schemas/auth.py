@@ -15,6 +15,11 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class UpdateMeRequest(BaseModel):
+    display_name: str | None = Field(default=None, max_length=120)
+    locale: str | None = Field(default=None, pattern="^(fr|en)$")
+
+
 class RefreshRequest(BaseModel):
     refresh_token: str
 

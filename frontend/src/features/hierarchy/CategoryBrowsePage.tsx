@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
 import { CardListSection } from "@/features/cards/CardListSection";
@@ -6,6 +7,7 @@ import { getCategory } from "@/features/categories/api";
 import { HierarchyTreeView } from "@/features/hierarchy/HierarchyTreeView";
 
 export function CategoryBrowsePage() {
+  const { t } = useTranslation("hierarchy");
   const { categoryId } = useParams<{ categoryId: string }>();
   const { data: category } = useQuery({
     queryKey: ["category", categoryId],
@@ -21,17 +23,17 @@ export function CategoryBrowsePage() {
         <Link to={`/categories/${categoryId}`} className="text-sm text-slate-500 hover:text-slate-800">
           ← {category.name}
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-900">Browse {category.name}</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Build out your theme / section / lesson hierarchy. Cards and full lesson editing land in Phase 3.
-        </p>
+        <h1 className="mt-2 text-2xl font-semibold text-slate-900">
+          {t("browse.title", { name: category.name })}
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">{t("browse.subtitle")}</p>
         <div className="mt-6">
           <HierarchyTreeView categoryId={categoryId} />
         </div>
 
         <div className="mt-10">
           <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">
-            Standalone cards (not tied to a lesson)
+            {t("browse.standaloneCards")}
           </h2>
           <div className="mt-2">
             <CardListSection categoryId={categoryId} lessonNodeId={null} />

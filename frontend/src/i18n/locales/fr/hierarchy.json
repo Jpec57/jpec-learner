@@ -1,0 +1,38 @@
+{
+  "browse": {
+    "title": "Explorer {{name}}",
+    "subtitle": "Construisez votre hiérarchie thème / section / leçon.",
+    "standaloneCards": "Cartes indépendantes (non liées à une leçon)",
+    "noThemes": "Aucun thème pour l'instant — ajoutez votre premier groupe ou leçon ci-dessous.",
+    "addGroup": "+ Ajouter un groupe",
+    "addLesson": "+ Ajouter une leçon"
+  },
+  "tree": {
+    "expand": "Déplier",
+    "collapse": "Replier",
+    "addGroupChild": "+ groupe",
+    "addLessonChild": "+ leçon",
+    "move": "Déplacer",
+    "cancelMove": "Annuler le déplacement",
+    "moveHere": "Déplacer ici",
+    "moveToTopLevel": "Déplacer au niveau racine",
+    "moveInstructions": "Choisissez où déplacer cet élément — cliquez sur « Déplacer ici » sur un groupe, ou déplacez-le au niveau racine.",
+    "moveError": "Impossible de déplacer cet élément ici.",
+    "dismiss": "Ignorer",
+    "deleteConfirm": "Supprimer « {{title}} » et tout ce qu'il contient ?",
+    "empty": "Vide — ajoutez un groupe ou une leçon ci-dessus.",
+    "groupTitlePlaceholder": "Titre du groupe (ex. Analyse)",
+    "lessonTitlePlaceholder": "Titre de la leçon (ex. Limites)",
+    "lessonContentPlaceholder": "Contenu de la leçon (Markdown, optionnel)",
+    "addGroupSubmit": "Ajouter le groupe",
+    "addLessonSubmit": "Ajouter la leçon"
+  },
+  "lesson": {
+    "backToBrowse": "Explorer {{name}}",
+    "content": "Contenu",
+    "contentPlaceholder": "Rédigez le contenu de cette leçon en Markdown…",
+    "saveContent": "Enregistrer le contenu",
+    "images": "Images",
+    "cardsInLesson": "Cartes de cette leçon"
+  }
+}

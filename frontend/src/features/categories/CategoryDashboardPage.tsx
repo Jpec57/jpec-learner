@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { deleteCategory, getCategory, updateCategory } from "@/features/categories/api";
@@ -6,6 +7,7 @@ import { getProgression } from "@/features/progression/api";
 import { StreakIndicator } from "@/features/progression/StreakIndicator";
 
 export function CategoryDashboardPage() {
+  const { t } = useTranslation(["categories", "common"]);
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -41,7 +43,7 @@ export function CategoryDashboardPage() {
     <div className="min-h-screen bg-slate-50 px-4 py-10">
       <div className="mx-auto max-w-3xl">
         <Link to="/" className="text-sm text-slate-500 hover:text-slate-800">
-          ← All categories
+          ← {t("common:nav.allCategories")}
         </Link>
 
         <div className="mt-4 flex items-center justify-between">
@@ -57,17 +59,19 @@ export function CategoryDashboardPage() {
               onClick={() => togglePublic.mutate()}
               className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
             >
-              {category.is_public ? "Make private" : "Make public"}
+              {category.is_public
+                ? t("categories:dashboard.makePrivate")
+                : t("categories:dashboard.makePublic")}
             </button>
             <button
               onClick={() => {
-                if (confirm(`Delete "${category.name}"? This can't be undone from the UI yet.`)) {
+                if (confirm(t("categories:dashboard.deleteConfirm", { name: category.name }))) {
                   remove.mutate();
                 }
               }}
               className="rounded-md border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
             >
-              Delete
+              {t("common:actions.delete")}
             </button>
           </div>
         </div>
@@ -77,15 +81,15 @@ export function CategoryDashboardPage() {
             to={`/categories/${category.id}/browse`}
             className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-indigo-300"
           >
-            <h3 className="font-semibold text-slate-900">Browse</h3>
-            <p className="mt-1 text-sm text-slate-500">Themes, sections and lessons</p>
+            <h3 className="font-semibold text-slate-900">{t("categories:dashboard.browse.title")}</h3>
+            <p className="mt-1 text-sm text-slate-500">{t("categories:dashboard.browse.subtitle")}</p>
           </Link>
           <Link
             to={`/categories/${category.id}/review`}
             className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-indigo-300"
           >
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-slate-900">Review</h3>
+              <h3 className="font-semibold text-slate-900">{t("categories:dashboard.review.title")}</h3>
               {!!progression?.total_due && (
                 <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs font-semibold text-white">
                   {progression.total_due}
@@ -93,17 +97,19 @@ export function CategoryDashboardPage() {
               )}
             </div>
             <p className="mt-1 text-sm text-slate-500">
-              {progression?.total_due ? `${progression.total_due} due now` : "Nothing due right now"}
+              {progression?.total_due
+                ? t("categories:dashboard.review.dueNow", { count: progression.total_due })
+                : t("categories:dashboard.review.nothingDue")}
             </p>
           </Link>
           <Link
             to={`/categories/${category.id}/progression`}
             className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-indigo-300"
           >
-            <h3 className="font-semibold text-slate-900">Progression</h3>
+            <h3 className="font-semibold text-slate-900">{t("categories:dashboard.progression.title")}</h3>
             <p className="mt-1 text-sm text-slate-500">
               {progression
-                ? `${progression.total_items} item${progression.total_items === 1 ? "" : "s"} tracked`
+                ? t("categories:dashboard.progression.itemsTracked", { count: progression.total_items })
                 : "…"}
             </p>
           </Link>

@@ -1,4 +1,5 @@
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { NodeKind } from "@/features/hierarchy/api";
 
@@ -11,6 +12,7 @@ export function AddChildForm({
   onSubmit: (input: { title: string; body_markdown?: string }) => Promise<unknown>;
   onCancel: () => void;
 }) {
+  const { t } = useTranslation(["hierarchy", "common"]);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -30,14 +32,14 @@ export function AddChildForm({
       <input
         autoFocus
         required
-        placeholder={kind === "group" ? "Group title (e.g. Analysis)" : "Lesson title (e.g. Limits)"}
+        placeholder={kind === "group" ? t("tree.groupTitlePlaceholder") : t("tree.lessonTitlePlaceholder")}
         value={title}
         onChange={(event) => setTitle(event.target.value)}
         className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
       />
       {kind === "lesson" && (
         <textarea
-          placeholder="Lesson content (Markdown, optional)"
+          placeholder={t("tree.lessonContentPlaceholder")}
           value={body}
           onChange={(event) => setBody(event.target.value)}
           rows={3}
@@ -50,14 +52,14 @@ export function AddChildForm({
           disabled={submitting}
           className="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
         >
-          Add {kind}
+          {kind === "group" ? t("tree.addGroupSubmit") : t("tree.addLessonSubmit")}
         </button>
         <button
           type="button"
           onClick={onCancel}
           className="rounded-md px-3 py-1 text-xs text-slate-500 hover:bg-slate-100"
         >
-          Cancel
+          {t("common:actions.cancel")}
         </button>
       </div>
     </form>

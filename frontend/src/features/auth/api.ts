@@ -32,3 +32,8 @@ export async function me(): Promise<UserOut> {
   const { data } = await api.get<UserOut>("/auth/me");
   return data;
 }
+
+export async function updateMe(input: { display_name?: string; locale?: string }): Promise<UserOut> {
+  const { data } = await api.patch<UserOut>("/auth/me", input);
+  return data;
+}

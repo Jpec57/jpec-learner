@@ -1,0 +1,29 @@
+{
+  "picker": {
+    "welcomeBack": "Bon retour, {{name}}",
+    "yourCategories": "Vos catégories",
+    "newCategory": "+ Nouvelle catégorie",
+    "namePlaceholder": "Nom de la catégorie (ex. Maths)",
+    "sharedCategory": "Catégorie partagée",
+    "publicFromOthers": "Catégories publiques d'autres utilisateurs"
+  },
+  "dashboard": {
+    "makePublic": "Rendre public",
+    "makePrivate": "Rendre privé",
+    "deleteConfirm": "Supprimer « {{name}} » ? Cette action n'est pas encore annulable depuis l'interface.",
+    "browse": {
+      "title": "Explorer",
+      "subtitle": "Thèmes, sections et leçons"
+    },
+    "review": {
+      "title": "Révision",
+      "dueNow": "{{count}} à réviser maintenant",
+      "nothingDue": "Rien à réviser pour le moment"
+    },
+    "progression": {
+      "title": "Progression",
+      "itemsTracked_one": "{{count}} élément suivi",
+      "itemsTracked_other": "{{count}} éléments suivis"
+    }
+  }
+}

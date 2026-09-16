@@ -1,0 +1,15 @@
+{
+  "front": "Recto",
+  "back": "Verso",
+  "frontPlaceholder": "Recto (question)",
+  "backPlaceholder": "Verso (réponse)",
+  "noCards": "Aucune carte pour l'instant.",
+  "addCard": "+ Ajouter une carte",
+  "addCardSubmit": "Ajouter la carte",
+  "makePublic": "Rendre publique",
+  "makePrivate": "Rendre privée",
+  "deleteConfirm": "Supprimer cette carte ?",
+  "addPhoto": "+ Photo",
+  "removeImage": "Retirer l'image",
+  "uploadError": "Impossible d'envoyer cette image."
+}

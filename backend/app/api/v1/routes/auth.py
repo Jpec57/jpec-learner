@@ -21,6 +21,7 @@ from app.schemas.auth import (
     RefreshRequest,
     RegisterRequest,
     TokenPair,
+    UpdateMeRequest,
     UserOut,
 )
 
@@ -102,4 +103,19 @@ async def logout(payload: LogoutRequest, db: AsyncSession = Depends(get_db)):
 
 @router.get("/me", response_model=UserOut)
 async def me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.patch("/me", response_model=UserOut)
+async def update_me(
+    payload: UpdateMeRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if payload.display_name is not None:
+        current_user.display_name = payload.display_name
+    if payload.locale is not None:
+        current_user.locale = payload.locale
+    await db.commit()
+    await db.refresh(current_user)
     return current_user

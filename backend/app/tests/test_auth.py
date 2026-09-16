@@ -55,3 +55,29 @@ async def test_register_login_me_refresh_logout(client):
         "/api/v1/auth/refresh", json={"refresh_token": new_tokens["refresh_token"]}
     )
     assert revoked_refresh_resp.status_code == 401
+
+
+async def test_update_me_changes_locale_and_display_name(client):
+    register_resp = await client.post(
+        "/api/v1/auth/register",
+        json={"email": "settings@example.com", "password": "password123", "locale": "fr"},
+    )
+    assert register_resp.json()["locale"] == "fr"
+
+    login_resp = await client.post(
+        "/api/v1/auth/login", json={"email": "settings@example.com", "password": "password123"}
+    )
+    headers = {"Authorization": f"Bearer {login_resp.json()['access_token']}"}
+
+    update_resp = await client.patch(
+        "/api/v1/auth/me", json={"locale": "en", "display_name": "Jean"}, headers=headers
+    )
+    assert update_resp.status_code == 200
+    assert update_resp.json()["locale"] == "en"
+    assert update_resp.json()["display_name"] == "Jean"
+
+    me_resp = await client.get("/api/v1/auth/me", headers=headers)
+    assert me_resp.json()["locale"] == "en"
+
+    invalid_resp = await client.patch("/api/v1/auth/me", json={"locale": "de"}, headers=headers)
+    assert invalid_resp.status_code == 422

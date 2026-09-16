@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { me } from "@/features/auth/api";
@@ -7,6 +8,7 @@ import { createCategory, listCategories, type Category } from "@/features/catego
 import { useAuthStore } from "@/lib/authStore";
 
 function CategoryCard({ category, mine }: { category: Category; mine: boolean }) {
+  const { t } = useTranslation(["categories", "common"]);
   return (
     <Link
       to={`/categories/${category.id}`}
@@ -16,17 +18,18 @@ function CategoryCard({ category, mine }: { category: Category; mine: boolean })
         <span className="text-2xl">{category.icon ?? "📚"}</span>
         {category.is_public && (
           <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-            Public
+            {t("common:status.public")}
           </span>
         )}
       </div>
       <h3 className="mt-3 text-lg font-semibold text-slate-900">{category.name}</h3>
-      {!mine && <p className="mt-1 text-xs text-slate-400">Shared category</p>}
+      {!mine && <p className="mt-1 text-xs text-slate-400">{t("categories:picker.sharedCategory")}</p>}
     </Link>
   );
 }
 
 function CreateCategoryForm() {
+  const { t } = useTranslation(["categories", "common"]);
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -51,7 +54,7 @@ function CreateCategoryForm() {
         onClick={() => setOpen(true)}
         className="flex h-full min-h-[110px] w-full items-center justify-center rounded-xl border-2 border-dashed border-slate-300 text-slate-400 transition hover:border-indigo-300 hover:text-indigo-500"
       >
-        + New category
+        {t("categories:picker.newCategory")}
       </button>
     );
   }
@@ -64,7 +67,7 @@ function CreateCategoryForm() {
       <input
         autoFocus
         required
-        placeholder="Category name (e.g. Maths)"
+        placeholder={t("categories:picker.namePlaceholder")}
         value={name}
         onChange={(event) => setName(event.target.value)}
         className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
@@ -75,14 +78,14 @@ function CreateCategoryForm() {
           disabled={submitting}
           className="flex-1 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
         >
-          Create
+          {t("common:actions.create")}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
           className="rounded-md px-3 py-2 text-sm text-slate-500 hover:bg-slate-100"
         >
-          Cancel
+          {t("common:actions.cancel")}
         </button>
       </div>
     </form>
@@ -90,6 +93,7 @@ function CreateCategoryForm() {
 }
 
 export function CategoryPickerPage() {
+  const { t } = useTranslation(["categories", "common"]);
   const clearTokens = useAuthStore((state) => state.clearTokens);
   const { data: user } = useQuery({ queryKey: ["me"], queryFn: me });
   const { data: mine } = useQuery({ queryKey: ["categories", "mine"], queryFn: () => listCategories("mine") });
@@ -103,14 +107,23 @@ export function CategoryPickerPage() {
       <div className="mx-auto max-w-3xl">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-slate-900">
-            {user ? `Welcome back, ${user.display_name ?? user.email}` : "JpecLearner"}
+            {user
+              ? t("categories:picker.welcomeBack", { name: user.display_name ?? user.email })
+              : t("common:appName")}
           </h1>
-          <button onClick={() => clearTokens()} className="text-sm text-slate-500 hover:text-slate-800">
-            Log out
-          </button>
+          <div className="flex items-center gap-4">
+            <Link to="/settings" className="text-sm text-slate-500 hover:text-slate-800">
+              {t("common:nav.settings")}
+            </Link>
+            <button onClick={() => clearTokens()} className="text-sm text-slate-500 hover:text-slate-800">
+              {t("common:nav.logOut")}
+            </button>
+          </div>
         </div>
 
-        <h2 className="mt-8 text-sm font-medium uppercase tracking-wide text-slate-400">Your categories</h2>
+        <h2 className="mt-8 text-sm font-medium uppercase tracking-wide text-slate-400">
+          {t("categories:picker.yourCategories")}
+        </h2>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
           {mine?.map((category) => (
             <CategoryCard key={category.id} category={category} mine />
@@ -121,7 +134,7 @@ export function CategoryPickerPage() {
         {publicCategories && publicCategories.length > 0 && (
           <>
             <h2 className="mt-10 text-sm font-medium uppercase tracking-wide text-slate-400">
-              Public categories from other users
+              {t("categories:picker.publicFromOthers")}
             </h2>
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               {publicCategories.map((category) => (

@@ -1,0 +1,29 @@
+{
+  "picker": {
+    "welcomeBack": "Welcome back, {{name}}",
+    "yourCategories": "Your categories",
+    "newCategory": "+ New category",
+    "namePlaceholder": "Category name (e.g. Maths)",
+    "sharedCategory": "Shared category",
+    "publicFromOthers": "Public categories from other users"
+  },
+  "dashboard": {
+    "makePublic": "Make public",
+    "makePrivate": "Make private",
+    "deleteConfirm": "Delete \"{{name}}\"? This can't be undone from the UI yet.",
+    "browse": {
+      "title": "Browse",
+      "subtitle": "Themes, sections and lessons"
+    },
+    "review": {
+      "title": "Review",
+      "dueNow": "{{count}} due now",
+      "nothingDue": "Nothing due right now"
+    },
+    "progression": {
+      "title": "Progression",
+      "itemsTracked_one": "{{count}} item tracked",
+      "itemsTracked_other": "{{count}} items tracked"
+    }
+  }
+}

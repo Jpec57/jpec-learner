@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import { listLevels } from "@/features/progression/api";
 
@@ -10,15 +11,17 @@ function tierClasses(level: number): string {
 }
 
 export function LevelBadge({ level }: { level: number }) {
+  const { t, i18n } = useTranslation("progression");
   const { data: levels } = useQuery({ queryKey: ["levels"], queryFn: listLevels, staleTime: Infinity });
   const rounded = Math.max(1, Math.min(10, Math.round(level)));
-  const name = levels?.find((l) => l.level === rounded)?.name_en ?? `Level ${rounded}`;
+  const definition = levels?.find((l) => l.level === rounded);
+  const name = (i18n.language.startsWith("fr") ? definition?.name_fr : definition?.name_en) ?? `${rounded}`;
 
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${tierClasses(rounded)}`}
     >
-      Lv. {rounded} · {name}
+      {t("level")} {rounded} · {name}
     </span>
   );
 }

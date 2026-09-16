@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { deleteImage, mediaUrl, uploadImage, type ImageOut } from "@/features/images/api";
 
@@ -11,6 +12,7 @@ export function ImageUploadInput({
   target: { card_id: string } | { lesson_node_id: string };
   onChange: (images: ImageOut[]) => void;
 }) {
+  const { t } = useTranslation("cards");
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export function ImageUploadInput({
       const image = await uploadImage(file, target);
       onChange([...images, image]);
     } catch {
-      setError("Couldn't upload that image.");
+      setError(t("uploadError"));
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -45,14 +47,14 @@ export function ImageUploadInput({
             <button
               onClick={() => handleDelete(image.id)}
               className="absolute right-0.5 top-0.5 hidden h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs text-white group-hover:flex"
-              aria-label="Remove image"
+              aria-label={t("removeImage")}
             >
               ×
             </button>
           </div>
         ))}
         <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-slate-300 text-xs text-slate-400 hover:border-indigo-300 hover:text-indigo-500">
-          {uploading ? "…" : "+ Photo"}
+          {uploading ? "…" : t("addPhoto")}
           <input
             ref={inputRef}
             type="file"

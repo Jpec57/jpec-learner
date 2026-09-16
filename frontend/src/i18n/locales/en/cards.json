@@ -1,0 +1,15 @@
+{
+  "front": "Front",
+  "back": "Back",
+  "frontPlaceholder": "Front (question)",
+  "backPlaceholder": "Back (answer)",
+  "noCards": "No cards yet.",
+  "addCard": "+ Add card",
+  "addCardSubmit": "Add card",
+  "makePublic": "Make public",
+  "makePrivate": "Make private",
+  "deleteConfirm": "Delete this card?",
+  "addPhoto": "+ Photo",
+  "removeImage": "Remove image",
+  "uploadError": "Couldn't upload that image."
+}

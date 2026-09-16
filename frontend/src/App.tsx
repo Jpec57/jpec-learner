@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
+import { SettingsPage } from "@/features/auth/SettingsPage";
 import { CategoryDashboardPage } from "@/features/categories/CategoryDashboardPage";
 import { CategoryPickerPage } from "@/features/categories/CategoryPickerPage";
 import { CategoryBrowsePage } from "@/features/hierarchy/CategoryBrowsePage";
@@ -23,6 +24,7 @@ export function App() {
           <Route path="/categories/:categoryId/lessons/:nodeId" element={<LessonDetailPage />} />
           <Route path="/categories/:categoryId/review" element={<ReviewSessionPage />} />
           <Route path="/categories/:categoryId/progression" element={<ProgressionPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { AddChildForm } from "@/features/hierarchy/AddChildForm";
 import { createNode, listChildren, moveNode, type NodeKind } from "@/features/hierarchy/api";
 import { TreeNode } from "@/features/hierarchy/TreeNode";
 
 export function HierarchyTreeView({ categoryId }: { categoryId: string }) {
+  const { t } = useTranslation("hierarchy");
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState<NodeKind | null>(null);
   const [movingNodeId, setMovingNodeId] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export function HierarchyTreeView({ categoryId }: { categoryId: string }) {
       queryClient.invalidateQueries({ queryKey: ["hierarchy", categoryId] });
     },
     onError: () => {
-      setError("Can't move that node there.");
+      setError(t("tree.moveError"));
       setMovingNodeId(null);
     },
   });
@@ -41,13 +43,13 @@ export function HierarchyTreeView({ categoryId }: { categoryId: string }) {
     <div>
       {movingNodeId && (
         <div className="mb-3 flex items-center justify-between rounded-md bg-indigo-50 px-3 py-2 text-sm text-indigo-700">
-          <span>Choose where to move this node — click "Move here" on a group, or move it to the top level.</span>
+          <span>{t("tree.moveInstructions")}</span>
           <div className="flex gap-3">
             <button onClick={() => moveToRoot.mutate()} className="font-medium hover:underline">
-              Move to top level
+              {t("tree.moveToTopLevel")}
             </button>
             <button onClick={() => setMovingNodeId(null)} className="hover:underline">
-              Cancel
+              {t("common:actions.cancel")}
             </button>
           </div>
         </div>
@@ -56,7 +58,7 @@ export function HierarchyTreeView({ categoryId }: { categoryId: string }) {
         <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}{" "}
           <button onClick={() => setError(null)} className="ml-2 underline">
-            Dismiss
+            {t("tree.dismiss")}
           </button>
         </div>
       )}
@@ -73,7 +75,7 @@ export function HierarchyTreeView({ categoryId }: { categoryId: string }) {
           />
         ))}
         {roots?.length === 0 && !adding && (
-          <p className="py-2 text-sm text-slate-400">No themes yet — add your first group or lesson below.</p>
+          <p className="py-2 text-sm text-slate-400">{t("browse.noThemes")}</p>
         )}
 
         {adding ? (
@@ -81,10 +83,10 @@ export function HierarchyTreeView({ categoryId }: { categoryId: string }) {
         ) : (
           <div className="mt-2 flex gap-3">
             <button onClick={() => setAdding("group")} className="text-sm text-indigo-600 hover:underline">
-              + Add group
+              {t("browse.addGroup")}
             </button>
             <button onClick={() => setAdding("lesson")} className="text-sm text-indigo-600 hover:underline">
-              + Add lesson
+              {t("browse.addLesson")}
             </button>
           </div>
         )}

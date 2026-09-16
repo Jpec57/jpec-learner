@@ -1,0 +1,38 @@
+{
+  "browse": {
+    "title": "Browse {{name}}",
+    "subtitle": "Build out your theme / section / lesson hierarchy.",
+    "standaloneCards": "Standalone cards (not tied to a lesson)",
+    "noThemes": "No themes yet — add your first group or lesson below.",
+    "addGroup": "+ Add group",
+    "addLesson": "+ Add lesson"
+  },
+  "tree": {
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "addGroupChild": "+ group",
+    "addLessonChild": "+ lesson",
+    "move": "Move",
+    "cancelMove": "Cancel move",
+    "moveHere": "Move here",
+    "moveToTopLevel": "Move to top level",
+    "moveInstructions": "Choose where to move this node — click \"Move here\" on a group, or move it to the top level.",
+    "moveError": "Can't move that node there.",
+    "dismiss": "Dismiss",
+    "deleteConfirm": "Delete \"{{title}}\" and everything under it?",
+    "empty": "Empty — add a group or lesson above.",
+    "groupTitlePlaceholder": "Group title (e.g. Analysis)",
+    "lessonTitlePlaceholder": "Lesson title (e.g. Limits)",
+    "lessonContentPlaceholder": "Lesson content (Markdown, optional)",
+    "addGroupSubmit": "Add group",
+    "addLessonSubmit": "Add lesson"
+  },
+  "lesson": {
+    "backToBrowse": "Browse {{name}}",
+    "content": "Content",
+    "contentPlaceholder": "Write this lesson's content in Markdown…",
+    "saveContent": "Save content",
+    "images": "Images",
+    "cardsInLesson": "Cards in this lesson"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "title": "Review",
+  "reviewedThisSession_one": "{{count}} reviewed this session",
+  "reviewedThisSession_other": "{{count}} reviewed this session",
+  "due_one": "{{count}} due",
+  "due_other": "{{count}} due",
+  "allCaughtUp": "All caught up! 🎉",
+  "nothingDueIn": "Nothing due right now in {{name}}.",
+  "backToDashboard": "Back to dashboard",
+  "revealAnswer": "Reveal answer",
+  "card": "Card",
+  "lesson": "Lesson",
+  "answer": "Answer",
+  "ratings": {
+    "again": "Again",
+    "hard": "Hard",
+    "good": "Good",
+    "easy": "Easy",
+    "perfect": "Perfect"
+  }
+}

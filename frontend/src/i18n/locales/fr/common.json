@@ -1,0 +1,21 @@
+{
+  "appName": "JpecLearner",
+  "nav": {
+    "logOut": "Se déconnecter",
+    "allCategories": "Toutes les catégories",
+    "settings": "Paramètres"
+  },
+  "actions": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "rename": "Renommer",
+    "create": "Créer",
+    "back": "Retour"
+  },
+  "status": {
+    "public": "Public",
+    "loading": "Chargement…"
+  }
+}

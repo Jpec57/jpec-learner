@@ -1,10 +1,12 @@
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import { login } from "@/features/auth/api";
 import { useAuthStore } from "@/lib/authStore";
 
 export function LoginPage() {
+  const { t } = useTranslation("auth");
   const navigate = useNavigate();
   const setTokens = useAuthStore((state) => state.setTokens);
   const [email, setEmail] = useState("");
@@ -21,7 +23,7 @@ export function LoginPage() {
       setTokens(tokens.access_token, tokens.refresh_token);
       navigate("/");
     } catch {
-      setError("Invalid email or password.");
+      setError(t("login.error"));
     } finally {
       setSubmitting(false);
     }
@@ -33,9 +35,9 @@ export function LoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm space-y-4 rounded-xl border border-slate-200 bg-white p-8 shadow-sm"
       >
-        <h1 className="text-xl font-semibold text-slate-900">Log in to JpecLearner</h1>
+        <h1 className="text-xl font-semibold text-slate-900">{t("login.title")}</h1>
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Email</label>
+          <label className="text-sm font-medium text-slate-700">{t("login.email")}</label>
           <input
             type="email"
             required
@@ -45,7 +47,7 @@ export function LoginPage() {
           />
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Password</label>
+          <label className="text-sm font-medium text-slate-700">{t("login.password")}</label>
           <input
             type="password"
             required
@@ -60,12 +62,12 @@ export function LoginPage() {
           disabled={submitting}
           className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
         >
-          {submitting ? "Logging in…" : "Log in"}
+          {submitting ? t("login.submitting") : t("login.submit")}
         </button>
         <p className="text-center text-sm text-slate-500">
-          No account?{" "}
+          {t("login.noAccount")}{" "}
           <a href="/register" className="text-indigo-600 hover:underline">
-            Register
+            {t("login.registerLink")}
           </a>
         </p>
       </form>

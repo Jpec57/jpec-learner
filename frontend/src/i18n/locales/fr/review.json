@@ -1,0 +1,21 @@
+{
+  "title": "Révision",
+  "reviewedThisSession_one": "{{count}} révisée dans cette session",
+  "reviewedThisSession_other": "{{count}} révisées dans cette session",
+  "due_one": "{{count}} à réviser",
+  "due_other": "{{count}} à réviser",
+  "allCaughtUp": "Tout est à jour ! 🎉",
+  "nothingDueIn": "Rien à réviser pour le moment dans {{name}}.",
+  "backToDashboard": "Retour au tableau de bord",
+  "revealAnswer": "Révéler la réponse",
+  "card": "Carte",
+  "lesson": "Leçon",
+  "answer": "Réponse",
+  "ratings": {
+    "again": "À revoir",
+    "hard": "Difficile",
+    "good": "Bien",
+    "easy": "Facile",
+    "perfect": "Parfait"
+  }
+}
