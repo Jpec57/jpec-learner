@@ -1,0 +1,23 @@
+# Env
+.env
+.env.local
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+.vite/
+
+# Editors / OS
+.DS_Store
+.vscode/
+.idea/
+
+# Docker
+images_data/
