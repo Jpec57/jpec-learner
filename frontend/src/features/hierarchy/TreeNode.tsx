@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { AddChildForm } from "@/features/hierarchy/AddChildForm";
 import {
@@ -125,7 +126,16 @@ export function TreeNode({
             </button>
           </>
         ) : (
-          <span className="text-sm font-medium text-slate-800">{node.title}</span>
+          node.node_kind === "lesson" ? (
+            <Link
+              to={`/categories/${categoryId}/lessons/${node.id}`}
+              className="text-sm font-medium text-slate-800 hover:text-indigo-600 hover:underline"
+            >
+              {node.title}
+            </Link>
+          ) : (
+            <span className="text-sm font-medium text-slate-800">{node.title}</span>
+          )
         )}
 
         {node.is_public && (

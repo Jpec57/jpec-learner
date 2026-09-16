@@ -30,7 +30,11 @@ async def _get_category_or_404(db: AsyncSession, category_id: uuid.UUID) -> Cate
 
 
 async def _get_node_or_404(db: AsyncSession, node_id: uuid.UUID) -> HierarchyNode:
-    node = await db.get(HierarchyNode, node_id, options=[selectinload(HierarchyNode.lesson)])
+    node = await db.get(
+        HierarchyNode,
+        node_id,
+        options=[selectinload(HierarchyNode.lesson), selectinload(HierarchyNode.images)],
+    )
     if node is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Node not found")
     return node
@@ -79,7 +83,7 @@ async def list_children(
 
     query = (
         select(HierarchyNode)
-        .options(selectinload(HierarchyNode.lesson))
+        .options(selectinload(HierarchyNode.lesson), selectinload(HierarchyNode.images))
         .where(HierarchyNode.category_id == category_id)
     )
     query = query.where(HierarchyNode.parent_id == parent_id) if parent_id else query.where(
@@ -147,7 +151,7 @@ async def create_node(
         db.add(Lesson(id=node.id, body_markdown=payload.body_markdown))
 
     await db.commit()
-    await db.refresh(node, attribute_names=["lesson"])
+    await db.refresh(node, attribute_names=["lesson", "images"])
     return (await _with_has_children(db, [node]))[0]
 
 
@@ -174,7 +178,7 @@ async def update_node(
         node.lesson.body_markdown = payload.body_markdown
 
     await db.commit()
-    await db.refresh(node, attribute_names=["lesson"])
+    await db.refresh(node, attribute_names=["lesson", "images"])
     return (await _with_has_children(db, [node]))[0]
 
 
@@ -225,5 +229,5 @@ async def move_node(
         node.order_index = await _next_order_index(db, node.category_id, payload.new_parent_id)
 
     await db.commit()
-    await db.refresh(node, attribute_names=["lesson"])
+    await db.refresh(node, attribute_names=["lesson", "images"])
     return (await _with_has_children(db, [node]))[0]

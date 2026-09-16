@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+from app.schemas.card import ImageOut
+
 NodeKind = Literal["group", "lesson"]
 
 
@@ -48,6 +50,7 @@ class HierarchyNodeOut(BaseModel):
     is_public: bool
     has_children: bool = False
     body_markdown: str | None = None
+    images: list[ImageOut] = []
     created_at: datetime
     updated_at: datetime
 

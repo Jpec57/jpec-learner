@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 
+import { CardListSection } from "@/features/cards/CardListSection";
 import { getCategory } from "@/features/categories/api";
 import { HierarchyTreeView } from "@/features/hierarchy/HierarchyTreeView";
 
@@ -26,6 +27,15 @@ export function CategoryBrowsePage() {
         </p>
         <div className="mt-6">
           <HierarchyTreeView categoryId={categoryId} />
+        </div>
+
+        <div className="mt-10">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">
+            Standalone cards (not tied to a lesson)
+          </h2>
+          <div className="mt-2">
+            <CardListSection categoryId={categoryId} lessonNodeId={null} />
+          </div>
         </div>
       </div>
     </div>

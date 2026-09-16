@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.types import LtreeType
+from app.models.image import Image
 from app.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
 
 
@@ -34,6 +35,7 @@ class HierarchyNode(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     lesson: Mapped["Lesson | None"] = relationship(
         back_populates="node", uselist=False, cascade="all, delete-orphan"
     )
+    images: Mapped[list["Image"]] = relationship(cascade="all, delete-orphan")
 
 
 class Lesson(TimestampMixin, Base):

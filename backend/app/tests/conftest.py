@@ -41,6 +41,10 @@ async def client():
 
     app.dependency_overrides[get_db] = override_get_db
 
+    # Note: StaticFiles binds its serving directory at app import time, so
+    # settings.image_storage_path can't be swapped per-test without also rebuilding
+    # that mount. Tests that upload images are responsible for deleting what they
+    # create (see test_cards.py) rather than relying on directory isolation.
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac

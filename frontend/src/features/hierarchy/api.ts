@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import type { ImageOut } from "@/features/images/api";
 
 export type NodeKind = "group" | "lesson";
 
@@ -14,6 +15,7 @@ export interface HierarchyNode {
   is_public: boolean;
   has_children: boolean;
   body_markdown: string | null;
+  images: ImageOut[];
   created_at: string;
   updated_at: string;
 }
