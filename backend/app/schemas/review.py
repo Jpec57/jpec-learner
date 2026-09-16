@@ -51,6 +51,10 @@ class DueItemOut(BaseModel):
     current_level: int
 
 
+class DueCountOut(BaseModel):
+    total_due: int
+
+
 class LevelDefinitionOut(BaseModel):
     level: int
     name_en: str

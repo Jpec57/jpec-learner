@@ -17,5 +17,10 @@
   "status": {
     "public": "Public",
     "loading": "Loading…"
+  },
+  "dueBanner": {
+    "message_one": "You have {{count}} card due for review today.",
+    "message_other": "You have {{count}} cards due for review today.",
+    "dismiss": "Dismiss for today"
   }
 }

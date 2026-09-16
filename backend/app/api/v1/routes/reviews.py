@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -11,13 +11,12 @@ from app.core.permissions import assert_visible
 from app.db.base import get_db
 from app.models.card import Card
 from app.models.hierarchy import HierarchyNode
-from app.models.level import LevelDefinition
 from app.models.review import ReviewLog, ReviewState
 from app.models.user import User
 from app.schemas.review import (
+    DueCountOut,
     DueItemOut,
     EnrollRequest,
-    LevelDefinitionOut,
     ReviewStateOut,
     SubmitReviewRequest,
 )
@@ -25,6 +24,21 @@ from app.services.enrollment import ensure_review_state
 from app.services.srs import RATING_TO_QUALITY, apply_review
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
+
+
+@router.get("/due-count", response_model=DueCountOut)
+async def get_due_count(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Total due items across every category the user owns -- used for the
+    global in-app due banner (see features/notifications on the frontend)."""
+    total = await db.scalar(
+        select(func.count())
+        .select_from(ReviewState)
+        .where(ReviewState.user_id == current_user.id, ReviewState.due_at <= func.now())
+    )
+    return DueCountOut(total_due=total or 0)
 
 
 @router.get("/due", response_model=list[DueItemOut])

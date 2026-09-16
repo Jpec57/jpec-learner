@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 
 import { me } from "@/features/auth/api";
 import { createCategory, listCategories, type Category } from "@/features/categories/api";
+import { DueBanner } from "@/features/notifications/DueBanner";
 import { useAuthStore } from "@/lib/authStore";
 
 function CategoryCard({ category, mine }: { category: Category; mine: boolean }) {
@@ -121,7 +122,11 @@ export function CategoryPickerPage() {
           </div>
         </div>
 
-        <h2 className="mt-8 text-sm font-medium uppercase tracking-wide text-slate-400">
+        <div className="mt-6">
+          <DueBanner />
+        </div>
+
+        <h2 className="mt-2 text-sm font-medium uppercase tracking-wide text-slate-400">
           {t("categories:picker.yourCategories")}
         </h2>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">

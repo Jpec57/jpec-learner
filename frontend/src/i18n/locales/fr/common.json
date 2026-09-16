@@ -17,5 +17,10 @@
   "status": {
     "public": "Public",
     "loading": "Chargement…"
+  },
+  "dueBanner": {
+    "message_one": "Vous avez {{count}} carte à réviser aujourd'hui.",
+    "message_other": "Vous avez {{count}} cartes à réviser aujourd'hui.",
+    "dismiss": "Ignorer pour aujourd'hui"
   }
 }
