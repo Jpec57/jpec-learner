@@ -5,7 +5,7 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import settings
 from app.db.base import Base
-from app.models import user  # noqa: F401  (ensures models are registered on Base.metadata)
+from app.models import category, hierarchy, user  # noqa: F401  (registers models on Base.metadata)
 
 config = context.config
 

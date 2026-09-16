@@ -1,11 +1,102 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { FormEvent, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { me } from "@/features/auth/api";
+import { createCategory, listCategories, type Category } from "@/features/categories/api";
 import { useAuthStore } from "@/lib/authStore";
+
+function CategoryCard({ category, mine }: { category: Category; mine: boolean }) {
+  return (
+    <Link
+      to={`/categories/${category.id}`}
+      className="block rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-indigo-300 hover:shadow-md"
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-2xl">{category.icon ?? "📚"}</span>
+        {category.is_public && (
+          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+            Public
+          </span>
+        )}
+      </div>
+      <h3 className="mt-3 text-lg font-semibold text-slate-900">{category.name}</h3>
+      {!mine && <p className="mt-1 text-xs text-slate-400">Shared category</p>}
+    </Link>
+  );
+}
+
+function CreateCategoryForm() {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setSubmitting(true);
+    try {
+      await createCategory({ name });
+      setName("");
+      setOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ["categories", "mine"] });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="flex h-full min-h-[110px] w-full items-center justify-center rounded-xl border-2 border-dashed border-slate-300 text-slate-400 transition hover:border-indigo-300 hover:text-indigo-500"
+      >
+        + New category
+      </button>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="flex h-full min-h-[110px] flex-col justify-between rounded-xl border border-indigo-200 bg-white p-4 shadow-sm"
+    >
+      <input
+        autoFocus
+        required
+        placeholder="Category name (e.g. Maths)"
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+      />
+      <div className="mt-3 flex gap-2">
+        <button
+          type="submit"
+          disabled={submitting}
+          className="flex-1 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+        >
+          Create
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="rounded-md px-3 py-2 text-sm text-slate-500 hover:bg-slate-100"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
 
 export function CategoryPickerPage() {
   const clearTokens = useAuthStore((state) => state.clearTokens);
   const { data: user } = useQuery({ queryKey: ["me"], queryFn: me });
+  const { data: mine } = useQuery({ queryKey: ["categories", "mine"], queryFn: () => listCategories("mine") });
+  const { data: publicCategories } = useQuery({
+    queryKey: ["categories", "public"],
+    queryFn: () => listCategories("public"),
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-10">
@@ -14,17 +105,31 @@ export function CategoryPickerPage() {
           <h1 className="text-2xl font-semibold text-slate-900">
             {user ? `Welcome back, ${user.display_name ?? user.email}` : "JpecLearner"}
           </h1>
-          <button
-            onClick={() => clearTokens()}
-            className="text-sm text-slate-500 hover:text-slate-800"
-          >
+          <button onClick={() => clearTokens()} className="text-sm text-slate-500 hover:text-slate-800">
             Log out
           </button>
         </div>
-        <p className="mt-2 text-slate-500">
-          Categories (Maths, Japanese, …) will appear here as selectable cards. This is the
-          Phase 1 scaffold — category CRUD lands in Phase 2.
-        </p>
+
+        <h2 className="mt-8 text-sm font-medium uppercase tracking-wide text-slate-400">Your categories</h2>
+        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+          {mine?.map((category) => (
+            <CategoryCard key={category.id} category={category} mine />
+          ))}
+          <CreateCategoryForm />
+        </div>
+
+        {publicCategories && publicCategories.length > 0 && (
+          <>
+            <h2 className="mt-10 text-sm font-medium uppercase tracking-wide text-slate-400">
+              Public categories from other users
+            </h2>
+            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+              {publicCategories.map((category) => (
+                <CategoryCard key={category.id} category={category} mine={false} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import asyncpg
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.core.config import settings
@@ -31,6 +32,7 @@ async def client():
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
     async with engine.begin() as conn:
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS ltree"))
         await conn.run_sync(Base.metadata.create_all)
 
     async def override_get_db():

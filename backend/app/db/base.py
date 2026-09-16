@@ -5,7 +5,11 @@ from app.core.config import settings
 
 
 class Base(DeclarativeBase):
-    pass
+    """`eager_defaults` makes server-computed columns (created_at/updated_at) come back
+    via RETURNING after flush, so accessing them post-commit never needs an implicit
+    lazy-load (which would crash outside an active async/greenlet context)."""
+
+    __mapper_args__ = {"eager_defaults": True}
 
 
 engine = create_async_engine(settings.database_url, echo=False, future=True)
