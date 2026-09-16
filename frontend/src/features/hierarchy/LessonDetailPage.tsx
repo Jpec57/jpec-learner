@@ -37,7 +37,9 @@ export function LessonDetailPage() {
 
   if (!categoryId || !nodeId || !category || !node) return null;
 
-  const currentBody = body ?? node.body_markdown ?? "";
+  const savedBody = node.body_markdown ?? "";
+  const currentBody = body ?? savedBody;
+  const isDirty = currentBody !== savedBody;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -91,13 +93,15 @@ export function LessonDetailPage() {
           </div>
         </div>
 
-        <button
-          onClick={() => saveBody.mutate(currentBody)}
-          disabled={saveBody.isPending}
-          className="mt-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
-        >
-          {t("lesson.saveContent")}
-        </button>
+        {isDirty && (
+          <button
+            onClick={() => saveBody.mutate(currentBody)}
+            disabled={saveBody.isPending}
+            className="mt-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
+          >
+            {t("lesson.saveContent")}
+          </button>
+        )}
       </section>
 
       <section className="mt-8">
