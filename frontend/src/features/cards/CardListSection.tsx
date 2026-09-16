@@ -54,7 +54,7 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
           <div className="flex gap-2">
             <button
               onClick={() => save.mutate()}
-              className="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500"
+              className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary-dark"
             >
               {t("common:actions.save")}
             </button>
@@ -91,11 +91,11 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
           </span>
         )}
         {!editing && (
-          <button onClick={() => setEditing(true)} className="text-xs text-slate-400 hover:text-indigo-600">
+          <button onClick={() => setEditing(true)} className="text-xs text-slate-400 hover:text-primary">
             {t("common:actions.edit")}
           </button>
         )}
-        <button onClick={() => togglePublic.mutate()} className="text-xs text-slate-400 hover:text-indigo-600">
+        <button onClick={() => togglePublic.mutate()} className="text-xs text-slate-400 hover:text-primary">
           {card.is_public ? t("makePrivate") : t("makePublic")}
         </button>
         <button
@@ -134,14 +134,14 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: { front: string; back: st
 
   if (!open) {
     return (
-      <button onClick={() => setOpen(true)} className="text-sm text-indigo-600 hover:underline">
+      <button onClick={() => setOpen(true)} className="text-sm text-primary hover:underline">
         {t("addCard")}
       </button>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2 rounded-lg border border-indigo-200 bg-indigo-50/30 p-3">
+    <form onSubmit={handleSubmit} className="space-y-2 rounded-lg border border-primary/30 bg-primary-light/30 p-3">
       <textarea
         autoFocus
         required
@@ -163,7 +163,7 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: { front: string; back: st
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+          className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary-dark disabled:opacity-60"
         >
           {t("addCardSubmit")}
         </button>

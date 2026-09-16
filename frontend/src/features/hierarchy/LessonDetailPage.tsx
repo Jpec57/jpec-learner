@@ -55,7 +55,7 @@ export function LessonDetailPage() {
           <button
             onClick={() => saveBody.mutate(currentBody)}
             disabled={saveBody.isPending}
-            className="mt-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+            className="mt-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
           >
             {t("lesson.saveContent")}
           </button>

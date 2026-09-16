@@ -42,7 +42,7 @@ export function HierarchyTreeView({ categoryId }: { categoryId: string }) {
   return (
     <div>
       {movingNodeId && (
-        <div className="mb-3 flex items-center justify-between rounded-md bg-indigo-50 px-3 py-2 text-sm text-indigo-700">
+        <div className="mb-3 flex items-center justify-between rounded-md bg-primary-light px-3 py-2 text-sm text-primary-dark">
           <span>{t("tree.moveInstructions")}</span>
           <div className="flex gap-3">
             <button onClick={() => moveToRoot.mutate()} className="font-medium hover:underline">
@@ -82,10 +82,10 @@ export function HierarchyTreeView({ categoryId }: { categoryId: string }) {
           <AddChildForm kind={adding} onSubmit={(input) => addRoot.mutateAsync(input)} onCancel={() => setAdding(null)} />
         ) : (
           <div className="mt-2 flex gap-3">
-            <button onClick={() => setAdding("group")} className="text-sm text-indigo-600 hover:underline">
+            <button onClick={() => setAdding("group")} className="text-sm text-primary hover:underline">
               {t("browse.addGroup")}
             </button>
-            <button onClick={() => setAdding("lesson")} className="text-sm text-indigo-600 hover:underline">
+            <button onClick={() => setAdding("lesson")} className="text-sm text-primary hover:underline">
               {t("browse.addLesson")}
             </button>
           </div>

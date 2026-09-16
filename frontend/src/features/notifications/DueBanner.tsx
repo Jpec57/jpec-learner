@@ -34,11 +34,11 @@ export function DueBanner() {
   }
 
   return (
-    <div className="mb-6 flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
-      <p className="text-sm font-medium text-indigo-900">
+    <div className="mb-6 flex items-center justify-between rounded-xl border border-primary/30 bg-primary-light px-4 py-3">
+      <p className="text-sm font-medium text-primary-dark">
         🔔 {t("dueBanner.message", { count: totalDue })}
       </p>
-      <button onClick={dismiss} className="text-xs text-indigo-500 hover:underline">
+      <button onClick={dismiss} className="text-xs text-primary hover:underline">
         {t("dueBanner.dismiss")}
       </button>
     </div>

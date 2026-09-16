@@ -60,13 +60,13 @@ export function LoginPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+          className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
         >
           {submitting ? t("login.submitting") : t("login.submit")}
         </button>
         <p className="text-center text-sm text-slate-500">
           {t("login.noAccount")}{" "}
-          <a href="/register" className="text-indigo-600 hover:underline">
+          <a href="/register" className="text-primary hover:underline">
             {t("login.registerLink")}
           </a>
         </p>

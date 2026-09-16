@@ -53,7 +53,7 @@ export function ImageUploadInput({
             </button>
           </div>
         ))}
-        <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-slate-300 text-xs text-slate-400 hover:border-indigo-300 hover:text-indigo-500">
+        <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-slate-300 text-xs text-slate-400 hover:border-primary/50 hover:text-primary-dark">
           {uploading ? "…" : t("addPhoto")}
           <input
             ref={inputRef}

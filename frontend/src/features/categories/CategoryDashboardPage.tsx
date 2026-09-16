@@ -81,19 +81,19 @@ export function CategoryDashboardPage() {
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Link
             to={`/categories/${category.id}/browse`}
-            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-indigo-300"
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
           >
             <h3 className="font-semibold text-slate-900">{t("categories:dashboard.browse.title")}</h3>
             <p className="mt-1 text-sm text-slate-500">{t("categories:dashboard.browse.subtitle")}</p>
           </Link>
           <Link
             to={`/categories/${category.id}/review`}
-            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-indigo-300"
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
           >
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-slate-900">{t("categories:dashboard.review.title")}</h3>
               {!!progression?.total_due && (
-                <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs font-semibold text-white">
+                <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white">
                   {progression.total_due}
                 </span>
               )}
@@ -106,7 +106,7 @@ export function CategoryDashboardPage() {
           </Link>
           <Link
             to={`/categories/${category.id}/progression`}
-            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-indigo-300"
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
           >
             <h3 className="font-semibold text-slate-900">{t("categories:dashboard.progression.title")}</h3>
             <p className="mt-1 text-sm text-slate-500">

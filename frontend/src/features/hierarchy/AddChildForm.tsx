@@ -50,7 +50,7 @@ export function AddChildForm({
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+          className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary-dark disabled:opacity-60"
         >
           {kind === "group" ? t("tree.addGroupSubmit") : t("tree.addLessonSubmit")}
         </button>

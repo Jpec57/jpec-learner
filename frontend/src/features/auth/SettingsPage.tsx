@@ -42,7 +42,7 @@ export function SettingsPage() {
                   }}
                   className={`rounded-md border px-3 py-1.5 text-sm ${
                     i18n.language === locale
-                      ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+                      ? "border-primary bg-primary-light text-primary-dark"
                       : "border-slate-300 text-slate-600 hover:bg-slate-50"
                   }`}
                 >
@@ -62,7 +62,7 @@ export function SettingsPage() {
               />
               <button
                 onClick={() => update.mutate({ display_name: displayName })}
-                className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
+                className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-dark"
               >
                 {t("common:actions.save")}
               </button>

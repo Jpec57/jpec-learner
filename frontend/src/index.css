@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Brand palette, as RGB channel triplets for Tailwind's `rgb(var(--x) / <alpha>)`
+   pattern (see tailwind.config.js). Change these values to reskin the whole
+   site -- every `primary`/`accent` Tailwind class (bg-primary, text-accent,
+   border-primary/50, ...) reads from here. */
+:root {
+  --color-primary-light: 238 242 255; /* indigo-50 */
+  --color-primary: 79 70 229; /* indigo-600 */
+  --color-primary-dark: 67 56 202; /* indigo-700 */
+
+  --color-accent-light: 255 247 237; /* orange-50 */
+  --color-accent: 249 115 22; /* orange-500 */
+  --color-accent-dark: 194 65 12; /* orange-700 */
+}

@@ -73,13 +73,13 @@ export function RegisterPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+          className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
         >
           {submitting ? t("register.submitting") : t("register.submit")}
         </button>
         <p className="text-center text-sm text-slate-500">
           {t("register.hasAccount")}{" "}
-          <a href="/login" className="text-indigo-600 hover:underline">
+          <a href="/login" className="text-primary hover:underline">
             {t("register.loginLink")}
           </a>
         </p>

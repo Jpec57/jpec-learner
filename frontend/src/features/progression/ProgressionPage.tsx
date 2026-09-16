@@ -65,7 +65,7 @@ export function ProgressionPage() {
           {progression.themes.length === 0 && (
             <p className="text-sm text-slate-400">
               {t("noThemesPrefix")}{" "}
-              <Link to={`/categories/${categoryId}/browse`} className="text-indigo-600 hover:underline">
+              <Link to={`/categories/${categoryId}/browse`} className="text-primary hover:underline">
                 {t("browse")}
               </Link>
               .

@@ -40,7 +40,7 @@ export function ConfirmDialog({
               <button
                 onClick={onConfirm}
                 className={`rounded-md px-3 py-1.5 text-sm font-medium text-white ${
-                  destructive ? "bg-red-600 hover:bg-red-500" : "bg-indigo-600 hover:bg-indigo-500"
+                  destructive ? "bg-red-600 hover:bg-red-500" : "bg-primary hover:bg-primary-dark"
                 }`}
               >
                 {t("actions.delete")}

@@ -33,15 +33,12 @@ export default defineConfig({
         importScripts: ["push-handlers.js"],
         navigateFallbackDenylist: [/^\/api\//, /^\/media\//],
         runtimeCaching: [
-          {
-            urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "api-cache",
-              networkTimeoutSeconds: 5,
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
+          // /api/ is intentionally NOT cached: every response is per-user and
+          // authenticated via the Authorization header, but Workbox's cache key
+          // is the request URL alone. Caching it risks serving one account's
+          // data to another on the same device after a login switch, or a
+          // stale response after any network hiccup (NetworkFirst falls back
+          // to cache on timeout). Offline API access was never a requirement.
           {
             urlPattern: ({ url }) => url.pathname.startsWith("/media/"),
             handler: "CacheFirst",

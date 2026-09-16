@@ -94,7 +94,7 @@ export function TreeNode({
     <div className="border-l border-slate-100 pl-3">
       <div
         className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${
-          isBeingMoved ? "bg-indigo-50" : "hover:bg-slate-50"
+          isBeingMoved ? "bg-primary-light" : "hover:bg-slate-50"
         }`}
       >
         {node.node_kind === "group" ? (
@@ -121,7 +121,7 @@ export function TreeNode({
             />
             <button
               onClick={() => rename.mutate()}
-              className="text-xs font-medium text-indigo-600 hover:underline"
+              className="text-xs font-medium text-primary hover:underline"
             >
               {t("common:actions.save")}
             </button>
@@ -133,7 +133,7 @@ export function TreeNode({
           node.node_kind === "lesson" ? (
             <Link
               to={`/categories/${categoryId}/lessons/${node.id}`}
-              className="text-sm font-medium text-slate-800 hover:text-indigo-600 hover:underline"
+              className="text-sm font-medium text-slate-800 hover:text-primary hover:underline"
             >
               {node.title}
             </Link>
@@ -152,7 +152,7 @@ export function TreeNode({
           {isMoveTarget && (
             <button
               onClick={() => moveHere.mutate(node.id)}
-              className="rounded-md bg-indigo-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-indigo-500"
+              className="rounded-md bg-primary px-2 py-0.5 text-xs font-medium text-white hover:bg-primary-dark"
             >
               {t("tree.moveHere")}
             </button>
@@ -166,7 +166,7 @@ export function TreeNode({
                       setExpanded(true);
                       setAdding("group");
                     }}
-                    className="text-xs text-slate-400 hover:text-indigo-600"
+                    className="text-xs text-slate-400 hover:text-primary"
                   >
                     {t("tree.addGroupChild")}
                   </button>
@@ -175,18 +175,18 @@ export function TreeNode({
                       setExpanded(true);
                       setAdding("lesson");
                     }}
-                    className="text-xs text-slate-400 hover:text-indigo-600"
+                    className="text-xs text-slate-400 hover:text-primary"
                   >
                     {t("tree.addLessonChild")}
                   </button>
                 </>
               )}
-              <button onClick={() => setEditing(true)} className="text-xs text-slate-400 hover:text-indigo-600">
+              <button onClick={() => setEditing(true)} className="text-xs text-slate-400 hover:text-primary">
                 {t("common:actions.rename")}
               </button>
               <button
                 onClick={() => setMovingNodeId(node.id)}
-                className="text-xs text-slate-400 hover:text-indigo-600"
+                className="text-xs text-slate-400 hover:text-primary"
               >
                 {t("tree.move")}
               </button>
@@ -203,7 +203,7 @@ export function TreeNode({
             </>
           )}
           {isBeingMoved && (
-            <button onClick={() => setMovingNodeId(null)} className="text-xs text-indigo-600 hover:underline">
+            <button onClick={() => setMovingNodeId(null)} className="text-xs text-primary hover:underline">
               {t("tree.cancelMove")}
             </button>
           )}

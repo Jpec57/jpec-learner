@@ -13,7 +13,7 @@ function CategoryCard({ category, mine }: { category: Category; mine: boolean })
   return (
     <Link
       to={`/categories/${category.id}`}
-      className="block rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-indigo-300 hover:shadow-md"
+      className="block rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
     >
       <div className="flex items-center justify-between">
         <span className="text-2xl">{category.icon ?? "📚"}</span>
@@ -53,7 +53,7 @@ function CreateCategoryForm() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex h-full min-h-[110px] w-full items-center justify-center rounded-xl border-2 border-dashed border-slate-300 text-slate-400 transition hover:border-indigo-300 hover:text-indigo-500"
+        className="flex h-full min-h-[110px] w-full items-center justify-center rounded-xl border-2 border-dashed border-slate-300 text-slate-400 transition hover:border-primary/50 hover:text-primary-dark"
       >
         {t("categories:picker.newCategory")}
       </button>
@@ -63,7 +63,7 @@ function CreateCategoryForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex h-full min-h-[110px] flex-col justify-between rounded-xl border border-indigo-200 bg-white p-4 shadow-sm"
+      className="flex h-full min-h-[110px] flex-col justify-between rounded-xl border border-primary/30 bg-white p-4 shadow-sm"
     >
       <input
         autoFocus
@@ -77,7 +77,7 @@ function CreateCategoryForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="flex-1 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+          className="flex-1 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
         >
           {t("common:actions.create")}
         </button>
