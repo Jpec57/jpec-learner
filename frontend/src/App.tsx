@@ -6,6 +6,7 @@ import { CategoryDashboardPage } from "@/features/categories/CategoryDashboardPa
 import { CategoryPickerPage } from "@/features/categories/CategoryPickerPage";
 import { CategoryBrowsePage } from "@/features/hierarchy/CategoryBrowsePage";
 import { LessonDetailPage } from "@/features/hierarchy/LessonDetailPage";
+import { ReviewSessionPage } from "@/features/reviews/ReviewSessionPage";
 import { RequireAuth } from "@/routes/RequireAuth";
 
 export function App() {
@@ -19,6 +20,7 @@ export function App() {
           <Route path="/categories/:categoryId" element={<CategoryDashboardPage />} />
           <Route path="/categories/:categoryId/browse" element={<CategoryBrowsePage />} />
           <Route path="/categories/:categoryId/lessons/:nodeId" element={<LessonDetailPage />} />
+          <Route path="/categories/:categoryId/review" element={<ReviewSessionPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

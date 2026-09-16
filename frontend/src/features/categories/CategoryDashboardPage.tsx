@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { deleteCategory, getCategory, updateCategory } from "@/features/categories/api";
+import { getDue } from "@/features/reviews/api";
 
 export function CategoryDashboardPage() {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -11,6 +12,12 @@ export function CategoryDashboardPage() {
   const { data: category } = useQuery({
     queryKey: ["category", categoryId],
     queryFn: () => getCategory(categoryId!),
+    enabled: !!categoryId,
+  });
+
+  const { data: due } = useQuery({
+    queryKey: ["reviewsDue", categoryId],
+    queryFn: () => getDue(categoryId!),
     enabled: !!categoryId,
   });
 
@@ -72,10 +79,22 @@ export function CategoryDashboardPage() {
             <h3 className="font-semibold text-slate-900">Browse</h3>
             <p className="mt-1 text-sm text-slate-500">Themes, sections and lessons</p>
           </Link>
-          <div className="rounded-xl border border-dashed border-slate-200 bg-white p-5 opacity-60">
-            <h3 className="font-semibold text-slate-900">Review</h3>
-            <p className="mt-1 text-sm text-slate-500">Coming in Phase 4 (SRS engine)</p>
-          </div>
+          <Link
+            to={`/categories/${category.id}/review`}
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-indigo-300"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-slate-900">Review</h3>
+              {!!due?.length && (
+                <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs font-semibold text-white">
+                  {due.length}
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-sm text-slate-500">
+              {due?.length ? `${due.length} due now` : "Nothing due right now"}
+            </p>
+          </Link>
           <div className="rounded-xl border border-dashed border-slate-200 bg-white p-5 opacity-60">
             <h3 className="font-semibold text-slate-900">Progression</h3>
             <p className="mt-1 text-sm text-slate-500">Coming in Phase 5</p>

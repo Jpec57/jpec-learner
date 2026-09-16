@@ -17,6 +17,7 @@ from app.schemas.hierarchy import (
     HierarchyNodeOut,
     HierarchyNodeUpdate,
 )
+from app.services.enrollment import ensure_review_state
 from app.services.hierarchy import child_path, is_descendant_or_self, reparent_subtree
 
 router = APIRouter(prefix="/hierarchy", tags=["hierarchy"])
@@ -149,6 +150,8 @@ async def create_node(
 
     if payload.node_kind == "lesson":
         db.add(Lesson(id=node.id, body_markdown=payload.body_markdown))
+        await db.flush()
+        await ensure_review_state(db, user_id=current_user.id, lesson_node_id=node.id)
 
     await db.commit()
     await db.refresh(node, attribute_names=["lesson", "images"])

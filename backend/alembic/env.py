@@ -5,7 +5,7 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import settings
 from app.db.base import Base
-from app.models import card, category, hierarchy, image, user  # noqa: F401  (registers models)
+from app.models import card, category, hierarchy, image, level, review, user  # noqa: F401
 
 config = context.config
 

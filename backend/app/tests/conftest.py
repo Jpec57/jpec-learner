@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.core.config import settings
 from app.db.base import Base, get_db
+from app.db.level_seed_data import LEVEL_NAMES
 from app.main import app
 
 TEST_DB_NAME = "jpeclearner_test"
@@ -34,6 +35,14 @@ async def client():
     async with engine.begin() as conn:
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS ltree"))
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(
+            text("INSERT INTO level_definitions (level, name_en, name_fr, icon_key) "
+                 "VALUES (:level, :name_en, :name_fr, :icon_key)"),
+            [
+                {"level": level, "name_en": name_en, "name_fr": name_fr, "icon_key": icon_key}
+                for level, name_en, name_fr, icon_key in LEVEL_NAMES
+            ],
+        )
 
     async def override_get_db():
         async with session_factory() as session:

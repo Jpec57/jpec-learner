@@ -15,6 +15,7 @@ from app.models.category import Category
 from app.models.hierarchy import HierarchyNode
 from app.models.user import User
 from app.schemas.card import CardCreate, CardOut, CardUpdate
+from app.services.enrollment import ensure_review_state
 
 router = APIRouter(prefix="/cards", tags=["cards"])
 
@@ -93,6 +94,8 @@ async def create_card(
         is_public=payload.is_public,
     )
     db.add(card)
+    await db.flush()
+    await ensure_review_state(db, user_id=current_user.id, card_id=card.id)
     await db.commit()
     await db.refresh(card, attribute_names=["images"])
     return _to_out(card)
