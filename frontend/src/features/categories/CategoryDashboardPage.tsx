@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
+import { useConfirm } from "@/components/ui/useConfirm";
 import { deleteCategory, getCategory, updateCategory } from "@/features/categories/api";
 import { getProgression } from "@/features/progression/api";
 import { StreakIndicator } from "@/features/progression/StreakIndicator";
@@ -11,6 +12,7 @@ export function CategoryDashboardPage() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { confirm, dialog } = useConfirm();
 
   const { data: category } = useQuery({
     queryKey: ["category", categoryId],
@@ -64,8 +66,8 @@ export function CategoryDashboardPage() {
                 : t("categories:dashboard.makePublic")}
             </button>
             <button
-              onClick={() => {
-                if (confirm(t("categories:dashboard.deleteConfirm", { name: category.name }))) {
+              onClick={async () => {
+                if (await confirm(t("common:actions.delete"), t("categories:dashboard.deleteConfirm", { name: category.name }))) {
                   remove.mutate();
                 }
               }}
@@ -121,6 +123,7 @@ export function CategoryDashboardPage() {
           </div>
         )}
       </div>
+      {dialog}
     </div>
   );
 }

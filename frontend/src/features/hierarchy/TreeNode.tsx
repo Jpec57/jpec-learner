@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
+import { useConfirm } from "@/components/ui/useConfirm";
 import { AddChildForm } from "@/features/hierarchy/AddChildForm";
 import {
   createNode,
@@ -32,6 +33,7 @@ export function TreeNode({
   onMoveError: (message: string) => void;
 }) {
   const { t } = useTranslation(["hierarchy", "common"]);
+  const { confirm, dialog } = useConfirm();
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
   const [adding, setAdding] = useState<NodeKind | null>(null);
@@ -189,8 +191,8 @@ export function TreeNode({
                 {t("tree.move")}
               </button>
               <button
-                onClick={() => {
-                  if (confirm(t("tree.deleteConfirm", { title: node.title }))) {
+                onClick={async () => {
+                  if (await confirm(t("common:actions.delete"), t("tree.deleteConfirm", { title: node.title }))) {
                     remove.mutate();
                   }
                 }}
@@ -235,6 +237,7 @@ export function TreeNode({
           )}
         </div>
       )}
+      {dialog}
     </div>
   );
 }

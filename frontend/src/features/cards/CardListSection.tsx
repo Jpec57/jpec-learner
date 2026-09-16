@@ -2,11 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { useConfirm } from "@/components/ui/useConfirm";
 import { createCard, deleteCard, listCards, updateCard, type Card } from "@/features/cards/api";
 import { ImageUploadInput } from "@/features/images/ImageUploadInput";
 
 function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: string; lessonNodeId: string | null }) {
   const { t } = useTranslation(["cards", "common"]);
+  const { confirm, dialog } = useConfirm();
   const queryClient = useQueryClient();
   const queryKey = ["cards", categoryId, lessonNodeId ?? null];
   const [editing, setEditing] = useState(false);
@@ -97,14 +99,15 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
           {card.is_public ? t("makePrivate") : t("makePublic")}
         </button>
         <button
-          onClick={() => {
-            if (confirm(t("deleteConfirm"))) remove.mutate();
+          onClick={async () => {
+            if (await confirm(t("common:actions.delete"), t("deleteConfirm"))) remove.mutate();
           }}
           className="text-xs text-slate-400 hover:text-red-600"
         >
           {t("common:actions.delete")}
         </button>
       </div>
+      {dialog}
     </div>
   );
 }

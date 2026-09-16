@@ -1,7 +1,7 @@
-// Push-notification handler scaffolding (Phase 7). Not registered yet — Phase 8
-// wires up the real service worker (via vite-plugin-pwa) and will fold these
-// handlers into it. Nothing currently sends a push (no scheduler/digest job
-// exists on the backend), so this only documents the intended shape.
+// Push-notification handler scaffolding (Phase 7), folded into the generated
+// PWA service worker via workbox.importScripts (see vite.config.ts). Nothing
+// currently sends a push -- no scheduler/digest job exists on the backend --
+// so this only documents the intended shape and is safe to leave imported.
 
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
