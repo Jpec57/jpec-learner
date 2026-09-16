@@ -17,5 +17,15 @@
     "good": "Bien",
     "easy": "Facile",
     "perfect": "Parfait"
+  },
+  "filter": {
+    "all": "Tout",
+    "cards": "Cartes",
+    "lessons": "Leçons"
+  },
+  "editCard": {
+    "trigger": "Modifier cette carte",
+    "front": "Recto",
+    "back": "Verso"
   }
 }

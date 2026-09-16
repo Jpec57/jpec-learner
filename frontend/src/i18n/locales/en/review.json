@@ -17,5 +17,15 @@
     "good": "Good",
     "easy": "Easy",
     "perfect": "Perfect"
+  },
+  "filter": {
+    "all": "All",
+    "cards": "Flashcards",
+    "lessons": "Lessons"
+  },
+  "editCard": {
+    "trigger": "Edit this card",
+    "front": "Front",
+    "back": "Back"
   }
 }

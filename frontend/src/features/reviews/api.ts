@@ -1,8 +1,11 @@
 import { api } from "@/lib/api";
 
+export type ReviewItemType = "card" | "lesson";
+export const ALL_REVIEW_ITEM_TYPES: ReviewItemType[] = ["card", "lesson"];
+
 export interface DueItem {
   review_state_id: string;
-  item_kind: "card" | "lesson";
+  item_kind: ReviewItemType;
   card_id: string | null;
   lesson_node_id: string | null;
   front_text: string | null;
@@ -29,9 +32,13 @@ export interface ReviewState {
   updated_at: string;
 }
 
-export async function getDue(categoryId: string, limit = 100): Promise<DueItem[]> {
+export async function getDue(
+  categoryId: string,
+  types: ReviewItemType[] = ALL_REVIEW_ITEM_TYPES,
+  limit = 100
+): Promise<DueItem[]> {
   const { data } = await api.get<DueItem[]>("/reviews/due", {
-    params: { category_id: categoryId, limit },
+    params: { category_id: categoryId, types, limit },
   });
   return data;
 }

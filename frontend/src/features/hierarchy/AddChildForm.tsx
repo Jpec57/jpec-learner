@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { NodeKind } from "@/features/hierarchy/api";
+import { getErrorMessage } from "@/lib/errors";
 
 export function AddChildForm({
   kind,
@@ -16,12 +17,16 @@ export function AddChildForm({
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setSubmitting(true);
+    setError(null);
     try {
       await onSubmit({ title, body_markdown: kind === "lesson" ? body : undefined });
+    } catch (err) {
+      setError(getErrorMessage(err, t("common:errors.generic")));
     } finally {
       setSubmitting(false);
     }
@@ -46,6 +51,7 @@ export function AddChildForm({
           className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
         />
       )}
+      {error && <p className="text-xs text-red-600">{error}</p>}
       <div className="flex gap-2">
         <button
           type="submit"

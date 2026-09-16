@@ -14,6 +14,7 @@ import {
   type HierarchyNode,
   type NodeKind,
 } from "@/features/hierarchy/api";
+import { getErrorMessage } from "@/lib/errors";
 
 function invalidateTree(queryClient: ReturnType<typeof useQueryClient>, categoryId: string) {
   return queryClient.invalidateQueries({ queryKey: ["hierarchy", categoryId] });
@@ -39,6 +40,7 @@ export function TreeNode({
   const [adding, setAdding] = useState<NodeKind | null>(null);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(node.title);
+  const [renameError, setRenameError] = useState<string | null>(null);
 
   const { data: children } = useQuery({
     queryKey: ["hierarchy", categoryId, node.id],
@@ -66,8 +68,10 @@ export function TreeNode({
     mutationFn: () => updateNode(node.id, { title: editTitle }),
     onSuccess: () => {
       setEditing(false);
+      setRenameError(null);
       invalidateTree(queryClient, categoryId);
     },
+    onError: (err) => setRenameError(getErrorMessage(err, t("common:errors.generic"))),
   });
 
   const remove = useMutation({
@@ -81,8 +85,8 @@ export function TreeNode({
       setMovingNodeId(null);
       invalidateTree(queryClient, categoryId);
     },
-    onError: () => {
-      onMoveError(t("tree.moveError"));
+    onError: (err) => {
+      onMoveError(getErrorMessage(err, t("tree.moveError")));
       setMovingNodeId(null);
     },
   });
@@ -125,9 +129,16 @@ export function TreeNode({
             >
               {t("common:actions.save")}
             </button>
-            <button onClick={() => setEditing(false)} className="text-xs text-slate-400 hover:underline">
+            <button
+              onClick={() => {
+                setEditing(false);
+                setRenameError(null);
+              }}
+              className="text-xs text-slate-400 hover:underline"
+            >
               {t("common:actions.cancel")}
             </button>
+            {renameError && <span className="text-xs text-red-600">{renameError}</span>}
           </>
         ) : (
           node.node_kind === "lesson" ? (
@@ -181,7 +192,13 @@ export function TreeNode({
                   </button>
                 </>
               )}
-              <button onClick={() => setEditing(true)} className="text-xs text-slate-400 hover:text-primary">
+              <button
+                onClick={() => {
+                  setEditTitle(node.title);
+                  setEditing(true);
+                }}
+                className="text-xs text-slate-400 hover:text-primary"
+              >
                 {t("common:actions.rename")}
               </button>
               <button

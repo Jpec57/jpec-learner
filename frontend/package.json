@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@types/react": "^18.3.11",
+    "@testing-library/react": "^16.0.1",
     "axios-mock-adapter": "^2.1.0",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^8.8.1",

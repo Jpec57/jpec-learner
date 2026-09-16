@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { AddChildForm } from "@/features/hierarchy/AddChildForm";
 import { createNode, listChildren, moveNode, type NodeKind } from "@/features/hierarchy/api";
 import { TreeNode } from "@/features/hierarchy/TreeNode";
+import { getErrorMessage } from "@/lib/errors";
 
 export function HierarchyTreeView({ categoryId }: { categoryId: string }) {
   const { t } = useTranslation("hierarchy");
@@ -33,8 +34,8 @@ export function HierarchyTreeView({ categoryId }: { categoryId: string }) {
       setMovingNodeId(null);
       queryClient.invalidateQueries({ queryKey: ["hierarchy", categoryId] });
     },
-    onError: () => {
-      setError(t("tree.moveError"));
+    onError: (err) => {
+      setError(getErrorMessage(err, t("tree.moveError")));
       setMovingNodeId(null);
     },
   });
