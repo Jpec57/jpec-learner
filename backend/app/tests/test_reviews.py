@@ -126,3 +126,33 @@ async def test_enroll_in_public_card_is_explicit_and_isolated_per_user(client):
         "/api/v1/reviews/enroll", json={"card_id": private_card["id"]}, headers=other_headers
     )
     assert denied_resp.status_code == 404
+
+
+async def test_due_queue_can_be_filtered_by_content_type(client):
+    headers = await _register_and_login(client, "type-filter@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    ).json()["id"]
+    await client.post(
+        "/api/v1/cards",
+        json={"category_id": category_id, "front_text": "q", "back_text": "a"},
+        headers=headers,
+    )
+    await client.post(
+        "/api/v1/hierarchy",
+        json={"category_id": category_id, "node_kind": "lesson", "title": "Limits"},
+        headers=headers,
+    )
+
+    both_resp = await client.get(f"/api/v1/reviews/due?category_id={category_id}", headers=headers)
+    assert {item["item_kind"] for item in both_resp.json()} == {"card", "lesson"}
+
+    cards_only_resp = await client.get(
+        f"/api/v1/reviews/due?category_id={category_id}&types=card", headers=headers
+    )
+    assert {item["item_kind"] for item in cards_only_resp.json()} == {"card"}
+
+    lessons_only_resp = await client.get(
+        f"/api/v1/reviews/due?category_id={category_id}&types=lesson", headers=headers
+    )
+    assert {item["item_kind"] for item in lessons_only_resp.json()} == {"lesson"}

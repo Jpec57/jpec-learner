@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, timezone
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
@@ -41,39 +42,51 @@ async def get_due_count(
     return DueCountOut(total_due=total or 0)
 
 
+ReviewItemType = Literal["card", "lesson"]
+ALL_REVIEW_ITEM_TYPES: tuple[ReviewItemType, ...] = ("card", "lesson")
+
+
 @router.get("/due", response_model=list[DueItemOut])
 async def get_due(
     category_id: uuid.UUID,
+    types: list[ReviewItemType] = Query(default=list(ALL_REVIEW_ITEM_TYPES)),
     limit: int = Query(20, ge=1, le=200),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """`types` selects which content types to include in the review queue --
+    the foundation for future "review decks" filtered by content type. Defaults
+    to every known type; pass e.g. `types=card` to review only flashcards."""
     now = datetime.now(timezone.utc)
 
-    card_query = (
-        select(ReviewState, Card)
-        .join(Card, ReviewState.card_id == Card.id)
-        .options(selectinload(Card.images))
-        .where(
-            ReviewState.user_id == current_user.id,
-            ReviewState.due_at <= now,
-            Card.category_id == category_id,
-            Card.deleted_at.is_(None),
+    card_rows = []
+    if "card" in types:
+        card_query = (
+            select(ReviewState, Card)
+            .join(Card, ReviewState.card_id == Card.id)
+            .options(selectinload(Card.images))
+            .where(
+                ReviewState.user_id == current_user.id,
+                ReviewState.due_at <= now,
+                Card.category_id == category_id,
+                Card.deleted_at.is_(None),
+            )
         )
-    )
-    node_query = (
-        select(ReviewState, HierarchyNode)
-        .join(HierarchyNode, ReviewState.lesson_node_id == HierarchyNode.id)
-        .options(selectinload(HierarchyNode.lesson), selectinload(HierarchyNode.images))
-        .where(
-            ReviewState.user_id == current_user.id,
-            ReviewState.due_at <= now,
-            HierarchyNode.category_id == category_id,
-        )
-    )
+        card_rows = (await db.execute(card_query)).all()
 
-    card_rows = (await db.execute(card_query)).all()
-    node_rows = (await db.execute(node_query)).all()
+    node_rows = []
+    if "lesson" in types:
+        node_query = (
+            select(ReviewState, HierarchyNode)
+            .join(HierarchyNode, ReviewState.lesson_node_id == HierarchyNode.id)
+            .options(selectinload(HierarchyNode.lesson), selectinload(HierarchyNode.images))
+            .where(
+                ReviewState.user_id == current_user.id,
+                ReviewState.due_at <= now,
+                HierarchyNode.category_id == category_id,
+            )
+        )
+        node_rows = (await db.execute(node_query)).all()
 
     items: list[DueItemOut] = []
     for review_state, card in card_rows:

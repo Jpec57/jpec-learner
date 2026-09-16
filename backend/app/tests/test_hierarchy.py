@@ -116,3 +116,78 @@ async def test_hierarchy_tree_move_and_cycle_prevention(client):
     assert delete_resp.status_code == 204
     gone_resp = await client.get(f"/api/v1/hierarchy/{lesson['id']}", headers=headers)
     assert gone_resp.status_code == 404
+
+
+async def test_sibling_titles_must_be_unique(client):
+    headers = await _register_and_login(client, "siblings@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    ).json()["id"]
+
+    first = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={"category_id": category_id, "node_kind": "group", "title": "Analysis"},
+            headers=headers,
+        )
+    ).json()
+
+    # Same title at the same (root) level is rejected...
+    dup_root_resp = await client.post(
+        "/api/v1/hierarchy",
+        json={"category_id": category_id, "node_kind": "group", "title": "Analysis"},
+        headers=headers,
+    )
+    assert dup_root_resp.status_code == 409
+
+    # ...even with incidental leading/trailing whitespace...
+    dup_whitespace_resp = await client.post(
+        "/api/v1/hierarchy",
+        json={"category_id": category_id, "node_kind": "group", "title": "  Analysis  "},
+        headers=headers,
+    )
+    assert dup_whitespace_resp.status_code == 409
+
+    # ...but the same title is fine at a different level (nested under "Analysis").
+    nested_resp = await client.post(
+        "/api/v1/hierarchy",
+        json={
+            "category_id": category_id,
+            "parent_id": first["id"],
+            "node_kind": "group",
+            "title": "Analysis",
+        },
+        headers=headers,
+    )
+    assert nested_resp.status_code == 201
+
+    # Renaming a second sibling to collide is also rejected.
+    second = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={"category_id": category_id, "node_kind": "group", "title": "Algebra"},
+            headers=headers,
+        )
+    ).json()
+    rename_conflict_resp = await client.patch(
+        f"/api/v1/hierarchy/{second['id']}", json={"title": "Analysis"}, headers=headers
+    )
+    assert rename_conflict_resp.status_code == 409
+
+    # And moving a node under a parent that already has that title is rejected too.
+    third = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={
+                "category_id": category_id,
+                "parent_id": second["id"],
+                "node_kind": "group",
+                "title": "Analysis",
+            },
+            headers=headers,
+        )
+    ).json()
+    move_conflict_resp = await client.post(
+        f"/api/v1/hierarchy/{third['id']}/move", json={"new_parent_id": None}, headers=headers
+    )
+    assert move_conflict_resp.status_code == 409

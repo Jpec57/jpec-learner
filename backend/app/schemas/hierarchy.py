@@ -10,6 +10,8 @@ NodeKind = Literal["group", "lesson"]
 
 
 class HierarchyNodeCreate(BaseModel):
+    model_config = {"str_strip_whitespace": True}
+
     category_id: uuid.UUID
     parent_id: uuid.UUID | None = None
     node_kind: NodeKind
@@ -27,6 +29,8 @@ class HierarchyNodeCreate(BaseModel):
 
 
 class HierarchyNodeUpdate(BaseModel):
+    model_config = {"str_strip_whitespace": True}
+
     title: str | None = Field(default=None, min_length=1, max_length=200)
     description: str | None = None
     is_public: bool | None = None

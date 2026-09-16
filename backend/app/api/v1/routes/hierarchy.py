@@ -1,7 +1,9 @@
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -9,7 +11,7 @@ from app.core.deps import get_current_user
 from app.core.permissions import assert_owner, assert_visible
 from app.db.base import get_db
 from app.models.category import Category
-from app.models.hierarchy import HierarchyNode, Lesson
+from app.models.hierarchy import SIBLING_TITLE_UNIQUE_CONSTRAINT, HierarchyNode, Lesson
 from app.models.user import User
 from app.schemas.hierarchy import (
     HierarchyNodeCreate,
@@ -39,6 +41,26 @@ async def _get_node_or_404(db: AsyncSession, node_id: uuid.UUID) -> HierarchyNod
     if node is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Node not found")
     return node
+
+
+@asynccontextmanager
+async def _sibling_title_conflict_guard(db: AsyncSession):
+    """Wraps a block that ends in a flush/commit, translating the sibling-title
+    unique constraint into a 409 with a message the frontend can show directly.
+    A context manager (not just a wrapped commit call) because SQLAlchemy can
+    autoflush pending changes during an unrelated SELECT anywhere inside the
+    block -- the constraint violation doesn't necessarily surface at the final
+    explicit commit."""
+    try:
+        yield
+    except IntegrityError as exc:
+        await db.rollback()
+        if SIBLING_TITLE_UNIQUE_CONSTRAINT in str(exc.orig):
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                "A group or lesson with this title already exists at this level.",
+            ) from exc
+        raise
 
 
 async def _next_order_index(db: AsyncSession, category_id: uuid.UUID, parent_id: uuid.UUID | None) -> int:
@@ -148,12 +170,12 @@ async def create_node(
     node.path = child_path(parent.path if parent else None, node.id)
     db.add(node)
 
-    if payload.node_kind == "lesson":
-        db.add(Lesson(id=node.id, body_markdown=payload.body_markdown))
-        await db.flush()
-        await ensure_review_state(db, user_id=current_user.id, lesson_node_id=node.id)
-
-    await db.commit()
+    async with _sibling_title_conflict_guard(db):
+        if payload.node_kind == "lesson":
+            db.add(Lesson(id=node.id, body_markdown=payload.body_markdown))
+            await db.flush()
+            await ensure_review_state(db, user_id=current_user.id, lesson_node_id=node.id)
+        await db.commit()
     await db.refresh(node, attribute_names=["lesson", "images"])
     return (await _with_has_children(db, [node]))[0]
 
@@ -180,7 +202,8 @@ async def update_node(
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Node is not a lesson")
         node.lesson.body_markdown = payload.body_markdown
 
-    await db.commit()
+    async with _sibling_title_conflict_guard(db):
+        await db.commit()
     await db.refresh(node, attribute_names=["lesson", "images"])
     return (await _with_has_children(db, [node]))[0]
 
@@ -222,15 +245,18 @@ async def move_node(
         if await is_descendant_or_self(db, node.path, new_parent.path):
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Cannot move a node under its own descendant")
 
+    # Resolved before mutating `node` -- once its title/parent change, this SELECT
+    # would trigger an autoflush that raises the conflict outside our try/except.
+    new_order_index = payload.new_order_index
+    if new_order_index is None:
+        new_order_index = await _next_order_index(db, node.category_id, payload.new_parent_id)
+
     await reparent_subtree(
         db, node, new_parent.path if new_parent else None, payload.new_parent_id
     )
+    node.order_index = new_order_index
 
-    if payload.new_order_index is not None:
-        node.order_index = payload.new_order_index
-    else:
-        node.order_index = await _next_order_index(db, node.category_id, payload.new_parent_id)
-
-    await db.commit()
+    async with _sibling_title_conflict_guard(db):
+        await db.commit()
     await db.refresh(node, attribute_names=["lesson", "images"])
     return (await _with_has_children(db, [node]))[0]

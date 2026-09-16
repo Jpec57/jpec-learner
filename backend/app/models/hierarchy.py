@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -9,11 +9,26 @@ from app.db.types import LtreeType
 from app.models.image import Image
 from app.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
 
+# Name used both on the model and in hierarchy route error handling to detect
+# this specific constraint violation (see api/v1/routes/hierarchy.py).
+SIBLING_TITLE_UNIQUE_CONSTRAINT = "uq_hierarchy_nodes_sibling_title"
+
 
 class HierarchyNode(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "hierarchy_nodes"
     __table_args__ = (
         CheckConstraint("node_kind IN ('group', 'lesson')", name="ck_hierarchy_nodes_node_kind"),
+        # Two siblings (same category + parent, including two root nodes, which
+        # share parent_id=NULL) can't have the same title. NULLS NOT DISTINCT
+        # makes Postgres treat NULL parent_id as equal to itself for this
+        # purpose, instead of the default SQL behavior where NULL != NULL.
+        UniqueConstraint(
+            "category_id",
+            "parent_id",
+            "title",
+            name=SIBLING_TITLE_UNIQUE_CONSTRAINT,
+            postgresql_nulls_not_distinct=True,
+        ),
     )
 
     category_id: Mapped[uuid.UUID] = mapped_column(
