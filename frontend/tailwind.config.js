@@ -1,3 +1,5 @@
+import typography from "@tailwindcss/typography";
+
 /** @type {import('tailwindcss').Config} */
 
 // Brand colors are backed by CSS variables (defined in src/index.css :root) so
@@ -27,5 +29,5 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [typography],
 };

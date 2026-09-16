@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -13,15 +14,23 @@ export function HierarchyTreeView({ categoryId }: { categoryId: string }) {
   const [adding, setAdding] = useState<NodeKind | null>(null);
   const [movingNodeId, setMovingNodeId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [browsePath, setBrowsePath] = useState<{ id: string; title: string }[]>([]);
+  const currentParentId = browsePath.length > 0 ? browsePath[browsePath.length - 1].id : null;
 
   const { data: roots } = useQuery({
-    queryKey: ["hierarchy", categoryId, null],
-    queryFn: () => listChildren(categoryId, null),
+    queryKey: ["hierarchy", categoryId, currentParentId],
+    queryFn: () => listChildren(categoryId, currentParentId),
   });
 
   const addRoot = useMutation({
     mutationFn: (input: { title: string; body_markdown?: string }) =>
-      createNode({ category_id: categoryId, node_kind: adding!, title: input.title, body_markdown: input.body_markdown }),
+      createNode({
+        category_id: categoryId,
+        parent_id: currentParentId,
+        node_kind: adding!,
+        title: input.title,
+        body_markdown: input.body_markdown,
+      }),
     onSuccess: () => {
       setAdding(null);
       queryClient.invalidateQueries({ queryKey: ["hierarchy", categoryId] });
@@ -64,6 +73,29 @@ export function HierarchyTreeView({ categoryId }: { categoryId: string }) {
         </div>
       )}
 
+      {browsePath.length > 0 && (
+        <div className="mb-2 flex flex-wrap items-center gap-1 text-sm text-slate-500">
+          <button onClick={() => setBrowsePath([])} className="hover:text-primary hover:underline">
+            {t("browse.root")}
+          </button>
+          {browsePath.map((crumb, index) => (
+            <span key={crumb.id} className="flex items-center gap-1">
+              <ChevronRight size={14} className="text-slate-300" />
+              {index === browsePath.length - 1 ? (
+                <span className="font-medium text-slate-700">{crumb.title}</span>
+              ) : (
+                <button
+                  onClick={() => setBrowsePath(browsePath.slice(0, index + 1))}
+                  className="hover:text-primary hover:underline"
+                >
+                  {crumb.title}
+                </button>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
+
       <div className="rounded-xl border border-slate-200 bg-white p-3">
         {roots?.map((node) => (
           <TreeNode
@@ -73,6 +105,7 @@ export function HierarchyTreeView({ categoryId }: { categoryId: string }) {
             movingNodeId={movingNodeId}
             setMovingNodeId={setMovingNodeId}
             onMoveError={setError}
+            onBrowseFrom={(id, title) => setBrowsePath([...browsePath, { id, title }])}
           />
         ))}
         {roots?.length === 0 && !adding && (

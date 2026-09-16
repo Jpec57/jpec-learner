@@ -65,6 +65,53 @@ async def test_card_crud_and_visibility(client):
     assert gone_resp.status_code == 404
 
 
+async def test_cards_can_be_searched_and_paginated(client):
+    owner_headers = await _register_and_login(client, "card-search-owner@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=owner_headers)
+    ).json()["id"]
+
+    for i in range(5):
+        await client.post(
+            "/api/v1/cards",
+            json={"category_id": category_id, "front_text": f"Question {i}", "back_text": f"Answer {i}"},
+            headers=owner_headers,
+        )
+    await client.post(
+        "/api/v1/cards",
+        json={"category_id": category_id, "front_text": "Unrelated", "back_text": "Nope"},
+        headers=owner_headers,
+    )
+
+    page_resp = await client.get(
+        "/api/v1/cards",
+        params={"category_id": category_id, "limit": 2, "offset": 0},
+        headers=owner_headers,
+    )
+    assert page_resp.status_code == 200
+    page = page_resp.json()
+    assert page["total"] == 6
+    assert len(page["items"]) == 2
+
+    next_page_resp = await client.get(
+        "/api/v1/cards",
+        params={"category_id": category_id, "limit": 2, "offset": 2},
+        headers=owner_headers,
+    )
+    next_page = next_page_resp.json()
+    assert len(next_page["items"]) == 2
+    assert {c["id"] for c in page["items"]}.isdisjoint({c["id"] for c in next_page["items"]})
+
+    search_resp = await client.get(
+        "/api/v1/cards",
+        params={"category_id": category_id, "search": "Question"},
+        headers=owner_headers,
+    )
+    search_result = search_resp.json()
+    assert search_result["total"] == 5
+    assert all("Question" in c["front_text"] for c in search_result["items"])
+
+
 async def test_image_upload_exif_and_ownership(client):
     owner_headers = await _register_and_login(client, "img-owner@example.com")
     other_headers = await _register_and_login(client, "img-other@example.com")

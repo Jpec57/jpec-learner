@@ -5,11 +5,13 @@
     "standaloneCards": "Cartes indépendantes (non liées à une leçon)",
     "noThemes": "Aucun thème pour l'instant — ajoutez votre premier groupe ou leçon ci-dessous.",
     "addGroup": "+ Ajouter un groupe",
-    "addLesson": "+ Ajouter une leçon"
+    "addLesson": "+ Ajouter une leçon",
+    "root": "Niveau racine"
   },
   "tree": {
     "expand": "Déplier",
     "collapse": "Replier",
+    "browseFrom": "Parcourir depuis ici",
     "addGroupChild": "+ groupe",
     "addLessonChild": "+ leçon",
     "move": "Déplacer",
@@ -32,6 +34,9 @@
     "content": "Contenu",
     "contentPlaceholder": "Rédigez le contenu de cette leçon en Markdown…",
     "saveContent": "Enregistrer le contenu",
+    "editTab": "Modifier",
+    "previewTab": "Aperçu",
+    "previewEmpty": "Rien à prévisualiser pour l'instant.",
     "images": "Images",
     "cardsInLesson": "Cartes de cette leçon"
   }

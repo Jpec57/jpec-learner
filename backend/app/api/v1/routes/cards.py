@@ -3,9 +3,10 @@ from datetime import datetime, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql import Select
 
 from app.core.deps import get_current_user
 from app.core.permissions import assert_owner, assert_visible
@@ -14,7 +15,7 @@ from app.models.card import Card
 from app.models.category import Category
 from app.models.hierarchy import HierarchyNode
 from app.models.user import User
-from app.schemas.card import CardCreate, CardOut, CardUpdate
+from app.schemas.card import CardCreate, CardOut, CardPageOut, CardUpdate
 from app.services.enrollment import ensure_review_state
 
 router = APIRouter(prefix="/cards", tags=["cards"])
@@ -38,36 +39,52 @@ def _to_out(card: Card) -> CardOut:
     return CardOut.model_validate(card)
 
 
-@router.get("", response_model=list[CardOut])
+def _filtered_cards_query(
+    category_id: uuid.UUID,
+    lesson_node_id: uuid.UUID | None,
+    owner: Literal["me", "public"],
+    search: str | None,
+    current_user_id: uuid.UUID,
+) -> Select:
+    query = select(Card).where(Card.category_id == category_id, Card.deleted_at.is_(None))
+    if lesson_node_id is not None:
+        query = query.where(Card.lesson_node_id == lesson_node_id)
+    if owner == "me":
+        query = query.where(Card.owner_id == current_user_id)
+    else:
+        query = query.where(Card.is_public.is_(True), Card.owner_id != current_user_id)
+    if search:
+        pattern = f"%{search}%"
+        query = query.where(or_(Card.front_text.ilike(pattern), Card.back_text.ilike(pattern)))
+    return query
+
+
+@router.get("", response_model=CardPageOut)
 async def list_cards(
     category_id: uuid.UUID,
     lesson_node_id: uuid.UUID | None = Query(None),
     owner: Literal["me", "public"] = Query("me"),
     search: str | None = Query(None),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     category = await _get_category_or_404(db, category_id)
     assert_visible(category, current_user.id)
 
-    query = (
-        select(Card)
-        .options(selectinload(Card.images))
-        .where(Card.category_id == category_id, Card.deleted_at.is_(None))
-    )
-    if lesson_node_id is not None:
-        query = query.where(Card.lesson_node_id == lesson_node_id)
-    if owner == "me":
-        query = query.where(Card.owner_id == current_user.id)
-    else:
-        query = query.where(Card.is_public.is_(True), Card.owner_id != current_user.id)
-    if search:
-        pattern = f"%{search}%"
-        query = query.where(or_(Card.front_text.ilike(pattern), Card.back_text.ilike(pattern)))
+    base_query = _filtered_cards_query(category_id, lesson_node_id, owner, search, current_user.id)
 
-    query = query.order_by(Card.created_at)
-    cards = (await db.scalars(query)).all()
-    return [_to_out(c) for c in cards]
+    total = await db.scalar(select(func.count()).select_from(base_query.subquery()))
+
+    page_query = (
+        base_query.options(selectinload(Card.images))
+        .order_by(Card.created_at)
+        .limit(limit)
+        .offset(offset)
+    )
+    cards = (await db.scalars(page_query)).all()
+    return CardPageOut(items=[_to_out(c) for c in cards], total=total or 0)
 
 
 @router.post("", response_model=CardOut, status_code=status.HTTP_201_CREATED)

@@ -14,18 +14,27 @@ export interface Card {
   updated_at: string;
 }
 
+export interface CardPage {
+  items: Card[];
+  total: number;
+}
+
 export async function listCards(input: {
   categoryId: string;
   lessonNodeId?: string | null;
   owner?: "me" | "public";
   search?: string;
-}): Promise<Card[]> {
-  const { data } = await api.get<Card[]>("/cards", {
+  limit?: number;
+  offset?: number;
+}): Promise<CardPage> {
+  const { data } = await api.get<CardPage>("/cards", {
     params: {
       category_id: input.categoryId,
       lesson_node_id: input.lessonNodeId ?? undefined,
       owner: input.owner ?? "me",
       search: input.search || undefined,
+      limit: input.limit,
+      offset: input.offset,
     },
   });
   return data;

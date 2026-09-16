@@ -58,3 +58,8 @@ class CardOut(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class CardPageOut(BaseModel):
+    items: list[CardOut]
+    total: int

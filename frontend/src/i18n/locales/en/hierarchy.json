@@ -5,11 +5,13 @@
     "standaloneCards": "Standalone cards (not tied to a lesson)",
     "noThemes": "No themes yet — add your first group or lesson below.",
     "addGroup": "+ Add group",
-    "addLesson": "+ Add lesson"
+    "addLesson": "+ Add lesson",
+    "root": "Top level"
   },
   "tree": {
     "expand": "Expand",
     "collapse": "Collapse",
+    "browseFrom": "Browse from here",
     "addGroupChild": "+ group",
     "addLessonChild": "+ lesson",
     "move": "Move",
@@ -32,6 +34,9 @@
     "content": "Content",
     "contentPlaceholder": "Write this lesson's content in Markdown…",
     "saveContent": "Save content",
+    "editTab": "Edit",
+    "previewTab": "Preview",
+    "previewEmpty": "Nothing to preview yet.",
     "images": "Images",
     "cardsInLesson": "Cards in this lesson"
   }

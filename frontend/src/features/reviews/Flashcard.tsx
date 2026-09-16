@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 
+import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import type { DueItem } from "@/features/reviews/api";
 
 export function Flashcard({ item, revealed }: { item: DueItem; revealed: boolean }) {
@@ -29,7 +30,11 @@ export function Flashcard({ item, revealed }: { item: DueItem; revealed: boolean
         >
           <hr className="my-5 border-slate-100" />
           <p className="text-xs uppercase tracking-wide text-slate-400">{t("answer")}</p>
-          <p className="mt-3 whitespace-pre-wrap text-lg text-slate-700">{answer}</p>
+          {item.item_kind === "lesson" ? (
+            <MarkdownContent markdown={answer ?? ""} className="mt-3" />
+          ) : (
+            <p className="mt-3 whitespace-pre-wrap text-lg text-slate-700">{answer}</p>
+          )}
         </motion.div>
       )}
     </motion.div>

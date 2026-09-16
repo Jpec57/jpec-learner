@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Compass } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -26,12 +27,14 @@ export function TreeNode({
   movingNodeId,
   setMovingNodeId,
   onMoveError,
+  onBrowseFrom,
 }: {
   node: HierarchyNode;
   categoryId: string;
   movingNodeId: string | null;
   setMovingNodeId: (id: string | null) => void;
   onMoveError: (message: string) => void;
+  onBrowseFrom: (id: string, title: string) => void;
 }) {
   const { t } = useTranslation(["hierarchy", "common"]);
   const { confirm, dialog } = useConfirm();
@@ -153,6 +156,17 @@ export function TreeNode({
           )
         )}
 
+        {!editing && node.node_kind === "group" && (
+          <button
+            onClick={() => onBrowseFrom(node.id, node.title)}
+            className="text-slate-300 hover:text-primary"
+            aria-label={t("tree.browseFrom")}
+            title={t("tree.browseFrom")}
+          >
+            <Compass size={14} />
+          </button>
+        )}
+
         {node.is_public && (
           <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
             {t("common:status.public")}
@@ -247,6 +261,7 @@ export function TreeNode({
               movingNodeId={movingNodeId}
               setMovingNodeId={setMovingNodeId}
               onMoveError={onMoveError}
+              onBrowseFrom={onBrowseFrom}
             />
           ))}
           {children?.length === 0 && !adding && (

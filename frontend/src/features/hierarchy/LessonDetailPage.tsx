@@ -3,16 +3,20 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
+import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { CardListSection } from "@/features/cards/CardListSection";
 import { getCategory } from "@/features/categories/api";
 import { getNode, updateNode } from "@/features/hierarchy/api";
 import { ImageUploadInput } from "@/features/images/ImageUploadInput";
+
+type EditorView = "edit" | "preview";
 
 export function LessonDetailPage() {
   const { t } = useTranslation(["hierarchy", "common"]);
   const { categoryId, nodeId } = useParams<{ categoryId: string; nodeId: string }>();
   const queryClient = useQueryClient();
   const [body, setBody] = useState<string | null>(null);
+  const [view, setView] = useState<EditorView>("edit");
 
   const { data: category } = useQuery({
     queryKey: ["category", categoryId],
@@ -44,13 +48,49 @@ export function LessonDetailPage() {
 
       <section className="mt-6">
         <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">{t("lesson.content")}</h2>
-        <textarea
-          value={currentBody}
-          onChange={(e) => setBody(e.target.value)}
-          rows={8}
-          placeholder={t("lesson.contentPlaceholder")}
-          className="mt-2 w-full rounded-lg border border-slate-200 bg-white p-3 font-mono text-sm"
-        />
+
+        <div className="mt-2 flex gap-1 lg:hidden">
+          <button
+            onClick={() => setView("edit")}
+            className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+              view === "edit" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
+            }`}
+          >
+            {t("lesson.editTab")}
+          </button>
+          <button
+            onClick={() => setView("preview")}
+            className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+              view === "preview" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
+            }`}
+          >
+            {t("lesson.previewTab")}
+          </button>
+        </div>
+
+        <div className="mt-2 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <textarea
+            value={currentBody}
+            onChange={(e) => setBody(e.target.value)}
+            rows={12}
+            placeholder={t("lesson.contentPlaceholder")}
+            className={`w-full rounded-lg border border-slate-200 bg-white p-3 font-mono text-sm ${
+              view === "preview" ? "hidden lg:block" : ""
+            }`}
+          />
+          <div
+            className={`rounded-lg border border-slate-200 bg-white p-3 ${
+              view === "edit" ? "hidden lg:block" : ""
+            }`}
+          >
+            {currentBody.trim() ? (
+              <MarkdownContent markdown={currentBody} />
+            ) : (
+              <p className="text-sm text-slate-400">{t("lesson.previewEmpty")}</p>
+            )}
+          </div>
+        </div>
+
         <button
           onClick={() => saveBody.mutate(currentBody)}
           disabled={saveBody.isPending}

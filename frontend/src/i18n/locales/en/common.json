@@ -18,6 +18,10 @@
     "public": "Public",
     "loading": "Loading…"
   },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next"
+  },
   "errors": {
     "generic": "Something went wrong. Please try again."
   },

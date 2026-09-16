@@ -18,6 +18,10 @@
     "public": "Public",
     "loading": "Chargement…"
   },
+  "pagination": {
+    "previous": "Précédent",
+    "next": "Suivant"
+  },
   "errors": {
     "generic": "Une erreur est survenue. Veuillez réessayer."
   },

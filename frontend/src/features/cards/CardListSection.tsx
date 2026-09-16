@@ -1,16 +1,21 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FormEvent, useState } from "react";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useConfirm } from "@/components/ui/useConfirm";
 import { createCard, deleteCard, listCards, updateCard, type Card } from "@/features/cards/api";
 import { ImageUploadInput } from "@/features/images/ImageUploadInput";
 
+const PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 300;
+
 function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: string; lessonNodeId: string | null }) {
   const { t } = useTranslation(["cards", "common"]);
   const { confirm, dialog } = useConfirm();
   const queryClient = useQueryClient();
   const queryKey = ["cards", categoryId, lessonNodeId ?? null];
+  const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [front, setFront] = useState(card.front_text);
   const [back, setBack] = useState(card.back_text);
@@ -33,8 +38,33 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
 
+  if (!expanded) {
+    return (
+      <button
+        onClick={() => setExpanded(true)}
+        className="flex w-full items-center justify-between rounded-lg border border-slate-200 p-3 text-left hover:border-primary/50"
+      >
+        <span className="truncate text-sm text-slate-800">{card.front_text}</span>
+        <span className="ml-3 flex shrink-0 items-center gap-2">
+          {card.is_public && (
+            <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+              {t("common:status.public")}
+            </span>
+          )}
+          <ChevronDown size={16} className="text-slate-400" />
+        </span>
+      </button>
+    );
+  }
+
   return (
     <div className="rounded-lg border border-slate-200 p-3">
+      <button
+        onClick={() => setExpanded(false)}
+        className="mb-2 flex items-center gap-1 text-xs text-slate-400 hover:text-primary"
+      >
+        <ChevronUp size={14} /> {t("collapse")}
+      </button>
       {editing ? (
         <div className="space-y-2">
           <textarea
@@ -182,14 +212,31 @@ export function CardListSection({
   categoryId: string;
   lessonNodeId: string | null;
 }) {
-  const { t } = useTranslation("cards");
+  const { t } = useTranslation(["cards", "common"]);
   const queryClient = useQueryClient();
-  const queryKey = ["cards", categoryId, lessonNodeId ?? null];
+  const baseQueryKey = ["cards", categoryId, lessonNodeId ?? null];
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
 
-  const { data: cards } = useQuery({
-    queryKey,
-    queryFn: () => listCards({ categoryId, lessonNodeId, owner: "me" }),
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(0);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(handle);
+  }, [searchInput]);
+
+  const { data } = useQuery({
+    queryKey: [...baseQueryKey, search, page],
+    queryFn: () =>
+      listCards({ categoryId, lessonNodeId, owner: "me", search, limit: PAGE_SIZE, offset: page * PAGE_SIZE }),
+    placeholderData: keepPreviousData,
   });
+  const cards = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const pageStart = total === 0 ? 0 : page * PAGE_SIZE + 1;
+  const pageEnd = Math.min(total, page * PAGE_SIZE + PAGE_SIZE);
 
   const addCard = useMutation({
     mutationFn: (input: { front: string; back: string }) =>
@@ -199,15 +246,45 @@ export function CardListSection({
         front_text: input.front,
         back_text: input.back,
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: baseQueryKey }),
   });
 
   return (
     <div className="space-y-3">
-      {cards?.map((card) => (
+      <input
+        value={searchInput}
+        onChange={(e) => setSearchInput(e.target.value)}
+        placeholder={t("searchPlaceholder")}
+        className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+      />
+
+      {cards.map((card) => (
         <CardRow key={card.id} card={card} categoryId={categoryId} lessonNodeId={lessonNodeId} />
       ))}
-      {cards?.length === 0 && <p className="text-sm text-slate-400">{t("noCards")}</p>}
+      {total === 0 && <p className="text-sm text-slate-400">{search ? t("noSearchResults") : t("noCards")}</p>}
+
+      {total > PAGE_SIZE && (
+        <div className="flex items-center justify-between text-xs text-slate-500">
+          <span>{t("pageRange", { start: pageStart, end: pageEnd, total })}</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="rounded-md px-2 py-1 hover:bg-slate-100 disabled:opacity-40"
+            >
+              {t("common:pagination.previous")}
+            </button>
+            <button
+              onClick={() => setPage((p) => (pageEnd < total ? p + 1 : p))}
+              disabled={pageEnd >= total}
+              className="rounded-md px-2 py-1 hover:bg-slate-100 disabled:opacity-40"
+            >
+              {t("common:pagination.next")}
+            </button>
+          </div>
+        </div>
+      )}
+
       <AddCardForm onSubmit={(input) => addCard.mutateAsync(input)} />
     </div>
   );
