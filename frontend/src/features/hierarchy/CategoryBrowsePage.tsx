@@ -18,26 +18,24 @@ export function CategoryBrowsePage() {
   if (!categoryId || !category) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10">
-      <div className="mx-auto max-w-3xl">
-        <Link to={`/categories/${categoryId}`} className="text-sm text-slate-500 hover:text-slate-800">
-          ← {category.name}
-        </Link>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-900">
-          {t("browse.title", { name: category.name })}
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">{t("browse.subtitle")}</p>
-        <div className="mt-6">
-          <HierarchyTreeView categoryId={categoryId} />
-        </div>
+    <div className="mx-auto max-w-3xl">
+      <Link to={`/categories/${categoryId}`} className="text-sm text-slate-500 hover:text-slate-800">
+        ← {category.name}
+      </Link>
+      <h1 className="mt-2 text-2xl font-semibold text-slate-900">
+        {t("browse.title", { name: category.name })}
+      </h1>
+      <p className="mt-1 text-sm text-slate-500">{t("browse.subtitle")}</p>
+      <div className="mt-6">
+        <HierarchyTreeView categoryId={categoryId} />
+      </div>
 
-        <div className="mt-10">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">
-            {t("browse.standaloneCards")}
-          </h2>
-          <div className="mt-2">
-            <CardListSection categoryId={categoryId} lessonNodeId={null} />
-          </div>
+      <div className="mt-10">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">
+          {t("browse.standaloneCards")}
+        </h2>
+        <div className="mt-2">
+          <CardListSection categoryId={categoryId} lessonNodeId={null} />
         </div>
       </div>
     </div>

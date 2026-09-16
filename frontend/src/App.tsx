@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
+import { AppLayout } from "@/components/layout/AppLayout";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { SettingsPage } from "@/features/auth/SettingsPage";
@@ -18,13 +19,15 @@ export function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route element={<RequireAuth />}>
-          <Route path="/" element={<CategoryPickerPage />} />
-          <Route path="/categories/:categoryId" element={<CategoryDashboardPage />} />
-          <Route path="/categories/:categoryId/browse" element={<CategoryBrowsePage />} />
-          <Route path="/categories/:categoryId/lessons/:nodeId" element={<LessonDetailPage />} />
-          <Route path="/categories/:categoryId/review" element={<ReviewSessionPage />} />
-          <Route path="/categories/:categoryId/progression" element={<ProgressionPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<CategoryPickerPage />} />
+            <Route path="/categories/:categoryId" element={<CategoryDashboardPage />} />
+            <Route path="/categories/:categoryId/browse" element={<CategoryBrowsePage />} />
+            <Route path="/categories/:categoryId/lessons/:nodeId" element={<LessonDetailPage />} />
+            <Route path="/categories/:categoryId/review" element={<ReviewSessionPage />} />
+            <Route path="/categories/:categoryId/progression" element={<ProgressionPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

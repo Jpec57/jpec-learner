@@ -5,8 +5,9 @@ import { Link } from "react-router-dom";
 
 import { me } from "@/features/auth/api";
 import { createCategory, listCategories, type Category } from "@/features/categories/api";
+import { DEFAULT_CATEGORY_ICON } from "@/features/categories/iconOptions";
+import { IconPicker } from "@/features/categories/IconPicker";
 import { DueBanner } from "@/features/notifications/DueBanner";
-import { useAuthStore } from "@/lib/authStore";
 
 function CategoryCard({ category, mine }: { category: Category; mine: boolean }) {
   const { t } = useTranslation(["categories", "common"]);
@@ -16,7 +17,9 @@ function CategoryCard({ category, mine }: { category: Category; mine: boolean })
       className="block rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
     >
       <div className="flex items-center justify-between">
-        <span className="text-2xl">{category.icon ?? "📚"}</span>
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-light text-2xl">
+          {category.icon ?? "📚"}
+        </span>
         {category.is_public && (
           <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
             {t("common:status.public")}
@@ -34,14 +37,16 @@ function CreateCategoryForm() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [icon, setIcon] = useState(DEFAULT_CATEGORY_ICON);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setSubmitting(true);
     try {
-      await createCategory({ name });
+      await createCategory({ name, icon });
       setName("");
+      setIcon(DEFAULT_CATEGORY_ICON);
       setOpen(false);
       await queryClient.invalidateQueries({ queryKey: ["categories", "mine"] });
     } finally {
@@ -63,17 +68,20 @@ function CreateCategoryForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex h-full min-h-[110px] flex-col justify-between rounded-xl border border-primary/30 bg-white p-4 shadow-sm"
+      className="flex h-full flex-col justify-between gap-3 rounded-xl border border-primary/30 bg-white p-4 shadow-sm"
     >
-      <input
-        autoFocus
-        required
-        placeholder={t("categories:picker.namePlaceholder")}
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-      />
-      <div className="mt-3 flex gap-2">
+      <div className="space-y-3">
+        <input
+          autoFocus
+          required
+          placeholder={t("categories:picker.namePlaceholder")}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+        />
+        <IconPicker value={icon} onChange={setIcon} />
+      </div>
+      <div className="flex gap-2">
         <button
           type="submit"
           disabled={submitting}
@@ -95,7 +103,6 @@ function CreateCategoryForm() {
 
 export function CategoryPickerPage() {
   const { t } = useTranslation(["categories", "common"]);
-  const clearTokens = useAuthStore((state) => state.clearTokens);
   const { data: user } = useQuery({ queryKey: ["me"], queryFn: me });
   const { data: mine } = useQuery({ queryKey: ["categories", "mine"], queryFn: () => listCategories("mine") });
   const { data: publicCategories } = useQuery({
@@ -104,51 +111,39 @@ export function CategoryPickerPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10">
-      <div className="mx-auto max-w-3xl">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-slate-900">
-            {user
-              ? t("categories:picker.welcomeBack", { name: user.display_name ?? user.email })
-              : t("common:appName")}
-          </h1>
-          <div className="flex items-center gap-4">
-            <Link to="/settings" className="text-sm text-slate-500 hover:text-slate-800">
-              {t("common:nav.settings")}
-            </Link>
-            <button onClick={() => clearTokens()} className="text-sm text-slate-500 hover:text-slate-800">
-              {t("common:nav.logOut")}
-            </button>
-          </div>
-        </div>
+    <div className="mx-auto max-w-3xl">
+      <h1 className="text-2xl font-semibold text-slate-900">
+        {user
+          ? t("categories:picker.welcomeBack", { name: user.display_name ?? user.email })
+          : t("common:appName")}
+      </h1>
 
-        <div className="mt-6">
-          <DueBanner />
-        </div>
-
-        <h2 className="mt-2 text-sm font-medium uppercase tracking-wide text-slate-400">
-          {t("categories:picker.yourCategories")}
-        </h2>
-        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-          {mine?.map((category) => (
-            <CategoryCard key={category.id} category={category} mine />
-          ))}
-          <CreateCategoryForm />
-        </div>
-
-        {publicCategories && publicCategories.length > 0 && (
-          <>
-            <h2 className="mt-10 text-sm font-medium uppercase tracking-wide text-slate-400">
-              {t("categories:picker.publicFromOthers")}
-            </h2>
-            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-              {publicCategories.map((category) => (
-                <CategoryCard key={category.id} category={category} mine={false} />
-              ))}
-            </div>
-          </>
-        )}
+      <div className="mt-6">
+        <DueBanner />
       </div>
+
+      <h2 className="mt-2 text-sm font-medium uppercase tracking-wide text-slate-400">
+        {t("categories:picker.yourCategories")}
+      </h2>
+      <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        {mine?.map((category) => (
+          <CategoryCard key={category.id} category={category} mine />
+        ))}
+        <CreateCategoryForm />
+      </div>
+
+      {publicCategories && publicCategories.length > 0 && (
+        <>
+          <h2 className="mt-10 text-sm font-medium uppercase tracking-wide text-slate-400">
+            {t("categories:picker.publicFromOthers")}
+          </h2>
+          <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {publicCategories.map((category) => (
+              <CategoryCard key={category.id} category={category} mine={false} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

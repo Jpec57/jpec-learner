@@ -15,3 +15,15 @@
   --color-accent: 249 115 22; /* orange-500 */
   --color-accent-dark: 194 65 12; /* orange-700 */
 }
+
+/* Single app-wide background wash (see DESIGN.md "Layout shell") -- pages
+   never set their own background, they just render content inside it. */
+body {
+  min-height: 100vh;
+  background: linear-gradient(
+    180deg,
+    rgb(var(--color-primary-light) / 0.6) 0%,
+    rgb(var(--color-background, 248 250 252) / 1) 420px
+  );
+  background-color: #f8fafc;
+}
