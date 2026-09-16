@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { deleteCategory, getCategory, updateCategory } from "@/features/categories/api";
-import { getDue } from "@/features/reviews/api";
+import { getProgression } from "@/features/progression/api";
+import { StreakIndicator } from "@/features/progression/StreakIndicator";
 
 export function CategoryDashboardPage() {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -15,9 +16,9 @@ export function CategoryDashboardPage() {
     enabled: !!categoryId,
   });
 
-  const { data: due } = useQuery({
-    queryKey: ["reviewsDue", categoryId],
-    queryFn: () => getDue(categoryId!),
+  const { data: progression } = useQuery({
+    queryKey: ["progression", categoryId],
+    queryFn: () => getProgression(categoryId!),
     enabled: !!categoryId,
   });
 
@@ -85,21 +86,34 @@ export function CategoryDashboardPage() {
           >
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-slate-900">Review</h3>
-              {!!due?.length && (
+              {!!progression?.total_due && (
                 <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs font-semibold text-white">
-                  {due.length}
+                  {progression.total_due}
                 </span>
               )}
             </div>
             <p className="mt-1 text-sm text-slate-500">
-              {due?.length ? `${due.length} due now` : "Nothing due right now"}
+              {progression?.total_due ? `${progression.total_due} due now` : "Nothing due right now"}
             </p>
           </Link>
-          <div className="rounded-xl border border-dashed border-slate-200 bg-white p-5 opacity-60">
+          <Link
+            to={`/categories/${category.id}/progression`}
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-indigo-300"
+          >
             <h3 className="font-semibold text-slate-900">Progression</h3>
-            <p className="mt-1 text-sm text-slate-500">Coming in Phase 5</p>
-          </div>
+            <p className="mt-1 text-sm text-slate-500">
+              {progression
+                ? `${progression.total_items} item${progression.total_items === 1 ? "" : "s"} tracked`
+                : "…"}
+            </p>
+          </Link>
         </div>
+
+        {progression && (
+          <div className="mt-4">
+            <StreakIndicator days={progression.streak_days} />
+          </div>
+        )}
       </div>
     </div>
   );
