@@ -20,11 +20,21 @@ function CategoryCard({ category, mine }: { category: Category; mine: boolean })
         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-light text-2xl">
           {category.icon ?? "📚"}
         </span>
-        {category.is_public && (
-          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-            {t("common:status.public")}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {category.due_count > 0 && (
+            <span
+              className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white"
+              title={t("categories:picker.dueCount", { count: category.due_count })}
+            >
+              {category.due_count}
+            </span>
+          )}
+          {category.is_public && (
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+              {t("common:status.public")}
+            </span>
+          )}
+        </div>
       </div>
       <h3 className="mt-3 text-lg font-semibold text-slate-900">{category.name}</h3>
       {!mine && <p className="mt-1 text-xs text-slate-400">{t("categories:picker.sharedCategory")}</p>}

@@ -7,6 +7,7 @@ export interface Category {
   icon: string | null;
   owner_id: string;
   is_public: boolean;
+  due_count: number;
   created_at: string;
   updated_at: string;
 }

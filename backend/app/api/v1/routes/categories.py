@@ -13,6 +13,7 @@ from app.db.base import get_db
 from app.models.category import Category
 from app.models.user import User
 from app.schemas.category import CategoryCreate, CategoryOut, CategoryUpdate
+from app.services.progression import bulk_due_counts
 
 router = APIRouter(prefix="/categories", tags=["categories"])
 
@@ -45,8 +46,13 @@ async def list_categories(
     else:
         query = query.where(Category.is_public.is_(True), Category.owner_id != current_user.id)
     query = query.order_by(Category.created_at)
-    result = await db.scalars(query)
-    return result.all()
+    categories = (await db.scalars(query)).all()
+
+    due_counts = await bulk_due_counts(db, user_id=current_user.id, category_ids=[c.id for c in categories])
+    return [
+        CategoryOut.model_validate(c).model_copy(update={"due_count": due_counts.get(c.id, 0)})
+        for c in categories
+    ]
 
 
 @router.post("", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
@@ -79,7 +85,8 @@ async def get_category(
 ):
     category = await _get_category_or_404(db, category_id)
     assert_visible(category, current_user.id)
-    return category
+    due_counts = await bulk_due_counts(db, user_id=current_user.id, category_ids=[category.id])
+    return CategoryOut.model_validate(category).model_copy(update={"due_count": due_counts.get(category.id, 0)})
 
 
 @router.patch("/{category_id}", response_model=CategoryOut)

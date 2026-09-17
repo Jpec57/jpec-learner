@@ -24,6 +24,7 @@ class CategoryOut(BaseModel):
     icon: str | None
     owner_id: uuid.UUID
     is_public: bool
+    due_count: int = 0
     created_at: datetime
     updated_at: datetime
 

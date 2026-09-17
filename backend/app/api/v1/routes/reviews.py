@@ -19,6 +19,8 @@ from app.schemas.review import (
     DueCountOut,
     DueItemOut,
     EnrollRequest,
+    ReviewInsightItemOut,
+    ReviewInsightsOut,
     ReviewStateOut,
     SubmitReviewRequest,
     UpcomingBucketOut,
@@ -178,6 +180,101 @@ async def get_upcoming(
         buckets.append(UpcomingBucketOut(hour=cursor, count=counts.get(cursor, 0)))
         cursor += timedelta(hours=1)
     return buckets
+
+
+async def _insight_items(
+    db: AsyncSession,
+    *,
+    category_id: uuid.UUID,
+    user_id: uuid.UUID,
+    order_col,
+    limit: int,
+    only_reviewed: bool,
+) -> list[ReviewInsightItemOut]:
+    card_query = (
+        select(ReviewState, Card)
+        .join(Card, ReviewState.card_id == Card.id)
+        .where(
+            ReviewState.user_id == user_id,
+            Card.category_id == category_id,
+            Card.deleted_at.is_(None),
+        )
+    )
+    node_query = (
+        select(ReviewState, HierarchyNode)
+        .join(HierarchyNode, ReviewState.lesson_node_id == HierarchyNode.id)
+        .where(ReviewState.user_id == user_id, HierarchyNode.category_id == category_id)
+    )
+    if only_reviewed:
+        card_query = card_query.where(ReviewState.repetitions > 0)
+        node_query = node_query.where(ReviewState.repetitions > 0)
+    card_query = card_query.order_by(order_col).limit(limit)
+    node_query = node_query.order_by(order_col).limit(limit)
+
+    items: list[ReviewInsightItemOut] = []
+    for review_state, card in (await db.execute(card_query)).all():
+        items.append(
+            ReviewInsightItemOut(
+                review_state_id=review_state.id,
+                item_kind="card",
+                card_id=card.id,
+                lesson_node_id=None,
+                front_text=card.front_text,
+                ease_factor=float(review_state.ease_factor),
+                repetitions=review_state.repetitions,
+                last_reviewed_at=review_state.last_reviewed_at,
+                current_level=review_state.current_level,
+            )
+        )
+    for review_state, node in (await db.execute(node_query)).all():
+        items.append(
+            ReviewInsightItemOut(
+                review_state_id=review_state.id,
+                item_kind="lesson",
+                card_id=None,
+                lesson_node_id=node.id,
+                title=node.title,
+                ease_factor=float(review_state.ease_factor),
+                repetitions=review_state.repetitions,
+                last_reviewed_at=review_state.last_reviewed_at,
+                current_level=review_state.current_level,
+            )
+        )
+    return items
+
+
+@router.get("/insights", response_model=ReviewInsightsOut)
+async def get_insights(
+    category_id: uuid.UUID,
+    limit: int = Query(5, ge=1, le=20),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Small "needs attention" lists for the category dashboard -- a nudge,
+    not a substitute for the due queue. "struggling" is the lowest ease
+    factor among items reviewed at least once; "stale" is the oldest
+    last_reviewed_at (never-reviewed items sort first)."""
+    struggling = await _insight_items(
+        db,
+        category_id=category_id,
+        user_id=current_user.id,
+        order_col=ReviewState.ease_factor.asc(),
+        limit=limit,
+        only_reviewed=True,
+    )
+    struggling.sort(key=lambda item: item.ease_factor)
+
+    stale = await _insight_items(
+        db,
+        category_id=category_id,
+        user_id=current_user.id,
+        order_col=ReviewState.last_reviewed_at.asc().nulls_first(),
+        limit=limit,
+        only_reviewed=False,
+    )
+    stale.sort(key=lambda item: (item.last_reviewed_at is not None, item.last_reviewed_at))
+
+    return ReviewInsightsOut(struggling=struggling[:limit], stale=stale[:limit])
 
 
 @router.post("/enroll", response_model=ReviewStateOut, status_code=status.HTTP_201_CREATED)

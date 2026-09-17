@@ -5,7 +5,9 @@
     "newCategory": "+ Nouvelle catégorie",
     "namePlaceholder": "Nom de la catégorie (ex. Maths)",
     "sharedCategory": "Catégorie partagée",
-    "publicFromOthers": "Catégories publiques d'autres utilisateurs"
+    "publicFromOthers": "Catégories publiques d'autres utilisateurs",
+    "dueCount_one": "{{count}} à réviser maintenant",
+    "dueCount_other": "{{count}} à réviser maintenant"
   },
   "dashboard": {
     "makePublic": "Rendre public",
@@ -25,5 +27,14 @@
       "itemsTracked_one": "{{count}} élément suivi",
       "itemsTracked_other": "{{count}} éléments suivis"
     }
+  },
+  "insights": {
+    "title": "À surveiller",
+    "reviewNow": "Réviser maintenant →",
+    "struggling": "En difficulté",
+    "stale": "Pas revu depuis longtemps",
+    "neverReviewed": "Jamais révisé",
+    "lastReviewed": "Dernière révision {{date}}",
+    "levelAttempts": "Niveau {{level}} · {{count}} tentatives"
   }
 }

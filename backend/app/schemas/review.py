@@ -59,6 +59,24 @@ class DueCountOut(BaseModel):
     total_due: int
 
 
+class ReviewInsightItemOut(BaseModel):
+    review_state_id: uuid.UUID
+    item_kind: Literal["card", "lesson"]
+    card_id: uuid.UUID | None
+    lesson_node_id: uuid.UUID | None
+    front_text: str | None = None
+    title: str | None = None
+    ease_factor: float
+    repetitions: int
+    last_reviewed_at: datetime | None
+    current_level: int
+
+
+class ReviewInsightsOut(BaseModel):
+    struggling: list[ReviewInsightItemOut]
+    stale: list[ReviewInsightItemOut]
+
+
 class UpcomingBucketOut(BaseModel):
     hour: datetime
     count: int

@@ -19,7 +19,7 @@ export function UpcomingBarChart({ categoryId }: { categoryId: string }) {
   const max = Math.max(...buckets.map((bucket) => bucket.count), 1);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <p className="text-xs uppercase tracking-wide text-slate-400">{t("upcoming.title")}</p>
       <div className="mt-3 flex items-end gap-0.5" style={{ height: CHART_HEIGHT_PX }}>
         {buckets.map((bucket, index) => {

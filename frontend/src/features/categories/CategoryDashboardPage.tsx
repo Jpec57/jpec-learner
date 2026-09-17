@@ -8,6 +8,7 @@ import { deleteCategory, getCategory, updateCategory, type Category } from "@/fe
 import { IconPicker } from "@/features/categories/IconPicker";
 import { getProgression } from "@/features/progression/api";
 import { StreakIndicator } from "@/features/progression/StreakIndicator";
+import { ReviewInsights } from "@/features/reviews/ReviewInsights";
 import { UpcomingBarChart } from "@/features/reviews/UpcomingBarChart";
 import { getErrorMessage } from "@/lib/errors";
 
@@ -186,6 +187,10 @@ export function CategoryDashboardPage() {
           <StreakIndicator days={progression.streak_days} />
         </div>
       )}
+
+      <div className="mt-6">
+        <ReviewInsights categoryId={category.id} />
+      </div>
 
       <div className="mt-6">
         <UpcomingBarChart categoryId={category.id} />

@@ -5,7 +5,9 @@
     "newCategory": "+ New category",
     "namePlaceholder": "Category name (e.g. Maths)",
     "sharedCategory": "Shared category",
-    "publicFromOthers": "Public categories from other users"
+    "publicFromOthers": "Public categories from other users",
+    "dueCount_one": "{{count}} due now",
+    "dueCount_other": "{{count}} due now"
   },
   "dashboard": {
     "makePublic": "Make public",
@@ -25,5 +27,14 @@
       "itemsTracked_one": "{{count}} item tracked",
       "itemsTracked_other": "{{count}} items tracked"
     }
+  },
+  "insights": {
+    "title": "Needs attention",
+    "reviewNow": "Review now →",
+    "struggling": "Struggling",
+    "stale": "Not reviewed in a while",
+    "neverReviewed": "Never reviewed",
+    "lastReviewed": "Last reviewed {{date}}",
+    "levelAttempts": "Level {{level}} · {{count}} attempts"
   }
 }

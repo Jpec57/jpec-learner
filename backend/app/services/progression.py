@@ -39,6 +39,19 @@ _CATEGORY_TOTALS_SQL = text(
     """
 )
 
+_BULK_DUE_COUNTS_SQL = text(
+    """
+    SELECT COALESCE(c.category_id, hn.category_id) AS category_id, COUNT(*) AS due_count
+    FROM review_states rs
+    LEFT JOIN cards c ON c.id = rs.card_id
+    LEFT JOIN hierarchy_nodes hn ON hn.id = rs.lesson_node_id
+    WHERE rs.user_id = :user_id
+      AND rs.due_at <= now()
+      AND COALESCE(c.category_id, hn.category_id) = ANY(:category_ids)
+    GROUP BY COALESCE(c.category_id, hn.category_id)
+    """
+)
+
 _LEVEL_DISTRIBUTION_SQL = text(
     """
     SELECT rs.current_level AS level, COUNT(*) AS count
@@ -112,3 +125,14 @@ async def compute_streak(db: AsyncSession, *, user_id: uuid.UUID) -> int:
         else:
             break
     return streak
+
+
+async def bulk_due_counts(
+    db: AsyncSession, *, user_id: uuid.UUID, category_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, int]:
+    """Due-now count per category in one query, for the category picker's
+    per-deck badge -- avoids an N+1 round trip per category."""
+    if not category_ids:
+        return {}
+    rows = await db.execute(_BULK_DUE_COUNTS_SQL, {"user_id": user_id, "category_ids": category_ids})
+    return {row.category_id: row.due_count for row in rows.all()}

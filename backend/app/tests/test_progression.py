@@ -156,3 +156,34 @@ async def test_progression_visibility_denied_for_private_category(client):
         f"/api/v1/progression/categories/{category_id}", headers=other_headers
     )
     assert denied_resp.status_code == 404
+
+
+async def test_categories_list_includes_per_category_due_count(client):
+    headers = await _register_and_login(client, "due-badge@example.com")
+    maths_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    ).json()["id"]
+    japanese_id = (
+        await client.post("/api/v1/categories", json={"name": "Japanese"}, headers=headers)
+    ).json()["id"]
+
+    for i in range(2):
+        await client.post(
+            "/api/v1/cards",
+            json={"category_id": maths_id, "front_text": f"q{i}", "back_text": f"a{i}"},
+            headers=headers,
+        )
+    await client.post(
+        "/api/v1/cards",
+        json={"category_id": japanese_id, "front_text": "q", "back_text": "a"},
+        headers=headers,
+    )
+
+    list_resp = await client.get("/api/v1/categories", headers=headers)
+    assert list_resp.status_code == 200
+    by_id = {c["id"]: c["due_count"] for c in list_resp.json()}
+    assert by_id[maths_id] == 2
+    assert by_id[japanese_id] == 1
+
+    detail_resp = await client.get(f"/api/v1/categories/{maths_id}", headers=headers)
+    assert detail_resp.json()["due_count"] == 2

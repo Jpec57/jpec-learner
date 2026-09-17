@@ -180,3 +180,48 @@ async def test_due_queue_can_be_filtered_by_content_type(client):
         f"/api/v1/reviews/due?category_id={category_id}&types=lesson", headers=headers
     )
     assert {item["item_kind"] for item in lessons_only_resp.json()} == {"lesson"}
+
+
+async def test_insights_surface_struggling_and_stale_items(client):
+    headers = await _register_and_login(client, "insights@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    ).json()["id"]
+
+    struggling_card = (
+        await client.post(
+            "/api/v1/cards",
+            json={"category_id": category_id, "front_text": "hard one", "back_text": "a"},
+            headers=headers,
+        )
+    ).json()
+    untouched_card = (
+        await client.post(
+            "/api/v1/cards",
+            json={"category_id": category_id, "front_text": "never reviewed", "back_text": "b"},
+            headers=headers,
+        )
+    ).json()
+
+    state = (
+        await client.get(f"/api/v1/reviews/state?card_id={struggling_card['id']}", headers=headers)
+    ).json()
+    # Good once (repetitions -> 1) then Hard (soft fail: keeps repetitions,
+    # lowers ease) -- a card can only be "struggling" (low ease) after having
+    # been reviewed at least once, per the SM-2 soft-fail branch.
+    await client.post(f"/api/v1/reviews/{state['id']}/submit", json={"rating": 3}, headers=headers)
+    await client.post(f"/api/v1/reviews/{state['id']}/submit", json={"rating": 2}, headers=headers)
+
+    resp = await client.get(f"/api/v1/reviews/insights?category_id={category_id}", headers=headers)
+    assert resp.status_code == 200
+    body = resp.json()
+
+    assert len(body["struggling"]) == 1
+    assert body["struggling"][0]["card_id"] == struggling_card["id"]
+    assert body["struggling"][0]["ease_factor"] < 2.5
+
+    # The never-reviewed card is the most stale (last_reviewed_at is null,
+    # sorts first); the touched card is also present but reviewed more recently.
+    stale_ids = [item["card_id"] for item in body["stale"]]
+    assert stale_ids[0] == untouched_card["id"]
+    assert body["stale"][0]["last_reviewed_at"] is None

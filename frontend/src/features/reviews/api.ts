@@ -29,6 +29,24 @@ export interface UpcomingBucket {
   count: number;
 }
 
+export interface ReviewInsightItem {
+  review_state_id: string;
+  item_kind: ReviewItemType;
+  card_id: string | null;
+  lesson_node_id: string | null;
+  front_text: string | null;
+  title: string | null;
+  ease_factor: number;
+  repetitions: number;
+  last_reviewed_at: string | null;
+  current_level: number;
+}
+
+export interface ReviewInsights {
+  struggling: ReviewInsightItem[];
+  stale: ReviewInsightItem[];
+}
+
 export interface ReviewState {
   id: string;
   user_id: string;
@@ -59,6 +77,13 @@ export async function getDue(
 export async function getUpcoming(categoryId: string, hours = 24): Promise<UpcomingBucket[]> {
   const { data } = await api.get<UpcomingBucket[]>("/reviews/upcoming", {
     params: { category_id: categoryId, hours },
+  });
+  return data;
+}
+
+export async function getInsights(categoryId: string, limit = 5): Promise<ReviewInsights> {
+  const { data } = await api.get<ReviewInsights>("/reviews/insights", {
+    params: { category_id: categoryId, limit },
   });
   return data;
 }

@@ -9,10 +9,7 @@ import { createCard, deleteCard, listCards, updateCard, type AnswerMode, type Ca
 import { listFlat } from "@/features/hierarchy/api";
 import { ImageUploadInput } from "@/features/images/ImageUploadInput";
 import { getReviewState } from "@/features/reviews/api";
-
-function formatDateTime(iso: string, locale: string): string {
-  return new Date(iso).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
-}
+import { formatDateTime } from "@/lib/formatDate";
 
 const PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 300;
