@@ -24,10 +24,15 @@
     "lessonTitlePlaceholder": "Lesson title (e.g. Limits)",
     "lessonContentPlaceholder": "Lesson content (Markdown, optional)",
     "addGroupSubmit": "Add group",
-    "addLessonSubmit": "Add lesson"
+    "addLessonSubmit": "Add lesson",
+    "groupsCount_one": "{{count}} group",
+    "groupsCount_other": "{{count}} groups",
+    "lessonsCount_one": "{{count}} lesson",
+    "lessonsCount_other": "{{count}} lessons",
+    "cardsCount_one": "{{count}} card",
+    "cardsCount_other": "{{count}} cards"
   },
   "lesson": {
-    "backToBrowse": "Browse {{name}}",
     "content": "Content",
     "contentPlaceholder": "Write this lesson's content in Markdown…",
     "saveContent": "Save content",

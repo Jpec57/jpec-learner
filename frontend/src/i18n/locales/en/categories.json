@@ -36,5 +36,7 @@
     "neverReviewed": "Never reviewed",
     "lastReviewed": "Last reviewed {{date}}",
     "levelAttempts": "Level {{level}} · {{count}} attempts"
-  }
+  },
+  "themeColor": "Deck theme color",
+  "clearTheme": "Use default theme"
 }

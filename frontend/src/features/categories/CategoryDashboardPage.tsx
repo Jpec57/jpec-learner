@@ -6,6 +6,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useConfirm } from "@/components/ui/useConfirm";
 import { deleteCategory, getCategory, updateCategory, type Category } from "@/features/categories/api";
 import { IconPicker } from "@/features/categories/IconPicker";
+import { ThemeColorPicker } from "@/features/categories/ThemeColorPicker";
 import { getProgression } from "@/features/progression/api";
 import { StreakIndicator } from "@/features/progression/StreakIndicator";
 import { ReviewInsights } from "@/features/reviews/ReviewInsights";
@@ -17,10 +18,11 @@ function EditCategoryForm({ category, onDone }: { category: Category; onDone: ()
   const queryClient = useQueryClient();
   const [name, setName] = useState(category.name);
   const [icon, setIcon] = useState(category.icon ?? "📚");
+  const [themeColor, setThemeColor] = useState(category.theme_color);
   const [error, setError] = useState<string | null>(null);
 
   const save = useMutation({
-    mutationFn: () => updateCategory(category.id, { name, icon }),
+    mutationFn: () => updateCategory(category.id, { name, icon, theme_color: themeColor }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["category", category.id] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
@@ -45,6 +47,7 @@ function EditCategoryForm({ category, onDone }: { category: Category; onDone: ()
         className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
       />
       <IconPicker value={icon} onChange={setIcon} />
+      <ThemeColorPicker value={themeColor} onChange={setThemeColor} />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2">
         <button

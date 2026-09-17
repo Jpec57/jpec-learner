@@ -7,6 +7,7 @@ export interface Category {
   icon: string | null;
   owner_id: string;
   is_public: boolean;
+  theme_color: string | null;
   due_count: number;
   created_at: string;
   updated_at: string;
@@ -26,6 +27,7 @@ export async function createCategory(input: {
   name: string;
   icon?: string;
   is_public?: boolean;
+  theme_color?: string | null;
 }): Promise<Category> {
   const { data } = await api.post<Category>("/categories", input);
   return data;
@@ -33,7 +35,7 @@ export async function createCategory(input: {
 
 export async function updateCategory(
   id: string,
-  input: { name?: string; icon?: string; is_public?: boolean }
+  input: { name?: string; icon?: string; is_public?: boolean; theme_color?: string | null }
 ): Promise<Category> {
   const { data } = await api.patch<Category>(`/categories/${id}`, input);
   return data;

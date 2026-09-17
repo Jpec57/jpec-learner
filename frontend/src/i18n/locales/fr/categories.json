@@ -36,5 +36,7 @@
     "neverReviewed": "Jamais révisé",
     "lastReviewed": "Dernière révision {{date}}",
     "levelAttempts": "Niveau {{level}} · {{count}} tentatives"
-  }
+  },
+  "themeColor": "Couleur du thème du deck",
+  "clearTheme": "Utiliser le thème par défaut"
 }

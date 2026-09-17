@@ -94,6 +94,14 @@ export function TreeNode({
   const isBeingMoved = movingNodeId === node.id;
   const isMoveTarget = movingNodeId !== null && !isBeingMoved && node.node_kind === "group";
 
+  const countsLabel = [
+    node.child_counts.groups > 0 && t("tree.groupsCount", { count: node.child_counts.groups }),
+    node.child_counts.lessons > 0 && t("tree.lessonsCount", { count: node.child_counts.lessons }),
+    node.child_counts.cards > 0 && t("tree.cardsCount", { count: node.child_counts.cards }),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <div className="border-l border-slate-100 pl-3">
       <div
@@ -148,6 +156,8 @@ export function TreeNode({
             {node.title}
           </Link>
         )}
+
+        {countsLabel && <span className="text-xs text-slate-400">{countsLabel}</span>}
 
         {node.is_public && (
           <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">

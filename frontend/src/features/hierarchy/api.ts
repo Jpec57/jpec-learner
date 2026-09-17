@@ -3,6 +3,17 @@ import type { ImageOut } from "@/features/images/api";
 
 export type NodeKind = "group" | "lesson";
 
+export interface Ancestor {
+  id: string;
+  title: string;
+}
+
+export interface ChildCounts {
+  groups: number;
+  lessons: number;
+  cards: number;
+}
+
 export interface HierarchyNode {
   id: string;
   category_id: string;
@@ -14,6 +25,8 @@ export interface HierarchyNode {
   owner_id: string;
   is_public: boolean;
   has_children: boolean;
+  child_counts: ChildCounts;
+  ancestors: Ancestor[];
   body_markdown: string | null;
   images: ImageOut[];
   created_at: string;

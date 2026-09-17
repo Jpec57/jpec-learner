@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import { CardListSection } from "@/features/cards/CardListSection";
 import { getCategory } from "@/features/categories/api";
 import { getNode } from "@/features/hierarchy/api";
 import { HierarchyTreeView } from "@/features/hierarchy/HierarchyTreeView";
+import { NodeBreadcrumb } from "@/features/hierarchy/NodeBreadcrumb";
 
 export function GroupDetailPage() {
   const { t } = useTranslation("hierarchy");
@@ -27,9 +28,12 @@ export function GroupDetailPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link to={`/categories/${categoryId}/browse`} className="text-sm text-slate-500 hover:text-slate-800">
-        ← {t("lesson.backToBrowse", { name: category.name })}
-      </Link>
+      <NodeBreadcrumb
+        categoryId={categoryId}
+        categoryName={category.name}
+        ancestors={node.ancestors}
+        currentTitle={node.title}
+      />
       <h1 className="mt-2 text-2xl font-semibold text-slate-900">{node.title}</h1>
 
       <section className="mt-6">

@@ -24,10 +24,15 @@
     "lessonTitlePlaceholder": "Titre de la leçon (ex. Limites)",
     "lessonContentPlaceholder": "Contenu de la leçon (Markdown, optionnel)",
     "addGroupSubmit": "Ajouter le groupe",
-    "addLessonSubmit": "Ajouter la leçon"
+    "addLessonSubmit": "Ajouter la leçon",
+    "groupsCount_one": "{{count}} groupe",
+    "groupsCount_other": "{{count}} groupes",
+    "lessonsCount_one": "{{count}} leçon",
+    "lessonsCount_other": "{{count}} leçons",
+    "cardsCount_one": "{{count}} carte",
+    "cardsCount_other": "{{count}} cartes"
   },
   "lesson": {
-    "backToBrowse": "Explorer {{name}}",
     "content": "Contenu",
     "contentPlaceholder": "Rédigez le contenu de cette leçon en Markdown…",
     "saveContent": "Enregistrer le contenu",

@@ -7,6 +7,7 @@ import { me } from "@/features/auth/api";
 import { createCategory, listCategories, type Category } from "@/features/categories/api";
 import { DEFAULT_CATEGORY_ICON } from "@/features/categories/iconOptions";
 import { IconPicker } from "@/features/categories/IconPicker";
+import { ThemeColorPicker } from "@/features/categories/ThemeColorPicker";
 import { DueBanner } from "@/features/notifications/DueBanner";
 
 function CategoryCard({ category, mine }: { category: Category; mine: boolean }) {
@@ -48,15 +49,17 @@ function CreateCategoryForm() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [icon, setIcon] = useState(DEFAULT_CATEGORY_ICON);
+  const [themeColor, setThemeColor] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setSubmitting(true);
     try {
-      await createCategory({ name, icon });
+      await createCategory({ name, icon, theme_color: themeColor });
       setName("");
       setIcon(DEFAULT_CATEGORY_ICON);
+      setThemeColor(null);
       setOpen(false);
       await queryClient.invalidateQueries({ queryKey: ["categories", "mine"] });
     } finally {
@@ -90,6 +93,7 @@ function CreateCategoryForm() {
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
         />
         <IconPicker value={icon} onChange={setIcon} />
+        <ThemeColorPicker value={themeColor} onChange={setThemeColor} />
       </div>
       <div className="flex gap-2">
         <button
