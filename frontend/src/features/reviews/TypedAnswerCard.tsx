@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { FuriganaText } from "@/components/ui/FuriganaText";
+import { answerLanguageDisplay } from "@/features/cards/answerLanguages";
 import { acceptedAnswersFor, classifyTypedAnswer } from "@/features/reviews/answerGrading";
 import type { DueItem } from "@/features/reviews/api";
 import { RatingButtons } from "@/features/reviews/RatingButtons";
@@ -27,8 +28,10 @@ export function TypedAnswerCard({
   const [phase, setPhase] = useState<Phase>("answering");
   const [closestGuess, setClosestGuess] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
+  const [showHint, setShowHint] = useState(false);
 
   const rawAcceptedAnswers = acceptedAnswersFor(item.back_text ?? "", item.accepted_answers);
+  const language = item.answer_language ? answerLanguageDisplay(item.answer_language) : null;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -53,7 +56,14 @@ export function TypedAnswerCard({
 
   return (
     <div className="min-h-[220px] rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-      <p className="text-xs uppercase tracking-wide text-slate-400">{t("card")}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs uppercase tracking-wide text-slate-400">{t("card")}</p>
+        {language && (
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+            {language.flag} {t("typed.expectedIn", { label: language.label })}
+          </span>
+        )}
+      </div>
       <FuriganaText text={item.front_text ?? ""} className="mt-3 block text-2xl text-slate-900" />
 
       {phase === "answering" && (
@@ -71,6 +81,22 @@ export function TypedAnswerCard({
           >
             {t("typed.submit")}
           </button>
+
+          {item.hint && (
+            <div className="mt-3">
+              {showHint ? (
+                <p className="text-sm text-slate-500">💡 {item.hint}</p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowHint(true)}
+                  className="text-xs text-slate-400 hover:text-primary"
+                >
+                  {t("typed.showHint")}
+                </button>
+              )}
+            </div>
+          )}
         </form>
       )}
 

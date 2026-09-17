@@ -13,6 +13,8 @@ export interface Card {
   is_public: boolean;
   answer_mode: AnswerMode;
   accepted_answers: string[];
+  answer_language: string | null;
+  hint: string | null;
   images: ImageOut[];
   created_at: string;
   updated_at: string;
@@ -52,7 +54,10 @@ export async function createCard(input: {
   is_public?: boolean;
   answer_mode?: AnswerMode;
   accepted_answers?: string[];
+  answer_language?: string | null;
+  hint?: string | null;
   create_reverse?: boolean;
+  reverse_answer_language?: string | null;
 }): Promise<Card> {
   const { data } = await api.post<Card>("/cards", input);
   return data;
@@ -66,6 +71,8 @@ export async function updateCard(
     is_public?: boolean;
     answer_mode?: AnswerMode;
     accepted_answers?: string[];
+    answer_language?: string | null;
+    hint?: string | null;
   }
 ): Promise<Card> {
   const { data } = await api.patch<Card>(`/cards/${id}`, input);

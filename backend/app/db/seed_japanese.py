@@ -30,16 +30,16 @@ async def _access_token_for(email: str) -> str:
             raise SystemExit(f"No user with email {email!r} -- register that account first.")
         return create_access_token(str(user.id))
 
-# (front with inline furigana, primary romaji answer, extra accepted answers)
-VOCAB: list[tuple[str, str, list[str]]] = [
-    ("勉強[べんきょう]", "benkyou", ["benkyō"]),
-    ("先生[せんせい]", "sensei", ["sensē"]),
-    ("学校[がっこう]", "gakkou", ["gakkō"]),
-    ("日本語[にほんご]", "nihongo", []),
-    ("水[みず]", "mizu", []),
-    ("食[た]べる", "taberu", []),
-    ("飲[の]む", "nomu", []),
-    ("友達[ともだち]", "tomodachi", []),
+# (front with inline furigana, primary romaji answer, extra accepted answers, hint)
+VOCAB: list[tuple[str, str, list[str], str | None]] = [
+    ("勉強[べんきょう]", "benkyou", ["benkyō"], "Sounds like 'ben' + 'kyo'"),
+    ("先生[せんせい]", "sensei", ["sensē"], None),
+    ("学校[がっこう]", "gakkou", ["gakkō"], None),
+    ("日本語[にほんご]", "nihongo", [], "日本 (Japan) + 語 (language)"),
+    ("水[みず]", "mizu", [], None),
+    ("食[た]べる", "taberu", [], None),
+    ("飲[の]む", "nomu", [], None),
+    ("友達[ともだち]", "tomodachi", [], None),
 ]
 
 
@@ -62,7 +62,7 @@ async def seed(email: str) -> None:
     async with AsyncClient(transport=transport, base_url="http://seed") as client:
         category_id = await _get_or_create_category(client, headers)
 
-        for front, back, extra_answers in VOCAB:
+        for front, back, extra_answers, hint in VOCAB:
             resp = await client.post(
                 "/api/v1/cards",
                 json={
@@ -71,7 +71,10 @@ async def seed(email: str) -> None:
                     "back_text": back,
                     "answer_mode": "typed",
                     "accepted_answers": extra_answers,
+                    "answer_language": "ja-romaji",
+                    "hint": hint,
                     "create_reverse": True,
+                    "reverse_answer_language": "ja-kanji",
                 },
                 headers=headers,
             )

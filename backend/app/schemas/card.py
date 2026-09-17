@@ -15,10 +15,15 @@ class CardCreate(BaseModel):
     is_public: bool = False
     answer_mode: AnswerMode = "reveal"
     accepted_answers: list[str] = []
+    answer_language: str | None = None
+    hint: str | None = None
     # Create-only, not persisted on this row: also creates a second card with
     # front/back swapped (e.g. "勉強" -> "benkyou" also creates "benkyou" -> "勉強"),
-    # each independently reviewable with its own SRS state.
+    # each independently reviewable with its own SRS state. reverse_answer_language
+    # lets that second card declare a different expected answer script (e.g. the
+    # forward card expects "ja-romaji", the reverse one expects "ja-kanji").
     create_reverse: bool = False
+    reverse_answer_language: str | None = None
 
 
 class CardUpdate(BaseModel):
@@ -28,6 +33,8 @@ class CardUpdate(BaseModel):
     lesson_node_id: uuid.UUID | None = None
     answer_mode: AnswerMode | None = None
     accepted_answers: list[str] | None = None
+    answer_language: str | None = None
+    hint: str | None = None
 
 
 class ImageOut(BaseModel):
@@ -65,6 +72,8 @@ class CardOut(BaseModel):
     is_public: bool
     answer_mode: AnswerMode
     accepted_answers: list[str]
+    answer_language: str | None
+    hint: str | None
     images: list[ImageOut] = []
     created_at: datetime
     updated_at: datetime

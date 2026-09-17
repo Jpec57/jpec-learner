@@ -126,7 +126,10 @@ async def test_typed_card_with_reverse_and_accepted_answers(client):
             "back_text": "benkyou",
             "answer_mode": "typed",
             "accepted_answers": ["benkyō"],
+            "answer_language": "ja-romaji",
+            "hint": "Sounds like 'ben+kyo'",
             "create_reverse": True,
+            "reverse_answer_language": "ja-kanji",
         },
         headers=owner_headers,
     )
@@ -135,6 +138,8 @@ async def test_typed_card_with_reverse_and_accepted_answers(client):
     assert forward["front_text"] == "勉強"
     assert forward["answer_mode"] == "typed"
     assert forward["accepted_answers"] == ["benkyō"]
+    assert forward["answer_language"] == "ja-romaji"
+    assert forward["hint"] == "Sounds like 'ben+kyo'"
 
     page_resp = await client.get(
         "/api/v1/cards", params={"category_id": category_id}, headers=owner_headers
@@ -146,6 +151,10 @@ async def test_typed_card_with_reverse_and_accepted_answers(client):
     assert reverse["back_text"] == "勉強"
     assert reverse["answer_mode"] == "typed"
     assert reverse["accepted_answers"] == []
+    # The reverse direction gets its own expected-answer language, and shares
+    # the same hint (a mnemonic for the vocab item, not direction-specific).
+    assert reverse["answer_language"] == "ja-kanji"
+    assert reverse["hint"] == "Sounds like 'ben+kyo'"
 
     # A learner's own valid-but-unlisted answer (e.g. a kana reading) can be
     # appended after the fact via PATCH.
@@ -156,6 +165,13 @@ async def test_typed_card_with_reverse_and_accepted_answers(client):
     )
     assert patch_resp.status_code == 200
     assert patch_resp.json()["accepted_answers"] == ["benkyō", "べんきょう"]
+
+    # answer_language can be explicitly cleared back to null via PATCH.
+    clear_resp = await client.patch(
+        f"/api/v1/cards/{forward['id']}", json={"answer_language": None}, headers=owner_headers
+    )
+    assert clear_resp.status_code == 200
+    assert clear_resp.json()["answer_language"] is None
 
 
 async def test_image_upload_exif_and_ownership(client):

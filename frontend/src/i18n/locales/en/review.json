@@ -1,7 +1,13 @@
 {
   "title": "Review",
-  "reviewedThisSession_one": "{{count}} reviewed this session",
-  "reviewedThisSession_other": "{{count}} reviewed this session",
+  "sessionStats": {
+    "correct_one": "✓ {{count}} correct",
+    "correct_other": "✓ {{count}} correct",
+    "incorrect_one": "✗ {{count}} incorrect",
+    "incorrect_other": "✗ {{count}} incorrect",
+    "remaining_one": "{{count}} left",
+    "remaining_other": "{{count}} left"
+  },
   "due_one": "{{count}} due",
   "due_other": "{{count}} due",
   "allCaughtUp": "All caught up! 🎉",
@@ -39,7 +45,9 @@
     "correctAnswers": "Accepted answers",
     "addAsAccepted": "Add my answer as accepted",
     "added": "Added — it'll be accepted next time.",
-    "selfRatePrompt": "Was your answer actually right (e.g. a valid variant)? Rate yourself:"
+    "selfRatePrompt": "Was your answer actually right (e.g. a valid variant)? Rate yourself:",
+    "expectedIn": "Answer in {{label}}",
+    "showHint": "💡 Show hint"
   },
   "upcoming": {
     "title": "Upcoming reviews",

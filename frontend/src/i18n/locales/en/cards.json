@@ -23,5 +23,8 @@
   },
   "acceptedAnswersPlaceholder": "Other accepted answers, comma or newline separated (optional)",
   "alsoAccepts": "Also accepts: {{answers}}",
-  "createReverse": "Also create the reverse card (back → front)"
+  "createReverse": "Also create the reverse card (back → front)",
+  "answerLanguagePlaceholder": "Expected answer language (optional)",
+  "reverseAnswerLanguagePlaceholder": "Reverse card's expected answer language (optional)",
+  "hintPlaceholder": "Hint shown on request during review (optional)"
 }

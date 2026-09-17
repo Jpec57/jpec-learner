@@ -35,6 +35,12 @@ class Card(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     accepted_answers: Mapped[list[str]] = mapped_column(
         ARRAY(Text), nullable=False, default=list, server_default="{}"
     )
+    # Free-form code (e.g. "en", "ja-romaji", "ja-hiragana", "ja-kanji") telling
+    # the learner which script/language the answer is expected in -- shown as a
+    # flag+label badge on the frontend. Null means "not applicable / unspecified"
+    # (e.g. non-language content like Maths).
+    answer_language: Mapped[str | None] = mapped_column(Text, nullable=True)
+    hint: Mapped[str | None] = mapped_column(Text, nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     images: Mapped[list["Image"]] = relationship(cascade="all, delete-orphan")

@@ -49,6 +49,8 @@ class DueItemOut(BaseModel):
     body_markdown: str | None = None
     answer_mode: Literal["reveal", "typed"] = "reveal"
     accepted_answers: list[str] = []
+    answer_language: str | None = None
+    hint: str | None = None
     due_at: datetime
     current_level: int
 

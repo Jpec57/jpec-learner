@@ -88,7 +88,13 @@ async def list_cards(
 
 
 def _build_card(
-    payload: CardCreate, *, front_text: str, back_text: str, accepted_answers: list[str], owner_id: uuid.UUID
+    payload: CardCreate,
+    *,
+    front_text: str,
+    back_text: str,
+    accepted_answers: list[str],
+    answer_language: str | None,
+    owner_id: uuid.UUID,
 ) -> Card:
     return Card(
         category_id=payload.category_id,
@@ -99,6 +105,8 @@ def _build_card(
         is_public=payload.is_public,
         answer_mode=payload.answer_mode,
         accepted_answers=accepted_answers,
+        answer_language=answer_language,
+        hint=payload.hint,
     )
 
 
@@ -122,6 +130,7 @@ async def create_card(
         front_text=payload.front_text,
         back_text=payload.back_text,
         accepted_answers=payload.accepted_answers,
+        answer_language=payload.answer_language,
         owner_id=current_user.id,
     )
     db.add(card)
@@ -132,12 +141,15 @@ async def create_card(
         # The reverse direction starts with no extra accepted answers -- its
         # only exact match is the original front_text (e.g. the kanji form),
         # variants (kana readings, synonyms) get added later via PATCH as the
-        # learner hits them during typed review.
+        # learner hits them during typed review. It commonly expects a
+        # different answer script than the forward card (e.g. forward wants
+        # romaji, reverse wants kanji), hence the separate language field.
         reverse = _build_card(
             payload,
             front_text=payload.back_text,
             back_text=payload.front_text,
             accepted_answers=[],
+            answer_language=payload.reverse_answer_language,
             owner_id=current_user.id,
         )
         db.add(reverse)
@@ -181,6 +193,10 @@ async def update_card(
         card.answer_mode = payload.answer_mode
     if payload.accepted_answers is not None:
         card.accepted_answers = payload.accepted_answers
+    if "answer_language" in payload.model_fields_set:
+        card.answer_language = payload.answer_language
+    if "hint" in payload.model_fields_set:
+        card.hint = payload.hint
     if "lesson_node_id" in payload.model_fields_set:
         if payload.lesson_node_id is not None:
             node = await db.get(HierarchyNode, payload.lesson_node_id)

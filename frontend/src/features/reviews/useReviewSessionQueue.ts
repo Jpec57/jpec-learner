@@ -35,20 +35,30 @@ function requeueRandomly<T>(remaining: T[], item: T): T[] {
 export function useReviewSessionQueue(fetchedItems: DueItem[] | undefined) {
   const [queue, setQueue] = useState<DueItem[]>([]);
   const [sessionAttempts, setSessionAttempts] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [incorrectCount, setIncorrectCount] = useState(0);
 
   useEffect(() => {
     if (fetchedItems) {
       setQueue(shuffled(fetchedItems));
       setSessionAttempts(0);
+      setCorrectCount(0);
+      setIncorrectCount(0);
     }
   }, [fetchedItems]);
 
   function submitResult(rating: number) {
+    const passed = rating >= PASSING_RATING_THRESHOLD;
     setSessionAttempts((n) => n + 1);
+    if (passed) {
+      setCorrectCount((n) => n + 1);
+    } else {
+      setIncorrectCount((n) => n + 1);
+    }
     setQueue((current) => {
       const [current_item, ...rest] = current;
       if (!current_item) return current;
-      return rating >= PASSING_RATING_THRESHOLD ? rest : requeueRandomly(rest, current_item);
+      return passed ? rest : requeueRandomly(rest, current_item);
     });
   }
 
@@ -62,6 +72,8 @@ export function useReviewSessionQueue(fetchedItems: DueItem[] | undefined) {
     currentItem: queue[0] as DueItem | undefined,
     remainingCount: queue.length,
     sessionAttempts,
+    correctCount,
+    incorrectCount,
     submitResult,
     updateCurrentItem,
   };

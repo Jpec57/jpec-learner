@@ -16,6 +16,8 @@ export interface DueItem {
   body_markdown: string | null;
   answer_mode: AnswerMode;
   accepted_answers: string[];
+  answer_language: string | null;
+  hint: string | null;
   due_at: string;
   current_level: number;
 }

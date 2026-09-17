@@ -1,7 +1,13 @@
 {
   "title": "Révision",
-  "reviewedThisSession_one": "{{count}} révisée dans cette session",
-  "reviewedThisSession_other": "{{count}} révisées dans cette session",
+  "sessionStats": {
+    "correct_one": "✓ {{count}} correcte",
+    "correct_other": "✓ {{count}} correctes",
+    "incorrect_one": "✗ {{count}} incorrecte",
+    "incorrect_other": "✗ {{count}} incorrectes",
+    "remaining_one": "{{count}} restante",
+    "remaining_other": "{{count}} restantes"
+  },
   "due_one": "{{count}} à réviser",
   "due_other": "{{count}} à réviser",
   "allCaughtUp": "Tout est à jour ! 🎉",
@@ -39,7 +45,9 @@
     "correctAnswers": "Réponses acceptées",
     "addAsAccepted": "Ajouter ma réponse comme acceptée",
     "added": "Ajoutée — elle sera acceptée la prochaine fois.",
-    "selfRatePrompt": "Votre réponse était-elle en fait correcte (ex. une variante valide) ? Notez-vous :"
+    "selfRatePrompt": "Votre réponse était-elle en fait correcte (ex. une variante valide) ? Notez-vous :",
+    "expectedIn": "Répondez en {{label}}",
+    "showHint": "💡 Afficher l'indice"
   },
   "upcoming": {
     "title": "Révisions à venir",

@@ -102,6 +102,8 @@ async def get_due(
                 back_text=card.back_text,
                 answer_mode=card.answer_mode,
                 accepted_answers=card.accepted_answers,
+                answer_language=card.answer_language,
+                hint=card.hint,
                 due_at=review_state.due_at,
                 current_level=review_state.current_level,
             )

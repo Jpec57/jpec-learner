@@ -16,6 +16,8 @@ function makeItem(id: string): DueItem {
     body_markdown: null,
     answer_mode: "reveal",
     accepted_answers: [],
+    answer_language: null,
+    hint: null,
     due_at: new Date().toISOString(),
     current_level: 1,
   };
@@ -67,6 +69,31 @@ describe("useReviewSessionQueue", () => {
     act(() => result.current.submitResult(4)); // pass, removed
 
     expect(result.current.sessionAttempts).toBe(2);
+  });
+
+  it("splits attempts into correct and incorrect counts", () => {
+    const items = [makeItem("a")];
+    const { result } = renderHook(() => useReviewSessionQueue(items));
+
+    act(() => result.current.submitResult(2)); // fail (Hard, below threshold), requeued
+    act(() => result.current.submitResult(3)); // pass (Good, at threshold), removed
+
+    expect(result.current.correctCount).toBe(1);
+    expect(result.current.incorrectCount).toBe(1);
+  });
+
+  it("resets correct/incorrect counts when a new batch of fetched items arrives", () => {
+    const initial = [makeItem("a")];
+    const { result, rerender } = renderHook(({ fetched }) => useReviewSessionQueue(fetched), {
+      initialProps: { fetched: initial as DueItem[] | undefined },
+    });
+    act(() => result.current.submitResult(4));
+    expect(result.current.correctCount).toBe(1);
+
+    rerender({ fetched: [makeItem("x")] });
+
+    expect(result.current.correctCount).toBe(0);
+    expect(result.current.incorrectCount).toBe(0);
   });
 
   it("never re-shows the just-failed item as the very next card when others remain", () => {

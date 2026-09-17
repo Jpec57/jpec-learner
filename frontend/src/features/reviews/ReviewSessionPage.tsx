@@ -40,7 +40,7 @@ export function ReviewSessionPage() {
     enabled: !!categoryId,
   });
 
-  const { currentItem, remainingCount, sessionAttempts, submitResult, updateCurrentItem } =
+  const { currentItem, remainingCount, correctCount, incorrectCount, submitResult, updateCurrentItem } =
     useReviewSessionQueue(fetchedDue);
 
   const addAcceptedAnswer = useMutation({
@@ -76,8 +76,12 @@ export function ReviewSessionPage() {
       </Link>
       <div className="mt-2 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-900">{t("title")}</h1>
-        {sessionAttempts > 0 && (
-          <span className="text-sm text-slate-400">{t("reviewedThisSession", { count: sessionAttempts })}</span>
+        {(correctCount > 0 || incorrectCount > 0) && (
+          <div className="flex items-center gap-3 text-sm">
+            <span className="font-medium text-emerald-600">{t("sessionStats.correct", { count: correctCount })}</span>
+            <span className="font-medium text-red-500">{t("sessionStats.incorrect", { count: incorrectCount })}</span>
+            <span className="text-slate-400">{t("sessionStats.remaining", { count: remainingCount })}</span>
+          </div>
         )}
       </div>
 

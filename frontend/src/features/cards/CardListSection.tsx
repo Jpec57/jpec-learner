@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useConfirm } from "@/components/ui/useConfirm";
+import { ANSWER_LANGUAGE_OPTIONS, answerLanguageDisplay } from "@/features/cards/answerLanguages";
 import { createCard, deleteCard, listCards, updateCard, type AnswerMode, type Card } from "@/features/cards/api";
 import { ImageUploadInput } from "@/features/images/ImageUploadInput";
 
@@ -17,6 +18,31 @@ function parseAcceptedAnswers(raw: string): string[] {
     .filter(Boolean);
 }
 
+function LanguageSelect({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="rounded-md border border-slate-300 px-2 py-1.5 text-xs text-slate-600"
+    >
+      <option value="">{placeholder}</option>
+      {ANSWER_LANGUAGE_OPTIONS.map((option) => (
+        <option key={option.code} value={option.code}>
+          {option.flag} {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: string; lessonNodeId: string | null }) {
   const { t } = useTranslation(["cards", "common"]);
   const { confirm, dialog } = useConfirm();
@@ -28,6 +54,8 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
   const [back, setBack] = useState(card.back_text);
   const [answerMode, setAnswerMode] = useState<AnswerMode>(card.answer_mode);
   const [acceptedAnswersInput, setAcceptedAnswersInput] = useState(card.accepted_answers.join(", "));
+  const [answerLanguage, setAnswerLanguage] = useState(card.answer_language ?? "");
+  const [hint, setHint] = useState(card.hint ?? "");
 
   const save = useMutation({
     mutationFn: () =>
@@ -36,6 +64,8 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
         back_text: back,
         answer_mode: answerMode,
         accepted_answers: answerMode === "typed" ? parseAcceptedAnswers(acceptedAnswersInput) : [],
+        answer_language: answerMode === "typed" ? answerLanguage || null : null,
+        hint: hint || null,
       }),
     onSuccess: () => {
       setEditing(false);
@@ -122,14 +152,27 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
             </button>
           </div>
           {answerMode === "typed" && (
-            <textarea
-              value={acceptedAnswersInput}
-              onChange={(e) => setAcceptedAnswersInput(e.target.value)}
-              rows={2}
-              className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-              placeholder={t("acceptedAnswersPlaceholder")}
-            />
+            <>
+              <textarea
+                value={acceptedAnswersInput}
+                onChange={(e) => setAcceptedAnswersInput(e.target.value)}
+                rows={2}
+                className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                placeholder={t("acceptedAnswersPlaceholder")}
+              />
+              <LanguageSelect
+                value={answerLanguage}
+                onChange={setAnswerLanguage}
+                placeholder={t("answerLanguagePlaceholder")}
+              />
+            </>
           )}
+          <input
+            value={hint}
+            onChange={(e) => setHint(e.target.value)}
+            placeholder={t("hintPlaceholder")}
+            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          />
           <div className="flex gap-2">
             <button
               onClick={() => save.mutate()}
@@ -156,6 +199,12 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
                 {t("alsoAccepts", { answers: card.accepted_answers.join(", ") })}
               </p>
             )}
+            {card.answer_mode === "typed" && card.answer_language && (
+              <p className="mt-1 text-xs text-slate-400">
+                {answerLanguageDisplay(card.answer_language).flag} {answerLanguageDisplay(card.answer_language).label}
+              </p>
+            )}
+            {card.hint && <p className="mt-1 text-xs text-slate-400">💡 {card.hint}</p>}
           </div>
         </div>
       )}
@@ -201,7 +250,10 @@ interface AddCardInput {
   back: string;
   answerMode: AnswerMode;
   acceptedAnswers: string[];
+  answerLanguage: string;
+  hint: string;
   createReverse: boolean;
+  reverseAnswerLanguage: string;
 }
 
 function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<unknown> }) {
@@ -211,7 +263,10 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<
   const [back, setBack] = useState("");
   const [answerMode, setAnswerMode] = useState<AnswerMode>("reveal");
   const [acceptedAnswersInput, setAcceptedAnswersInput] = useState("");
+  const [answerLanguage, setAnswerLanguage] = useState("");
+  const [hint, setHint] = useState("");
   const [createReverse, setCreateReverse] = useState(false);
+  const [reverseAnswerLanguage, setReverseAnswerLanguage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
@@ -223,12 +278,18 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<
         back,
         answerMode,
         acceptedAnswers: answerMode === "typed" ? parseAcceptedAnswers(acceptedAnswersInput) : [],
+        answerLanguage,
+        hint,
         createReverse,
+        reverseAnswerLanguage,
       });
       setFront("");
       setBack("");
       setAcceptedAnswersInput("");
+      setAnswerLanguage("");
+      setHint("");
       setCreateReverse(false);
+      setReverseAnswerLanguage("");
       setOpen(false);
     } finally {
       setSubmitting(false);
@@ -285,19 +346,41 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<
       </div>
 
       {answerMode === "typed" && (
-        <textarea
-          value={acceptedAnswersInput}
-          onChange={(e) => setAcceptedAnswersInput(e.target.value)}
-          rows={2}
-          placeholder={t("acceptedAnswersPlaceholder")}
-          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-        />
+        <>
+          <textarea
+            value={acceptedAnswersInput}
+            onChange={(e) => setAcceptedAnswersInput(e.target.value)}
+            rows={2}
+            placeholder={t("acceptedAnswersPlaceholder")}
+            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          />
+          <LanguageSelect
+            value={answerLanguage}
+            onChange={setAnswerLanguage}
+            placeholder={t("answerLanguagePlaceholder")}
+          />
+        </>
       )}
+
+      <input
+        value={hint}
+        onChange={(e) => setHint(e.target.value)}
+        placeholder={t("hintPlaceholder")}
+        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+      />
 
       <label className="flex items-center gap-2 text-xs text-slate-600">
         <input type="checkbox" checked={createReverse} onChange={(e) => setCreateReverse(e.target.checked)} />
         {t("createReverse")}
       </label>
+
+      {answerMode === "typed" && createReverse && (
+        <LanguageSelect
+          value={reverseAnswerLanguage}
+          onChange={setReverseAnswerLanguage}
+          placeholder={t("reverseAnswerLanguagePlaceholder")}
+        />
+      )}
 
       <div className="flex gap-2">
         <button
@@ -357,7 +440,11 @@ export function CardListSection({
         back_text: input.back,
         answer_mode: input.answerMode,
         accepted_answers: input.acceptedAnswers,
+        answer_language: input.answerMode === "typed" ? input.answerLanguage || null : null,
+        hint: input.hint || null,
         create_reverse: input.createReverse,
+        reverse_answer_language:
+          input.answerMode === "typed" && input.createReverse ? input.reverseAnswerLanguage || null : null,
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: baseQueryKey }),
   });
