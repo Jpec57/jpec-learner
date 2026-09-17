@@ -27,5 +27,22 @@
     "trigger": "Edit this card",
     "front": "Front",
     "back": "Back"
+  },
+  "typed": {
+    "placeholder": "Type your answer…",
+    "submit": "Check",
+    "typoWarning": "\"{{input}}\" is close to \"{{closest}}\" but not an exact match — could be a typo.",
+    "tryAgain": "Fix my answer",
+    "forceSubmit": "Submit anyway",
+    "yourAnswer": "Your answer",
+    "noAnswer": "(nothing entered)",
+    "correctAnswers": "Accepted answers",
+    "addAsAccepted": "Add my answer as accepted",
+    "added": "Added — it'll be accepted next time.",
+    "selfRatePrompt": "Was your answer actually right (e.g. a valid variant)? Rate yourself:"
+  },
+  "upcoming": {
+    "title": "Upcoming reviews",
+    "tooltip": "{{count}} due at {{hour}}:00"
   }
 }

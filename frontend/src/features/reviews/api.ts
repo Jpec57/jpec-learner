@@ -3,6 +3,8 @@ import { api } from "@/lib/api";
 export type ReviewItemType = "card" | "lesson";
 export const ALL_REVIEW_ITEM_TYPES: ReviewItemType[] = ["card", "lesson"];
 
+export type AnswerMode = "reveal" | "typed";
+
 export interface DueItem {
   review_state_id: string;
   item_kind: ReviewItemType;
@@ -12,8 +14,15 @@ export interface DueItem {
   back_text: string | null;
   title: string | null;
   body_markdown: string | null;
+  answer_mode: AnswerMode;
+  accepted_answers: string[];
   due_at: string;
   current_level: number;
+}
+
+export interface UpcomingBucket {
+  hour: string;
+  count: number;
 }
 
 export interface ReviewState {
@@ -39,6 +48,13 @@ export async function getDue(
 ): Promise<DueItem[]> {
   const { data } = await api.get<DueItem[]>("/reviews/due", {
     params: { category_id: categoryId, types, limit },
+  });
+  return data;
+}
+
+export async function getUpcoming(categoryId: string, hours = 24): Promise<UpcomingBucket[]> {
+  const { data } = await api.get<UpcomingBucket[]>("/reviews/upcoming", {
+    params: { category_id: categoryId, hours },
   });
   return data;
 }

@@ -1,14 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
+import { updateCard } from "@/features/cards/api";
 import { getCategory } from "@/features/categories/api";
 import { ALL_REVIEW_ITEM_TYPES, getDue, submitReview, type ReviewItemType } from "@/features/reviews/api";
 import { EditCardForm } from "@/features/reviews/EditCardForm";
 import { Flashcard } from "@/features/reviews/Flashcard";
 import { RatingButtons } from "@/features/reviews/RatingButtons";
+import { TypedAnswerCard } from "@/features/reviews/TypedAnswerCard";
 import { TypeFilter } from "@/features/reviews/TypeFilter";
+import { UpcomingBarChart } from "@/features/reviews/UpcomingBarChart";
 import { useReviewSessionQueue } from "@/features/reviews/useReviewSessionQueue";
 import { getErrorMessage } from "@/lib/errors";
 
@@ -39,6 +42,14 @@ export function ReviewSessionPage() {
 
   const { currentItem, remainingCount, sessionAttempts, submitResult, updateCurrentItem } =
     useReviewSessionQueue(fetchedDue);
+
+  const addAcceptedAnswer = useMutation({
+    mutationFn: (answer: string) => {
+      const existing = currentItem?.accepted_answers ?? [];
+      return updateCard(currentItem!.card_id!, { accepted_answers: [...existing, answer] });
+    },
+    onSuccess: (updated) => updateCurrentItem({ accepted_answers: updated.accepted_answers }),
+  });
 
   if (!categoryId || !category || isLoading) return null;
 
@@ -71,6 +82,10 @@ export function ReviewSessionPage() {
       </div>
 
       <div className="mt-4">
+        <UpcomingBarChart categoryId={categoryId} />
+      </div>
+
+      <div className="mt-4">
         <TypeFilter value={types} onChange={setTypes} />
       </div>
 
@@ -88,41 +103,56 @@ export function ReviewSessionPage() {
       ) : (
         <div className="mt-6">
           <p className="text-sm text-slate-400">{t("due", { count: remainingCount })}</p>
-          <div className="mt-2">
-            <Flashcard item={currentItem} revealed={revealed} />
-          </div>
 
-          {revealed && currentItem.card_id && !editing && (
-            <button onClick={() => setEditing(true)} className="mt-2 text-xs text-slate-400 hover:text-primary">
-              {t("editCard.trigger")}
-            </button>
-          )}
+          {currentItem.item_kind === "card" && currentItem.answer_mode === "typed" ? (
+            <div className="mt-2">
+              <TypedAnswerCard
+                key={currentItem.review_state_id}
+                item={currentItem}
+                onRate={handleRate}
+                disabled={submitting}
+                onAddAcceptedAnswer={(answer) => addAcceptedAnswer.mutate(answer)}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="mt-2">
+                <Flashcard item={currentItem} revealed={revealed} />
+              </div>
 
-          {revealed && editing && currentItem.card_id && (
-            <EditCardForm
-              cardId={currentItem.card_id}
-              frontText={currentItem.front_text ?? ""}
-              backText={currentItem.back_text ?? ""}
-              onSaved={(patch) => {
-                updateCurrentItem(patch);
-                setEditing(false);
-              }}
-              onCancel={() => setEditing(false)}
-            />
+              {revealed && currentItem.card_id && !editing && (
+                <button onClick={() => setEditing(true)} className="mt-2 text-xs text-slate-400 hover:text-primary">
+                  {t("editCard.trigger")}
+                </button>
+              )}
+
+              {revealed && editing && currentItem.card_id && (
+                <EditCardForm
+                  cardId={currentItem.card_id}
+                  frontText={currentItem.front_text ?? ""}
+                  backText={currentItem.back_text ?? ""}
+                  onSaved={(patch) => {
+                    updateCurrentItem(patch);
+                    setEditing(false);
+                  }}
+                  onCancel={() => setEditing(false)}
+                />
+              )}
+
+              {!revealed ? (
+                <button
+                  onClick={() => setRevealed(true)}
+                  className="mt-6 w-full rounded-lg bg-slate-800 py-3 text-sm font-medium text-white hover:bg-slate-700"
+                >
+                  {t("revealAnswer")}
+                </button>
+              ) : (
+                !editing && <RatingButtons onRate={handleRate} disabled={submitting} />
+              )}
+            </>
           )}
 
           {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-
-          {!revealed ? (
-            <button
-              onClick={() => setRevealed(true)}
-              className="mt-6 w-full rounded-lg bg-slate-800 py-3 text-sm font-medium text-white hover:bg-slate-700"
-            >
-              {t("revealAnswer")}
-            </button>
-          ) : (
-            !editing && <RatingButtons onRate={handleRate} disabled={submitting} />
-          )}
         </div>
       )}
     </div>

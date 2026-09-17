@@ -15,5 +15,13 @@
   "deleteConfirm": "Supprimer cette carte ?",
   "addPhoto": "+ Photo",
   "removeImage": "Retirer l'image",
-  "uploadError": "Impossible d'envoyer cette image."
+  "uploadError": "Impossible d'envoyer cette image.",
+  "typedBadge": "Saisie",
+  "answerMode": {
+    "reveal": "Retourner & noter",
+    "typed": "Saisir la réponse"
+  },
+  "acceptedAnswersPlaceholder": "Autres réponses acceptées, séparées par une virgule ou un retour à la ligne (optionnel)",
+  "alsoAccepts": "Accepte aussi : {{answers}}",
+  "createReverse": "Créer aussi la carte inversée (verso → recto)"
 }

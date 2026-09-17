@@ -15,5 +15,13 @@
   "deleteConfirm": "Delete this card?",
   "addPhoto": "+ Photo",
   "removeImage": "Remove image",
-  "uploadError": "Couldn't upload that image."
+  "uploadError": "Couldn't upload that image.",
+  "typedBadge": "Typed",
+  "answerMode": {
+    "reveal": "Flip & rate",
+    "typed": "Type answer"
+  },
+  "acceptedAnswersPlaceholder": "Other accepted answers, comma or newline separated (optional)",
+  "alsoAccepts": "Also accepts: {{answers}}",
+  "createReverse": "Also create the reverse card (back → front)"
 }

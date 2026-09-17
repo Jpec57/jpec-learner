@@ -14,6 +14,8 @@ function makeItem(id: string): DueItem {
     back_text: `back-${id}`,
     title: null,
     body_markdown: null,
+    answer_mode: "reveal",
+    accepted_answers: [],
     due_at: new Date().toISOString(),
     current_level: 1,
   };

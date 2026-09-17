@@ -4,11 +4,18 @@ import { FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useConfirm } from "@/components/ui/useConfirm";
-import { createCard, deleteCard, listCards, updateCard, type Card } from "@/features/cards/api";
+import { createCard, deleteCard, listCards, updateCard, type AnswerMode, type Card } from "@/features/cards/api";
 import { ImageUploadInput } from "@/features/images/ImageUploadInput";
 
 const PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 300;
+
+function parseAcceptedAnswers(raw: string): string[] {
+  return raw
+    .split(/[,\n]/)
+    .map((answer) => answer.trim())
+    .filter(Boolean);
+}
 
 function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: string; lessonNodeId: string | null }) {
   const { t } = useTranslation(["cards", "common"]);
@@ -19,9 +26,17 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
   const [editing, setEditing] = useState(false);
   const [front, setFront] = useState(card.front_text);
   const [back, setBack] = useState(card.back_text);
+  const [answerMode, setAnswerMode] = useState<AnswerMode>(card.answer_mode);
+  const [acceptedAnswersInput, setAcceptedAnswersInput] = useState(card.accepted_answers.join(", "));
 
   const save = useMutation({
-    mutationFn: () => updateCard(card.id, { front_text: front, back_text: back }),
+    mutationFn: () =>
+      updateCard(card.id, {
+        front_text: front,
+        back_text: back,
+        answer_mode: answerMode,
+        accepted_answers: answerMode === "typed" ? parseAcceptedAnswers(acceptedAnswersInput) : [],
+      }),
     onSuccess: () => {
       setEditing(false);
       queryClient.invalidateQueries({ queryKey });
@@ -46,6 +61,11 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
       >
         <span className="truncate text-sm text-slate-800">{card.front_text}</span>
         <span className="ml-3 flex shrink-0 items-center gap-2">
+          {card.answer_mode === "typed" && (
+            <span className="rounded-full bg-accent-light px-1.5 py-0.5 text-[10px] font-medium text-accent-dark">
+              {t("typedBadge")}
+            </span>
+          )}
           {card.is_public && (
             <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
               {t("common:status.public")}
@@ -81,6 +101,35 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
             className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
             placeholder={t("back")}
           />
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => setAnswerMode("reveal")}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+                answerMode === "reveal" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
+              }`}
+            >
+              {t("answerMode.reveal")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setAnswerMode("typed")}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+                answerMode === "typed" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
+              }`}
+            >
+              {t("answerMode.typed")}
+            </button>
+          </div>
+          {answerMode === "typed" && (
+            <textarea
+              value={acceptedAnswersInput}
+              onChange={(e) => setAcceptedAnswersInput(e.target.value)}
+              rows={2}
+              className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              placeholder={t("acceptedAnswersPlaceholder")}
+            />
+          )}
           <div className="flex gap-2">
             <button
               onClick={() => save.mutate()}
@@ -102,6 +151,11 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
           <div>
             <p className="text-[10px] uppercase tracking-wide text-slate-400">{t("back")}</p>
             <p className="text-sm text-slate-800">{card.back_text}</p>
+            {card.answer_mode === "typed" && card.accepted_answers.length > 0 && (
+              <p className="mt-1 text-xs text-slate-400">
+                {t("alsoAccepts", { answers: card.accepted_answers.join(", ") })}
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -142,20 +196,39 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
   );
 }
 
-function AddCardForm({ onSubmit }: { onSubmit: (input: { front: string; back: string }) => Promise<unknown> }) {
+interface AddCardInput {
+  front: string;
+  back: string;
+  answerMode: AnswerMode;
+  acceptedAnswers: string[];
+  createReverse: boolean;
+}
+
+function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<unknown> }) {
   const { t } = useTranslation(["cards", "common"]);
   const [open, setOpen] = useState(false);
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
+  const [answerMode, setAnswerMode] = useState<AnswerMode>("reveal");
+  const [acceptedAnswersInput, setAcceptedAnswersInput] = useState("");
+  const [createReverse, setCreateReverse] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setSubmitting(true);
     try {
-      await onSubmit({ front, back });
+      await onSubmit({
+        front,
+        back,
+        answerMode,
+        acceptedAnswers: answerMode === "typed" ? parseAcceptedAnswers(acceptedAnswersInput) : [],
+        createReverse,
+      });
       setFront("");
       setBack("");
+      setAcceptedAnswersInput("");
+      setCreateReverse(false);
       setOpen(false);
     } finally {
       setSubmitting(false);
@@ -189,6 +262,43 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: { front: string; back: st
         placeholder={t("backPlaceholder")}
         className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
       />
+
+      <div className="flex gap-1">
+        <button
+          type="button"
+          onClick={() => setAnswerMode("reveal")}
+          className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+            answerMode === "reveal" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
+          }`}
+        >
+          {t("answerMode.reveal")}
+        </button>
+        <button
+          type="button"
+          onClick={() => setAnswerMode("typed")}
+          className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+            answerMode === "typed" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
+          }`}
+        >
+          {t("answerMode.typed")}
+        </button>
+      </div>
+
+      {answerMode === "typed" && (
+        <textarea
+          value={acceptedAnswersInput}
+          onChange={(e) => setAcceptedAnswersInput(e.target.value)}
+          rows={2}
+          placeholder={t("acceptedAnswersPlaceholder")}
+          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+        />
+      )}
+
+      <label className="flex items-center gap-2 text-xs text-slate-600">
+        <input type="checkbox" checked={createReverse} onChange={(e) => setCreateReverse(e.target.checked)} />
+        {t("createReverse")}
+      </label>
+
       <div className="flex gap-2">
         <button
           type="submit"
@@ -239,12 +349,15 @@ export function CardListSection({
   const pageEnd = Math.min(total, page * PAGE_SIZE + PAGE_SIZE);
 
   const addCard = useMutation({
-    mutationFn: (input: { front: string; back: string }) =>
+    mutationFn: (input: AddCardInput) =>
       createCard({
         category_id: categoryId,
         lesson_node_id: lessonNodeId,
         front_text: input.front,
         back_text: input.back,
+        answer_mode: input.answerMode,
+        accepted_answers: input.acceptedAnswers,
+        create_reverse: input.createReverse,
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: baseQueryKey }),
   });

@@ -27,5 +27,22 @@
     "trigger": "Modifier cette carte",
     "front": "Recto",
     "back": "Verso"
+  },
+  "typed": {
+    "placeholder": "Tapez votre réponse…",
+    "submit": "Vérifier",
+    "typoWarning": "« {{input}} » ressemble à « {{closest}} » mais ne correspond pas exactement — peut-être une faute de frappe.",
+    "tryAgain": "Corriger ma réponse",
+    "forceSubmit": "Envoyer quand même",
+    "yourAnswer": "Votre réponse",
+    "noAnswer": "(rien saisi)",
+    "correctAnswers": "Réponses acceptées",
+    "addAsAccepted": "Ajouter ma réponse comme acceptée",
+    "added": "Ajoutée — elle sera acceptée la prochaine fois.",
+    "selfRatePrompt": "Votre réponse était-elle en fait correcte (ex. une variante valide) ? Notez-vous :"
+  },
+  "upcoming": {
+    "title": "Révisions à venir",
+    "tooltip": "{{count}} à réviser à {{hour}}h"
   }
 }

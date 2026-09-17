@@ -1,6 +1,8 @@
 import { api } from "@/lib/api";
 import type { ImageOut } from "@/features/images/api";
 
+export type AnswerMode = "reveal" | "typed";
+
 export interface Card {
   id: string;
   category_id: string;
@@ -9,6 +11,8 @@ export interface Card {
   front_text: string;
   back_text: string;
   is_public: boolean;
+  answer_mode: AnswerMode;
+  accepted_answers: string[];
   images: ImageOut[];
   created_at: string;
   updated_at: string;
@@ -46,6 +50,9 @@ export async function createCard(input: {
   front_text: string;
   back_text: string;
   is_public?: boolean;
+  answer_mode?: AnswerMode;
+  accepted_answers?: string[];
+  create_reverse?: boolean;
 }): Promise<Card> {
   const { data } = await api.post<Card>("/cards", input);
   return data;
@@ -53,7 +60,13 @@ export async function createCard(input: {
 
 export async function updateCard(
   id: string,
-  input: { front_text?: string; back_text?: string; is_public?: boolean }
+  input: {
+    front_text?: string;
+    back_text?: string;
+    is_public?: boolean;
+    answer_mode?: AnswerMode;
+    accepted_answers?: string[];
+  }
 ): Promise<Card> {
   const { data } = await api.patch<Card>(`/cards/${id}`, input);
   return data;
