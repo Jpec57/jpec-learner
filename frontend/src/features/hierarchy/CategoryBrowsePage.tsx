@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
-import { CardListSection } from "@/features/cards/CardListSection";
 import { getCategory } from "@/features/categories/api";
 import { HierarchyTreeView } from "@/features/hierarchy/HierarchyTreeView";
 
@@ -28,15 +27,6 @@ export function CategoryBrowsePage() {
       <p className="mt-1 text-sm text-slate-500">{t("browse.subtitle")}</p>
       <div className="mt-6">
         <HierarchyTreeView categoryId={categoryId} />
-      </div>
-
-      <div className="mt-10">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">
-          {t("browse.standaloneCards")}
-        </h2>
-        <div className="mt-2">
-          <CardListSection categoryId={categoryId} lessonNodeId={null} />
-        </div>
       </div>
     </div>
   );

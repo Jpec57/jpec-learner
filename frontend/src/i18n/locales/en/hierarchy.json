@@ -2,16 +2,13 @@
   "browse": {
     "title": "Browse {{name}}",
     "subtitle": "Build out your theme / section / lesson hierarchy.",
-    "standaloneCards": "Standalone cards (not tied to a lesson)",
     "noThemes": "No themes yet — add your first group or lesson below.",
     "addGroup": "+ Add group",
-    "addLesson": "+ Add lesson",
-    "root": "Top level"
+    "addLesson": "+ Add lesson"
   },
   "tree": {
     "expand": "Expand",
     "collapse": "Collapse",
-    "browseFrom": "Browse from here",
     "addGroupChild": "+ group",
     "addLessonChild": "+ lesson",
     "move": "Move",
@@ -39,5 +36,9 @@
     "previewEmpty": "Nothing to preview yet.",
     "images": "Images",
     "cardsInLesson": "Cards in this lesson"
+  },
+  "group": {
+    "subgroups": "Groups and lessons",
+    "cardsInGroup": "Cards in this group"
   }
 }

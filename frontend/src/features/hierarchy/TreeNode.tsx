@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Compass } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -27,14 +26,12 @@ export function TreeNode({
   movingNodeId,
   setMovingNodeId,
   onMoveError,
-  onBrowseFrom,
 }: {
   node: HierarchyNode;
   categoryId: string;
   movingNodeId: string | null;
   setMovingNodeId: (id: string | null) => void;
   onMoveError: (message: string) => void;
-  onBrowseFrom: (id: string, title: string) => void;
 }) {
   const { t } = useTranslation(["hierarchy", "common"]);
   const { confirm, dialog } = useConfirm();
@@ -144,27 +141,12 @@ export function TreeNode({
             {renameError && <span className="text-xs text-red-600">{renameError}</span>}
           </>
         ) : (
-          node.node_kind === "lesson" ? (
-            <Link
-              to={`/categories/${categoryId}/lessons/${node.id}`}
-              className="text-sm font-medium text-slate-800 hover:text-primary hover:underline"
-            >
-              {node.title}
-            </Link>
-          ) : (
-            <span className="text-sm font-medium text-slate-800">{node.title}</span>
-          )
-        )}
-
-        {!editing && node.node_kind === "group" && (
-          <button
-            onClick={() => onBrowseFrom(node.id, node.title)}
-            className="text-slate-300 hover:text-primary"
-            aria-label={t("tree.browseFrom")}
-            title={t("tree.browseFrom")}
+          <Link
+            to={`/categories/${categoryId}/${node.node_kind === "lesson" ? "lessons" : "groups"}/${node.id}`}
+            className="text-sm font-medium text-slate-800 hover:text-primary hover:underline"
           >
-            <Compass size={14} />
-          </button>
+            {node.title}
+          </Link>
         )}
 
         {node.is_public && (
@@ -261,7 +243,6 @@ export function TreeNode({
               movingNodeId={movingNodeId}
               setMovingNodeId={setMovingNodeId}
               onMoveError={onMoveError}
-              onBrowseFrom={onBrowseFrom}
             />
           ))}
           {children?.length === 0 && !adding && (

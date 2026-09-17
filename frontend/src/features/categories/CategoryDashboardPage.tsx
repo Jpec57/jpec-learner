@@ -8,6 +8,7 @@ import { deleteCategory, getCategory, updateCategory, type Category } from "@/fe
 import { IconPicker } from "@/features/categories/IconPicker";
 import { getProgression } from "@/features/progression/api";
 import { StreakIndicator } from "@/features/progression/StreakIndicator";
+import { UpcomingBarChart } from "@/features/reviews/UpcomingBarChart";
 import { getErrorMessage } from "@/lib/errors";
 
 function EditCategoryForm({ category, onDone }: { category: Category; onDone: () => void }) {
@@ -185,6 +186,10 @@ export function CategoryDashboardPage() {
           <StreakIndicator days={progression.streak_days} />
         </div>
       )}
+
+      <div className="mt-6">
+        <UpcomingBarChart categoryId={category.id} />
+      </div>
       {dialog}
     </div>
   );

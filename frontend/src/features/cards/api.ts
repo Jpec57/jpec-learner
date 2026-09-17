@@ -73,6 +73,7 @@ export async function updateCard(
     accepted_answers?: string[];
     answer_language?: string | null;
     hint?: string | null;
+    lesson_node_id?: string | null;
   }
 ): Promise<Card> {
   const { data } = await api.patch<Card>(`/cards/${id}`, input);

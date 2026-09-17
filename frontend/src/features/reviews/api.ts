@@ -1,3 +1,5 @@
+import { isAxiosError } from "axios";
+
 import { api } from "@/lib/api";
 
 export type ReviewItemType = "card" | "lesson";
@@ -69,4 +71,16 @@ export async function submitReview(reviewStateId: string, rating: number): Promi
 export async function enroll(target: { card_id: string } | { lesson_node_id: string }): Promise<ReviewState> {
   const { data } = await api.post<ReviewState>("/reviews/enroll", target);
   return data;
+}
+
+export async function getReviewState(
+  target: { card_id: string } | { lesson_node_id: string }
+): Promise<ReviewState | null> {
+  try {
+    const { data } = await api.get<ReviewState>("/reviews/state", { params: target });
+    return data;
+  } catch (err) {
+    if (isAxiosError(err) && err.response?.status === 404) return null;
+    throw err;
+  }
 }

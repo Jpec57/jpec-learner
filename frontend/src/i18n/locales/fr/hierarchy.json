@@ -2,16 +2,13 @@
   "browse": {
     "title": "Explorer {{name}}",
     "subtitle": "Construisez votre hiérarchie thème / section / leçon.",
-    "standaloneCards": "Cartes indépendantes (non liées à une leçon)",
     "noThemes": "Aucun thème pour l'instant — ajoutez votre premier groupe ou leçon ci-dessous.",
     "addGroup": "+ Ajouter un groupe",
-    "addLesson": "+ Ajouter une leçon",
-    "root": "Niveau racine"
+    "addLesson": "+ Ajouter une leçon"
   },
   "tree": {
     "expand": "Déplier",
     "collapse": "Replier",
-    "browseFrom": "Parcourir depuis ici",
     "addGroupChild": "+ groupe",
     "addLessonChild": "+ leçon",
     "move": "Déplacer",
@@ -39,5 +36,9 @@
     "previewEmpty": "Rien à prévisualiser pour l'instant.",
     "images": "Images",
     "cardsInLesson": "Cartes de cette leçon"
+  },
+  "group": {
+    "subgroups": "Groupes et leçons",
+    "cardsInGroup": "Cartes de ce groupe"
   }
 }

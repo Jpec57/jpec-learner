@@ -26,5 +26,8 @@
   "createReverse": "Also create the reverse card (back → front)",
   "answerLanguagePlaceholder": "Expected answer language (optional)",
   "reverseAnswerLanguagePlaceholder": "Reverse card's expected answer language (optional)",
-  "hintPlaceholder": "Hint shown on request during review (optional)"
+  "hintPlaceholder": "Hint shown on request during review (optional)",
+  "levelLabel": "Level {{level}}",
+  "nextReviewLabel": "next review {{date}}",
+  "moveToNode": "Group / lesson"
 }

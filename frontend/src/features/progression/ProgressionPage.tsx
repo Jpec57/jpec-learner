@@ -4,9 +4,10 @@ import { Link, useParams } from "react-router-dom";
 
 import { getCategory } from "@/features/categories/api";
 import { getProgression } from "@/features/progression/api";
-import { LevelBadge } from "@/features/progression/LevelBadge";
-import { ProgressBar } from "@/features/progression/ProgressBar";
+import { ProgressionTree } from "@/features/progression/ProgressionTree";
 import { StreakIndicator } from "@/features/progression/StreakIndicator";
+
+const LEVEL_CHART_HEIGHT_PX = 64;
 
 export function ProgressionPage() {
   const { t } = useTranslation("progression");
@@ -25,6 +26,8 @@ export function ProgressionPage() {
   });
 
   if (!categoryId || !category || !progression) return null;
+
+  const maxLevelCount = Math.max(...progression.level_distribution.map((entry) => entry.count), 1);
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -45,31 +48,32 @@ export function ProgressionPage() {
         </div>
       </div>
 
-      <h2 className="mt-8 text-sm font-medium uppercase tracking-wide text-slate-400">{t("themes")}</h2>
-      <div className="mt-3 space-y-3">
-        {progression.themes.map((theme) => (
-          <div key={theme.node_id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-slate-900">{theme.title}</h3>
-              <LevelBadge level={theme.avg_level} />
-            </div>
-            <div className="mt-3">
-              <ProgressBar value={theme.avg_level} />
-            </div>
-            <p className="mt-2 text-xs text-slate-400">
-              {t("itemsTracked", { count: theme.total_items })} · {t("dueNow", { count: theme.due_count })}
-            </p>
+      {progression.total_items > 0 && (
+        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs uppercase tracking-wide text-slate-400">{t("byLevel")}</p>
+          <div className="mt-3 flex items-end gap-1" style={{ height: LEVEL_CHART_HEIGHT_PX }}>
+            {progression.level_distribution.map((entry) => {
+              const height =
+                entry.count === 0 ? 2 : Math.max(6, (entry.count / maxLevelCount) * LEVEL_CHART_HEIGHT_PX);
+              return (
+                <div key={entry.level} className="flex flex-1 flex-col items-center justify-end gap-1">
+                  {entry.count > 0 && <span className="text-[10px] text-slate-500">{entry.count}</span>}
+                  <div
+                    className={`w-full rounded-sm ${entry.count > 0 ? "bg-primary" : "bg-slate-100"}`}
+                    style={{ height }}
+                  />
+                  <span className="text-[9px] text-slate-400">{entry.level}</span>
+                </div>
+              );
+            })}
           </div>
-        ))}
-        {progression.themes.length === 0 && (
-          <p className="text-sm text-slate-400">
-            {t("noThemesPrefix")}{" "}
-            <Link to={`/categories/${categoryId}/browse`} className="text-primary hover:underline">
-              {t("browse")}
-            </Link>
-            .
-          </p>
-        )}
+        </div>
+      )}
+
+      <h2 className="mt-8 text-sm font-medium uppercase tracking-wide text-slate-400">{t("themes")}</h2>
+      <p className="mt-1 text-xs text-slate-400">{t("treeHint")}</p>
+      <div className="mt-3">
+        <ProgressionTree categoryId={categoryId} />
       </div>
     </div>
   );

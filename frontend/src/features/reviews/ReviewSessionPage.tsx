@@ -11,7 +11,6 @@ import { Flashcard } from "@/features/reviews/Flashcard";
 import { RatingButtons } from "@/features/reviews/RatingButtons";
 import { TypedAnswerCard } from "@/features/reviews/TypedAnswerCard";
 import { TypeFilter } from "@/features/reviews/TypeFilter";
-import { UpcomingBarChart } from "@/features/reviews/UpcomingBarChart";
 import { useReviewSessionQueue } from "@/features/reviews/useReviewSessionQueue";
 import { getErrorMessage } from "@/lib/errors";
 
@@ -83,10 +82,6 @@ export function ReviewSessionPage() {
             <span className="text-slate-400">{t("sessionStats.remaining", { count: remainingCount })}</span>
           </div>
         )}
-      </div>
-
-      <div className="mt-4">
-        <UpcomingBarChart categoryId={categoryId} />
       </div>
 
       <div className="mt-4">

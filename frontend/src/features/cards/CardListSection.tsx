@@ -6,7 +6,13 @@ import { useTranslation } from "react-i18next";
 import { useConfirm } from "@/components/ui/useConfirm";
 import { ANSWER_LANGUAGE_OPTIONS, answerLanguageDisplay } from "@/features/cards/answerLanguages";
 import { createCard, deleteCard, listCards, updateCard, type AnswerMode, type Card } from "@/features/cards/api";
+import { listFlat } from "@/features/hierarchy/api";
 import { ImageUploadInput } from "@/features/images/ImageUploadInput";
+import { getReviewState } from "@/features/reviews/api";
+
+function formatDateTime(iso: string, locale: string): string {
+  return new Date(iso).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
+}
 
 const PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -44,7 +50,7 @@ function LanguageSelect({
 }
 
 function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: string; lessonNodeId: string | null }) {
-  const { t } = useTranslation(["cards", "common"]);
+  const { t, i18n } = useTranslation(["cards", "common"]);
   const { confirm, dialog } = useConfirm();
   const queryClient = useQueryClient();
   const queryKey = ["cards", categoryId, lessonNodeId ?? null];
@@ -56,6 +62,19 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
   const [acceptedAnswersInput, setAcceptedAnswersInput] = useState(card.accepted_answers.join(", "));
   const [answerLanguage, setAnswerLanguage] = useState(card.answer_language ?? "");
   const [hint, setHint] = useState(card.hint ?? "");
+  const [moveToNodeId, setMoveToNodeId] = useState(card.lesson_node_id ?? "");
+
+  const { data: reviewState } = useQuery({
+    queryKey: ["reviewState", card.id],
+    queryFn: () => getReviewState({ card_id: card.id }),
+    enabled: expanded,
+  });
+
+  const { data: flatNodes } = useQuery({
+    queryKey: ["hierarchyFlat", categoryId],
+    queryFn: () => listFlat(categoryId),
+    enabled: editing,
+  });
 
   const save = useMutation({
     mutationFn: () =>
@@ -66,6 +85,7 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
         accepted_answers: answerMode === "typed" ? parseAcceptedAnswers(acceptedAnswersInput) : [],
         answer_language: answerMode === "typed" ? answerLanguage || null : null,
         hint: hint || null,
+        lesson_node_id: moveToNodeId,
       }),
     onSuccess: () => {
       setEditing(false);
@@ -115,6 +135,12 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
       >
         <ChevronUp size={14} /> {t("collapse")}
       </button>
+      {reviewState && (
+        <p className="mb-2 text-xs text-slate-400">
+          {t("levelLabel", { level: reviewState.current_level })} ·{" "}
+          {t("nextReviewLabel", { date: formatDateTime(reviewState.due_at, i18n.language) })}
+        </p>
+      )}
       {editing ? (
         <div className="space-y-2">
           <textarea
@@ -173,6 +199,20 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
             placeholder={t("hintPlaceholder")}
             className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           />
+          <div>
+            <label className="text-[10px] uppercase tracking-wide text-slate-400">{t("moveToNode")}</label>
+            <select
+              value={moveToNodeId}
+              onChange={(e) => setMoveToNodeId(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            >
+              {flatNodes?.map((node) => (
+                <option key={node.id} value={node.id}>
+                  {node.node_kind === "lesson" ? "📄" : "📁"} {node.title}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="flex gap-2">
             <button
               onClick={() => save.mutate()}

@@ -26,5 +26,8 @@
   "createReverse": "Créer aussi la carte inversée (verso → recto)",
   "answerLanguagePlaceholder": "Langue de réponse attendue (optionnel)",
   "reverseAnswerLanguagePlaceholder": "Langue de réponse attendue pour la carte inversée (optionnel)",
-  "hintPlaceholder": "Indice affichable pendant la révision (optionnel)"
+  "hintPlaceholder": "Indice affichable pendant la révision (optionnel)",
+  "levelLabel": "Niveau {{level}}",
+  "nextReviewLabel": "prochaine révision {{date}}",
+  "moveToNode": "Groupe / leçon"
 }

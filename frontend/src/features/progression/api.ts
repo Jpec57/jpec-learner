@@ -8,12 +8,18 @@ export interface ThemeProgress {
   due_count: number;
 }
 
+export interface LevelCount {
+  level: number;
+  count: number;
+}
+
 export interface Progression {
   category_id: string;
   streak_days: number;
   total_items: number;
   total_due: number;
   themes: ThemeProgress[];
+  level_distribution: LevelCount[];
 }
 
 export interface LevelDefinition {
@@ -30,5 +36,10 @@ export async function getProgression(categoryId: string): Promise<Progression> {
 
 export async function listLevels(): Promise<LevelDefinition[]> {
   const { data } = await api.get<LevelDefinition[]>("/progression/levels");
+  return data;
+}
+
+export async function getNodeProgression(nodeId: string): Promise<ThemeProgress> {
+  const { data } = await api.get<ThemeProgress>(`/progression/nodes/${nodeId}`);
   return data;
 }

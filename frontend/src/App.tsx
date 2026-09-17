@@ -7,6 +7,7 @@ import { SettingsPage } from "@/features/auth/SettingsPage";
 import { CategoryDashboardPage } from "@/features/categories/CategoryDashboardPage";
 import { CategoryPickerPage } from "@/features/categories/CategoryPickerPage";
 import { CategoryBrowsePage } from "@/features/hierarchy/CategoryBrowsePage";
+import { GroupDetailPage } from "@/features/hierarchy/GroupDetailPage";
 import { LessonDetailPage } from "@/features/hierarchy/LessonDetailPage";
 import { ProgressionPage } from "@/features/progression/ProgressionPage";
 import { ReviewSessionPage } from "@/features/reviews/ReviewSessionPage";
@@ -24,6 +25,7 @@ export function App() {
             <Route path="/categories/:categoryId" element={<CategoryDashboardPage />} />
             <Route path="/categories/:categoryId/browse" element={<CategoryBrowsePage />} />
             <Route path="/categories/:categoryId/lessons/:nodeId" element={<LessonDetailPage />} />
+            <Route path="/categories/:categoryId/groups/:nodeId" element={<GroupDetailPage />} />
             <Route path="/categories/:categoryId/review" element={<ReviewSessionPage />} />
             <Route path="/categories/:categoryId/progression" element={<ProgressionPage />} />
             <Route path="/settings" element={<SettingsPage />} />

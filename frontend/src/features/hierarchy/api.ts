@@ -20,9 +20,23 @@ export interface HierarchyNode {
   updated_at: string;
 }
 
+export interface FlatHierarchyNode {
+  id: string;
+  parent_id: string | null;
+  node_kind: NodeKind;
+  title: string;
+}
+
 export async function listChildren(categoryId: string, parentId: string | null): Promise<HierarchyNode[]> {
   const { data } = await api.get<HierarchyNode[]>("/hierarchy", {
     params: { category_id: categoryId, parent_id: parentId ?? undefined },
+  });
+  return data;
+}
+
+export async function listFlat(categoryId: string): Promise<FlatHierarchyNode[]> {
+  const { data } = await api.get<FlatHierarchyNode[]>("/hierarchy/flat", {
+    params: { category_id: categoryId },
   });
   return data;
 }
