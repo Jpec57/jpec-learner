@@ -15,6 +15,14 @@ class ReviewResult:
     current_level: int
 
 
+def _round_up_to_hour(dt: datetime) -> datetime:
+    """Reviews are only ever due exactly on the hour, so a whole batch of cards
+    unlocks together instead of trickling in one-by-one across a review
+    session."""
+    floor = dt.replace(minute=0, second=0, microsecond=0)
+    return floor if floor == dt else floor + timedelta(hours=1)
+
+
 def compute_level(interval_days: int) -> int:
     level = 1
     for i, threshold in enumerate(const.LEVEL_INTERVAL_THRESHOLDS, start=1):
@@ -67,6 +75,6 @@ def apply_review(
         repetitions=new_repetitions,
         ease_factor=round(new_ease, 2),
         interval_days=new_interval,
-        due_at=now + timedelta(days=new_interval),
+        due_at=_round_up_to_hour(now + timedelta(days=new_interval)),
         current_level=compute_level(new_interval),
     )

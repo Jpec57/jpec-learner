@@ -1,5 +1,6 @@
 import uuid
-from datetime import datetime, timezone
+from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -20,6 +21,7 @@ from app.schemas.review import (
     EnrollRequest,
     ReviewStateOut,
     SubmitReviewRequest,
+    UpcomingBucketOut,
 )
 from app.services.enrollment import ensure_review_state
 from app.services.srs import RATING_TO_QUALITY, apply_review
@@ -98,6 +100,8 @@ async def get_due(
                 lesson_node_id=None,
                 front_text=card.front_text,
                 back_text=card.back_text,
+                answer_mode=card.answer_mode,
+                accepted_answers=card.accepted_answers,
                 due_at=review_state.due_at,
                 current_level=review_state.current_level,
             )
@@ -118,6 +122,60 @@ async def get_due(
 
     items.sort(key=lambda item: item.due_at)
     return items[:limit]
+
+
+@router.get("/upcoming", response_model=list[UpcomingBucketOut])
+async def get_upcoming(
+    category_id: uuid.UUID,
+    hours: int = Query(24, ge=1, le=168),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Hour-bucketed counts of items becoming due over the next `hours` hours,
+    for the "upcoming reviews" bar graph. Already-overdue items are folded
+    into the current hour's bucket -- from the learner's perspective they're
+    simply due now, same as items that just unlocked this hour."""
+    now = datetime.now(timezone.utc)
+    horizon = now + timedelta(hours=hours)
+    current_hour = now.replace(minute=0, second=0, microsecond=0)
+    bucket = func.greatest(func.date_trunc("hour", ReviewState.due_at), current_hour)
+
+    card_query = (
+        select(bucket.label("hour"), func.count())
+        .select_from(ReviewState)
+        .join(Card, ReviewState.card_id == Card.id)
+        .where(
+            ReviewState.user_id == current_user.id,
+            ReviewState.due_at <= horizon,
+            Card.category_id == category_id,
+            Card.deleted_at.is_(None),
+        )
+        .group_by(bucket)
+    )
+    node_query = (
+        select(bucket.label("hour"), func.count())
+        .select_from(ReviewState)
+        .join(HierarchyNode, ReviewState.lesson_node_id == HierarchyNode.id)
+        .where(
+            ReviewState.user_id == current_user.id,
+            ReviewState.due_at <= horizon,
+            HierarchyNode.category_id == category_id,
+        )
+        .group_by(bucket)
+    )
+
+    counts: dict[datetime, int] = defaultdict(int)
+    for hour, count in (await db.execute(card_query)).all():
+        counts[hour] += count
+    for hour, count in (await db.execute(node_query)).all():
+        counts[hour] += count
+
+    buckets = []
+    cursor = current_hour
+    while cursor <= horizon:
+        buckets.append(UpcomingBucketOut(hour=cursor, count=counts.get(cursor, 0)))
+        cursor += timedelta(hours=1)
+    return buckets
 
 
 @router.post("/enroll", response_model=ReviewStateOut, status_code=status.HTTP_201_CREATED)

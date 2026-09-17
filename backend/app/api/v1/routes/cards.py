@@ -87,6 +87,21 @@ async def list_cards(
     return CardPageOut(items=[_to_out(c) for c in cards], total=total or 0)
 
 
+def _build_card(
+    payload: CardCreate, *, front_text: str, back_text: str, accepted_answers: list[str], owner_id: uuid.UUID
+) -> Card:
+    return Card(
+        category_id=payload.category_id,
+        lesson_node_id=payload.lesson_node_id,
+        owner_id=owner_id,
+        front_text=front_text,
+        back_text=back_text,
+        is_public=payload.is_public,
+        answer_mode=payload.answer_mode,
+        accepted_answers=accepted_answers,
+    )
+
+
 @router.post("", response_model=CardOut, status_code=status.HTTP_201_CREATED)
 async def create_card(
     payload: CardCreate,
@@ -102,17 +117,33 @@ async def create_card(
         if node is None or node.category_id != payload.category_id:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Node must belong to the same category")
 
-    card = Card(
-        category_id=payload.category_id,
-        lesson_node_id=payload.lesson_node_id,
-        owner_id=current_user.id,
+    card = _build_card(
+        payload,
         front_text=payload.front_text,
         back_text=payload.back_text,
-        is_public=payload.is_public,
+        accepted_answers=payload.accepted_answers,
+        owner_id=current_user.id,
     )
     db.add(card)
     await db.flush()
     await ensure_review_state(db, user_id=current_user.id, card_id=card.id)
+
+    if payload.create_reverse:
+        # The reverse direction starts with no extra accepted answers -- its
+        # only exact match is the original front_text (e.g. the kanji form),
+        # variants (kana readings, synonyms) get added later via PATCH as the
+        # learner hits them during typed review.
+        reverse = _build_card(
+            payload,
+            front_text=payload.back_text,
+            back_text=payload.front_text,
+            accepted_answers=[],
+            owner_id=current_user.id,
+        )
+        db.add(reverse)
+        await db.flush()
+        await ensure_review_state(db, user_id=current_user.id, card_id=reverse.id)
+
     await db.commit()
     await db.refresh(card, attribute_names=["images"])
     return _to_out(card)
@@ -146,6 +177,10 @@ async def update_card(
         card.back_text = payload.back_text
     if payload.is_public is not None:
         card.is_public = payload.is_public
+    if payload.answer_mode is not None:
+        card.answer_mode = payload.answer_mode
+    if payload.accepted_answers is not None:
+        card.accepted_answers = payload.accepted_answers
     if "lesson_node_id" in payload.model_fields_set:
         if payload.lesson_node_id is not None:
             node = await db.get(HierarchyNode, payload.lesson_node_id)

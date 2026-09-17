@@ -16,6 +16,17 @@ def test_first_review_good_sets_interval_to_one_day():
     assert result.due_at == NOW + timedelta(days=1)
 
 
+def test_due_at_rounds_up_to_the_next_hour():
+    misaligned = datetime(2026, 1, 1, 14, 23, 7, tzinfo=timezone.utc)
+    result = apply_review(rating=3, repetitions=0, ease_factor=2.5, interval_days=1, now=misaligned)
+    assert result.due_at == datetime(2026, 1, 2, 15, 0, 0, tzinfo=timezone.utc)
+
+
+def test_due_at_left_alone_when_already_on_the_hour():
+    result = apply_review(rating=3, repetitions=0, ease_factor=2.5, interval_days=0, now=NOW)
+    assert result.due_at == NOW + timedelta(days=1)
+
+
 def test_second_review_good_sets_interval_to_six_days():
     result = apply_review(rating=3, repetitions=1, ease_factor=2.5, interval_days=1, now=NOW)
     assert result.repetitions == 2

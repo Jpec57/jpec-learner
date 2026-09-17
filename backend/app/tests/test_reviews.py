@@ -128,6 +128,30 @@ async def test_enroll_in_public_card_is_explicit_and_isolated_per_user(client):
     assert denied_resp.status_code == 404
 
 
+async def test_upcoming_buckets_group_overdue_items_into_the_current_hour(client):
+    headers = await _register_and_login(client, "upcoming@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    ).json()["id"]
+    await client.post(
+        "/api/v1/cards",
+        json={"category_id": category_id, "front_text": "q", "back_text": "a"},
+        headers=headers,
+    )
+
+    resp = await client.get(
+        f"/api/v1/reviews/upcoming?category_id={category_id}&hours=6", headers=headers
+    )
+    assert resp.status_code == 200
+    buckets = resp.json()
+    assert len(buckets) == 7  # current hour plus the next 6
+
+    # A freshly auto-enrolled card is due immediately, so it lands in the
+    # first (current-hour) bucket, not spread across the horizon.
+    assert buckets[0]["count"] == 1
+    assert sum(b["count"] for b in buckets[1:]) == 0
+
+
 async def test_due_queue_can_be_filtered_by_content_type(client):
     headers = await _register_and_login(client, "type-filter@example.com")
     category_id = (

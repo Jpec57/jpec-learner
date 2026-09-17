@@ -1,8 +1,10 @@
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
+
+AnswerMode = Literal["reveal", "typed"]
 
 
 class CardCreate(BaseModel):
@@ -11,6 +13,12 @@ class CardCreate(BaseModel):
     front_text: str = Field(min_length=1)
     back_text: str = Field(min_length=1)
     is_public: bool = False
+    answer_mode: AnswerMode = "reveal"
+    accepted_answers: list[str] = []
+    # Create-only, not persisted on this row: also creates a second card with
+    # front/back swapped (e.g. "勉強" -> "benkyou" also creates "benkyou" -> "勉強"),
+    # each independently reviewable with its own SRS state.
+    create_reverse: bool = False
 
 
 class CardUpdate(BaseModel):
@@ -18,6 +26,8 @@ class CardUpdate(BaseModel):
     back_text: str | None = Field(default=None, min_length=1)
     is_public: bool | None = None
     lesson_node_id: uuid.UUID | None = None
+    answer_mode: AnswerMode | None = None
+    accepted_answers: list[str] | None = None
 
 
 class ImageOut(BaseModel):
@@ -53,6 +63,8 @@ class CardOut(BaseModel):
     front_text: str
     back_text: str
     is_public: bool
+    answer_mode: AnswerMode
+    accepted_answers: list[str]
     images: list[ImageOut] = []
     created_at: datetime
     updated_at: datetime

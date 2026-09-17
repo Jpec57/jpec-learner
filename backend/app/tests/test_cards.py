@@ -112,6 +112,52 @@ async def test_cards_can_be_searched_and_paginated(client):
     assert all("Question" in c["front_text"] for c in search_result["items"])
 
 
+async def test_typed_card_with_reverse_and_accepted_answers(client):
+    owner_headers = await _register_and_login(client, "card-typed-owner@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Japanese"}, headers=owner_headers)
+    ).json()["id"]
+
+    create_resp = await client.post(
+        "/api/v1/cards",
+        json={
+            "category_id": category_id,
+            "front_text": "勉強",
+            "back_text": "benkyou",
+            "answer_mode": "typed",
+            "accepted_answers": ["benkyō"],
+            "create_reverse": True,
+        },
+        headers=owner_headers,
+    )
+    assert create_resp.status_code == 201
+    forward = create_resp.json()
+    assert forward["front_text"] == "勉強"
+    assert forward["answer_mode"] == "typed"
+    assert forward["accepted_answers"] == ["benkyō"]
+
+    page_resp = await client.get(
+        "/api/v1/cards", params={"category_id": category_id}, headers=owner_headers
+    )
+    cards = page_resp.json()["items"]
+    assert len(cards) == 2
+    reverse = next(c for c in cards if c["id"] != forward["id"])
+    assert reverse["front_text"] == "benkyou"
+    assert reverse["back_text"] == "勉強"
+    assert reverse["answer_mode"] == "typed"
+    assert reverse["accepted_answers"] == []
+
+    # A learner's own valid-but-unlisted answer (e.g. a kana reading) can be
+    # appended after the fact via PATCH.
+    patch_resp = await client.patch(
+        f"/api/v1/cards/{forward['id']}",
+        json={"accepted_answers": ["benkyō", "べんきょう"]},
+        headers=owner_headers,
+    )
+    assert patch_resp.status_code == 200
+    assert patch_resp.json()["accepted_answers"] == ["benkyō", "べんきょう"]
+
+
 async def test_image_upload_exif_and_ownership(client):
     owner_headers = await _register_and_login(client, "img-owner@example.com")
     other_headers = await _register_and_login(client, "img-other@example.com")

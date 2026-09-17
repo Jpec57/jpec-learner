@@ -47,12 +47,19 @@ class DueItemOut(BaseModel):
     back_text: str | None = None
     title: str | None = None
     body_markdown: str | None = None
+    answer_mode: Literal["reveal", "typed"] = "reveal"
+    accepted_answers: list[str] = []
     due_at: datetime
     current_level: int
 
 
 class DueCountOut(BaseModel):
     total_due: int
+
+
+class UpcomingBucketOut(BaseModel):
+    hour: datetime
+    count: int
 
 
 class LevelDefinitionOut(BaseModel):
