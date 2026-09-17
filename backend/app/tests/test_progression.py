@@ -69,13 +69,19 @@ async def test_theme_rollup_and_category_totals(client):
     assert progression["total_due"] == 3
     assert progression["streak_days"] == 0  # no reviews submitted yet
 
-    assert len(progression["themes"]) == 1
-    theme = progression["themes"][0]
-    assert theme["node_id"] == analysis["id"]
+    # The standalone card has no lesson_node_id of its own -- it lands in the
+    # auto-created "Unclassified" bucket, which is why it now shows up as its
+    # own theme rather than being invisible to progression tracking.
+    assert len(progression["themes"]) == 2
+    theme = next(t for t in progression["themes"] if t["node_id"] == analysis["id"])
     # The theme subtree covers the lesson node itself plus the card attached to it (not the standalone card).
     assert theme["total_items"] == 2
     assert theme["due_count"] == 2
     assert theme["avg_level"] == 1.0
+
+    unclassified_theme = next(t for t in progression["themes"] if t["title"] == "Unclassified")
+    assert unclassified_theme["total_items"] == 1
+    assert unclassified_theme["due_count"] == 1
 
     # Review the in-theme card with a strong rating; the theme's avg level should rise
     # while the standalone card (outside any theme) is untouched.
@@ -87,11 +93,56 @@ async def test_theme_rollup_and_category_totals(client):
     progression_after = (
         await client.get(f"/api/v1/progression/categories/{category_id}", headers=headers)
     ).json()
-    theme_after = progression_after["themes"][0]
+    theme_after = next(t for t in progression_after["themes"] if t["node_id"] == analysis["id"])
     assert theme_after["due_count"] == 1  # the lesson node is still due, the card isn't anymore
     assert theme_after["total_items"] == 2
     assert progression_after["streak_days"] == 1
     assert progression_after["total_due"] == 2  # lesson + standalone card still due
+
+    # level_distribution is zero-filled for all 10 levels; the reviewed card
+    # moved from level 1 to level 2 (SM-2 "Good" on a first review -> repetitions=1).
+    distribution = {row["level"]: row["count"] for row in progression_after["level_distribution"]}
+    assert len(distribution) == 10
+    assert distribution[2] == 1
+    assert distribution[1] == 2  # lesson node + standalone card, still untouched
+
+
+async def test_node_progression_endpoint_works_for_any_node_not_just_roots(client):
+    headers = await _register_and_login(client, "node-prog@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    ).json()["id"]
+    analysis = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={"category_id": category_id, "node_kind": "group", "title": "Analysis"},
+            headers=headers,
+        )
+    ).json()
+    subgroup = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={
+                "category_id": category_id,
+                "parent_id": analysis["id"],
+                "node_kind": "group",
+                "title": "Limits",
+            },
+            headers=headers,
+        )
+    ).json()
+    await client.post(
+        "/api/v1/cards",
+        json={"category_id": category_id, "lesson_node_id": subgroup["id"], "front_text": "q", "back_text": "a"},
+        headers=headers,
+    )
+
+    resp = await client.get(f"/api/v1/progression/nodes/{subgroup['id']}", headers=headers)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["node_id"] == subgroup["id"]
+    assert body["title"] == "Limits"
+    assert body["total_items"] == 1
 
 
 async def test_progression_visibility_denied_for_private_category(client):

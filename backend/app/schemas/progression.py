@@ -11,9 +11,15 @@ class ThemeProgressOut(BaseModel):
     due_count: int
 
 
+class LevelCountOut(BaseModel):
+    level: int
+    count: int
+
+
 class ProgressionOut(BaseModel):
     category_id: uuid.UUID
     streak_days: int
     total_items: int
     total_due: int
     themes: list[ThemeProgressOut]
+    level_distribution: list[LevelCountOut]

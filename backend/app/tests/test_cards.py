@@ -65,6 +65,52 @@ async def test_card_crud_and_visibility(client):
     assert gone_resp.status_code == 404
 
 
+async def test_card_without_a_node_falls_back_to_unclassified(client):
+    headers = await _register_and_login(client, "card-unclassified@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    ).json()["id"]
+
+    first = (
+        await client.post(
+            "/api/v1/cards",
+            json={"category_id": category_id, "front_text": "q1", "back_text": "a1"},
+            headers=headers,
+        )
+    ).json()
+    second = (
+        await client.post(
+            "/api/v1/cards",
+            json={"category_id": category_id, "front_text": "q2", "back_text": "a2"},
+            headers=headers,
+        )
+    ).json()
+
+    # Every card lands on the SAME reserved node -- not a fresh one each time.
+    assert first["lesson_node_id"] is not None
+    assert first["lesson_node_id"] == second["lesson_node_id"]
+
+    node_resp = await client.get(f"/api/v1/hierarchy/{first['lesson_node_id']}", headers=headers)
+    assert node_resp.json()["title"] == "Unclassified"
+
+    # Explicitly clearing a card's node (PATCH with lesson_node_id: null) also
+    # resolves back to the same reserved node, not a bare NULL.
+    group = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={"category_id": category_id, "node_kind": "group", "title": "Some group"},
+            headers=headers,
+        )
+    ).json()
+    await client.patch(
+        f"/api/v1/cards/{first['id']}", json={"lesson_node_id": group["id"]}, headers=headers
+    )
+    cleared_resp = await client.patch(
+        f"/api/v1/cards/{first['id']}", json={"lesson_node_id": None}, headers=headers
+    )
+    assert cleared_resp.json()["lesson_node_id"] == first["lesson_node_id"]
+
+
 async def test_cards_can_be_searched_and_paginated(client):
     owner_headers = await _register_and_login(client, "card-search-owner@example.com")
     category_id = (

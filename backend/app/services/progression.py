@@ -39,6 +39,18 @@ _CATEGORY_TOTALS_SQL = text(
     """
 )
 
+_LEVEL_DISTRIBUTION_SQL = text(
+    """
+    SELECT rs.current_level AS level, COUNT(*) AS count
+    FROM review_states rs
+    LEFT JOIN cards c ON c.id = rs.card_id
+    LEFT JOIN hierarchy_nodes hn ON hn.id = rs.lesson_node_id
+    WHERE rs.user_id = :user_id
+      AND (c.category_id = :category_id OR hn.category_id = :category_id)
+    GROUP BY rs.current_level
+    """
+)
+
 
 async def theme_rollup(
     db: AsyncSession, *, user_id: uuid.UUID, root_node_id: uuid.UUID, root_path: str
@@ -59,6 +71,17 @@ async def category_totals(db: AsyncSession, *, user_id: uuid.UUID, category_id: 
         await db.execute(_CATEGORY_TOTALS_SQL, {"user_id": user_id, "category_id": category_id})
     ).one()
     return {"total_items": row.total_items, "total_due": row.total_due}
+
+
+MAX_LEVEL = 10
+
+
+async def level_distribution(db: AsyncSession, *, user_id: uuid.UUID, category_id: uuid.UUID) -> list[dict]:
+    """Count of tracked items at each SRS level (1-10), zero-filled so the
+    frontend can render a full mastery breakdown without gap-filling itself."""
+    rows = await db.execute(_LEVEL_DISTRIBUTION_SQL, {"user_id": user_id, "category_id": category_id})
+    counts = {row.level: row.count for row in rows.all()}
+    return [{"level": level, "count": counts.get(level, 0)} for level in range(1, MAX_LEVEL + 1)]
 
 
 async def compute_streak(db: AsyncSession, *, user_id: uuid.UUID) -> int:

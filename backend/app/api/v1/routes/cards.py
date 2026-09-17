@@ -17,6 +17,7 @@ from app.models.hierarchy import HierarchyNode
 from app.models.user import User
 from app.schemas.card import CardCreate, CardOut, CardPageOut, CardUpdate
 from app.services.enrollment import ensure_review_state
+from app.services.hierarchy import get_or_create_unclassified_node
 
 router = APIRouter(prefix="/cards", tags=["cards"])
 
@@ -94,11 +95,12 @@ def _build_card(
     back_text: str,
     accepted_answers: list[str],
     answer_language: str | None,
+    lesson_node_id: uuid.UUID,
     owner_id: uuid.UUID,
 ) -> Card:
     return Card(
         category_id=payload.category_id,
-        lesson_node_id=payload.lesson_node_id,
+        lesson_node_id=lesson_node_id,
         owner_id=owner_id,
         front_text=front_text,
         back_text=back_text,
@@ -124,6 +126,15 @@ async def create_card(
         node = await db.get(HierarchyNode, payload.lesson_node_id)
         if node is None or node.category_id != payload.category_id:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Node must belong to the same category")
+        lesson_node_id = payload.lesson_node_id
+    else:
+        # No specific lesson/group chosen -- every card belongs to a real
+        # node, so it falls back to the category's reserved "Unclassified"
+        # bucket rather than being untethered (lesson_node_id=NULL).
+        unclassified = await get_or_create_unclassified_node(
+            db, category_id=payload.category_id, owner_id=current_user.id
+        )
+        lesson_node_id = unclassified.id
 
     card = _build_card(
         payload,
@@ -131,6 +142,7 @@ async def create_card(
         back_text=payload.back_text,
         accepted_answers=payload.accepted_answers,
         answer_language=payload.answer_language,
+        lesson_node_id=lesson_node_id,
         owner_id=current_user.id,
     )
     db.add(card)
@@ -150,6 +162,7 @@ async def create_card(
             back_text=payload.front_text,
             accepted_answers=[],
             answer_language=payload.reverse_answer_language,
+            lesson_node_id=lesson_node_id,
             owner_id=current_user.id,
         )
         db.add(reverse)
@@ -202,7 +215,12 @@ async def update_card(
             node = await db.get(HierarchyNode, payload.lesson_node_id)
             if node is None or node.category_id != card.category_id:
                 raise HTTPException(status.HTTP_400_BAD_REQUEST, "Node must belong to the same category")
-        card.lesson_node_id = payload.lesson_node_id
+            card.lesson_node_id = payload.lesson_node_id
+        else:
+            unclassified = await get_or_create_unclassified_node(
+                db, category_id=card.category_id, owner_id=card.owner_id
+            )
+            card.lesson_node_id = unclassified.id
 
     await db.commit()
     await db.refresh(card, attribute_names=["images"])

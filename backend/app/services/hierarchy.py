@@ -1,9 +1,9 @@
 import uuid
 
-from sqlalchemy import text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.hierarchy import HierarchyNode
+from app.models.hierarchy import UNCLASSIFIED_NODE_TITLE, HierarchyNode
 
 
 def label_for(node_id: uuid.UUID) -> str:
@@ -58,3 +58,42 @@ async def reparent_subtree(
         node.path = new_path
 
     node.parent_id = new_parent_id
+
+
+async def get_or_create_unclassified_node(
+    db: AsyncSession, *, category_id: uuid.UUID, owner_id: uuid.UUID
+) -> HierarchyNode:
+    """Get-or-create the reserved root group that cards attach to when the
+    learner doesn't pick a specific lesson/group -- so every card always
+    belongs to a real, browsable hierarchy node instead of being an
+    untethered "independent card". Title is reserved: see
+    UNCLASSIFIED_NODE_TITLE and its validation in the hierarchy routes."""
+    existing = await db.scalar(
+        select(HierarchyNode).where(
+            HierarchyNode.category_id == category_id,
+            HierarchyNode.parent_id.is_(None),
+            HierarchyNode.title == UNCLASSIFIED_NODE_TITLE,
+        )
+    )
+    if existing is not None:
+        return existing
+
+    order_index = await db.scalar(
+        select(func.coalesce(func.max(HierarchyNode.order_index), -1) + 1).where(
+            HierarchyNode.category_id == category_id, HierarchyNode.parent_id.is_(None)
+        )
+    )
+    node = HierarchyNode(
+        category_id=category_id,
+        parent_id=None,
+        path="",
+        node_kind="group",
+        title=UNCLASSIFIED_NODE_TITLE,
+        order_index=order_index,
+        owner_id=owner_id,
+    )
+    node.id = uuid.uuid4()
+    node.path = child_path(None, node.id)
+    db.add(node)
+    await db.flush()
+    return node

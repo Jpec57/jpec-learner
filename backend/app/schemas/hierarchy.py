@@ -37,6 +37,19 @@ class HierarchyNodeUpdate(BaseModel):
     body_markdown: str | None = None
 
 
+class HierarchyNodeFlatOut(BaseModel):
+    """Lightweight shape for populating a "move this card/node to..." picker
+    across the whole category, without the per-node children/images payload
+    HierarchyNodeOut carries."""
+
+    id: uuid.UUID
+    parent_id: uuid.UUID | None
+    node_kind: NodeKind
+    title: str
+
+    model_config = {"from_attributes": True}
+
+
 class HierarchyNodeMove(BaseModel):
     new_parent_id: uuid.UUID | None = None
     new_order_index: int | None = None

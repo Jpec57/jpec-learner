@@ -13,6 +13,11 @@ from app.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
 # this specific constraint violation (see api/v1/routes/hierarchy.py).
 SIBLING_TITLE_UNIQUE_CONSTRAINT = "uq_hierarchy_nodes_sibling_title"
 
+# Reserved title for the auto-created root group that cards attach to when no
+# specific lesson/group is chosen (see services/hierarchy.get_or_create_unclassified_node).
+# Blocked from user-driven create/rename at the root level only -- see hierarchy routes.
+UNCLASSIFIED_NODE_TITLE = "Unclassified"
+
 
 class HierarchyNode(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "hierarchy_nodes"

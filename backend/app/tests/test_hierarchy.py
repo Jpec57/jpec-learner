@@ -191,3 +191,64 @@ async def test_sibling_titles_must_be_unique(client):
         f"/api/v1/hierarchy/{third['id']}/move", json={"new_parent_id": None}, headers=headers
     )
     assert move_conflict_resp.status_code == 409
+
+
+async def test_unclassified_title_is_reserved_at_root_only(client):
+    headers = await _register_and_login(client, "unclassified@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    ).json()["id"]
+
+    create_resp = await client.post(
+        "/api/v1/hierarchy",
+        json={"category_id": category_id, "node_kind": "group", "title": "Unclassified"},
+        headers=headers,
+    )
+    assert create_resp.status_code == 400
+
+    # Case-insensitive, and matches the system-created node too (see cards.py
+    # resolving lesson_node_id=None) -- renaming into collision is rejected.
+    group = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={"category_id": category_id, "node_kind": "group", "title": "Vocab"},
+            headers=headers,
+        )
+    ).json()
+    rename_resp = await client.patch(
+        f"/api/v1/hierarchy/{group['id']}", json={"title": "unclassified"}, headers=headers
+    )
+    assert rename_resp.status_code == 400
+
+    # Nested (non-root) nodes may use the name freely -- the reservation only
+    # matters where get_or_create_unclassified_node actually looks.
+    nested_resp = await client.post(
+        "/api/v1/hierarchy",
+        json={"category_id": category_id, "parent_id": group["id"], "node_kind": "group", "title": "Unclassified"},
+        headers=headers,
+    )
+    assert nested_resp.status_code == 201
+
+
+async def test_hierarchy_flat_lists_every_node_in_category(client):
+    headers = await _register_and_login(client, "flat@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    ).json()["id"]
+    group = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={"category_id": category_id, "node_kind": "group", "title": "Analysis"},
+            headers=headers,
+        )
+    ).json()
+    await client.post(
+        "/api/v1/hierarchy",
+        json={"category_id": category_id, "parent_id": group["id"], "node_kind": "lesson", "title": "Limits"},
+        headers=headers,
+    )
+
+    flat_resp = await client.get(f"/api/v1/hierarchy/flat?category_id={category_id}", headers=headers)
+    assert flat_resp.status_code == 200
+    titles = {node["title"] for node in flat_resp.json()}
+    assert titles == {"Analysis", "Limits"}
