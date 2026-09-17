@@ -15,6 +15,10 @@ class Category(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     slug: Mapped[str] = mapped_column(String(80), unique=True, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     icon: Mapped[str | None] = mapped_column(String(80))
+    # Hex color (e.g. "#8b5cf6") driving both the deck's retinted accent
+    # (frontend derives light/dark variants from this single value) and its
+    # optional background gradient. Null means "use the app's default theme".
+    theme_color: Mapped[str | None] = mapped_column(String(7))
     owner_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )

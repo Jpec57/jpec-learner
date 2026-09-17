@@ -55,6 +55,17 @@ class HierarchyNodeMove(BaseModel):
     new_order_index: int | None = None
 
 
+class AncestorOut(BaseModel):
+    id: uuid.UUID
+    title: str
+
+
+class ChildCountsOut(BaseModel):
+    groups: int = 0
+    lessons: int = 0
+    cards: int = 0
+
+
 class HierarchyNodeOut(BaseModel):
     id: uuid.UUID
     category_id: uuid.UUID
@@ -66,6 +77,8 @@ class HierarchyNodeOut(BaseModel):
     owner_id: uuid.UUID
     is_public: bool
     has_children: bool = False
+    child_counts: ChildCountsOut = ChildCountsOut()
+    ancestors: list[AncestorOut] = []
     body_markdown: str | None = None
     images: list[ImageOut] = []
     created_at: datetime

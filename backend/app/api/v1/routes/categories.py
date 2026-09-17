@@ -70,6 +70,7 @@ async def create_category(
         icon=payload.icon,
         owner_id=current_user.id,
         is_public=payload.is_public,
+        theme_color=payload.theme_color,
     )
     db.add(category)
     await db.commit()
@@ -106,6 +107,8 @@ async def update_category(
         category.icon = payload.icon
     if payload.is_public is not None:
         category.is_public = payload.is_public
+    if "theme_color" in payload.model_fields_set:
+        category.theme_color = payload.theme_color
 
     await db.commit()
     await db.refresh(category)

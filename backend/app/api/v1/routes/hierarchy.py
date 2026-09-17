@@ -10,10 +10,13 @@ from sqlalchemy.orm import selectinload
 from app.core.deps import get_current_user
 from app.core.permissions import assert_owner, assert_visible
 from app.db.base import get_db
+from app.models.card import Card
 from app.models.category import Category
 from app.models.hierarchy import SIBLING_TITLE_UNIQUE_CONSTRAINT, UNCLASSIFIED_NODE_TITLE, HierarchyNode, Lesson
 from app.models.user import User
 from app.schemas.hierarchy import (
+    AncestorOut,
+    ChildCountsOut,
     HierarchyNodeCreate,
     HierarchyNodeFlatOut,
     HierarchyNodeMove,
@@ -88,21 +91,54 @@ async def _with_has_children(db: AsyncSession, nodes: list[HierarchyNode]) -> li
     if not nodes:
         return []
     ids = [n.id for n in nodes]
-    result = await db.execute(
-        select(HierarchyNode.parent_id)
+
+    child_kind_rows = await db.execute(
+        select(HierarchyNode.parent_id, HierarchyNode.node_kind, func.count())
         .where(HierarchyNode.parent_id.in_(ids))
-        .distinct()
+        .group_by(HierarchyNode.parent_id, HierarchyNode.node_kind)
     )
-    parents_with_children = {row[0] for row in result.all()}
+    counts_by_parent: dict[uuid.UUID, ChildCountsOut] = {}
+    for parent_id, node_kind, count in child_kind_rows.all():
+        counts = counts_by_parent.setdefault(parent_id, ChildCountsOut())
+        if node_kind == "group":
+            counts.groups = count
+        else:
+            counts.lessons = count
+
+    card_count_rows = await db.execute(
+        select(Card.lesson_node_id, func.count())
+        .where(Card.lesson_node_id.in_(ids), Card.deleted_at.is_(None))
+        .group_by(Card.lesson_node_id)
+    )
+    for node_id, count in card_count_rows.all():
+        counts_by_parent.setdefault(node_id, ChildCountsOut()).cards = count
 
     out = []
     for node in nodes:
         item = HierarchyNodeOut.model_validate(node)
-        item.has_children = node.id in parents_with_children
+        node_counts = counts_by_parent.get(node.id, ChildCountsOut())
+        item.has_children = node_counts.groups > 0 or node_counts.lessons > 0
+        item.child_counts = node_counts
         if node.lesson is not None:
             item.body_markdown = node.lesson.body_markdown
         out.append(item)
     return out
+
+
+def _labels_to_uuids(path: str) -> list[uuid.UUID]:
+    return [uuid.UUID(hex=label) for label in path.split(".")]
+
+
+async def _ancestors_for(db: AsyncSession, node: HierarchyNode) -> list[AncestorOut]:
+    """Derived from the ltree path (dot-separated hex UUID labels, see
+    services/hierarchy.child_path) rather than walking parent_id repeatedly --
+    one query regardless of depth."""
+    ancestor_ids = _labels_to_uuids(node.path)[:-1]
+    if not ancestor_ids:
+        return []
+    rows = await db.execute(select(HierarchyNode.id, HierarchyNode.title).where(HierarchyNode.id.in_(ancestor_ids)))
+    titles_by_id = {row.id: row.title for row in rows.all()}
+    return [AncestorOut(id=aid, title=titles_by_id[aid]) for aid in ancestor_ids if aid in titles_by_id]
 
 
 @router.get("", response_model=list[HierarchyNodeOut])
@@ -159,6 +195,7 @@ async def get_node(
     node = await _get_node_or_404(db, node_id)
     assert_visible(node, current_user.id)
     out = (await _with_has_children(db, [node]))[0]
+    out.ancestors = await _ancestors_for(db, node)
     return out
 
 

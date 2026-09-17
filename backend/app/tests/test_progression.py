@@ -187,3 +187,29 @@ async def test_categories_list_includes_per_category_due_count(client):
 
     detail_resp = await client.get(f"/api/v1/categories/{maths_id}", headers=headers)
     assert detail_resp.json()["due_count"] == 2
+
+
+async def test_category_theme_color_can_be_set_updated_and_cleared(client):
+    headers = await _register_and_login(client, "theme-color@example.com")
+
+    create_resp = await client.post(
+        "/api/v1/categories", json={"name": "Japanese", "theme_color": "#8b5cf6"}, headers=headers
+    )
+    assert create_resp.status_code == 201
+    category = create_resp.json()
+    assert category["theme_color"] == "#8b5cf6"
+
+    invalid_resp = await client.post(
+        "/api/v1/categories", json={"name": "Bad", "theme_color": "not-a-color"}, headers=headers
+    )
+    assert invalid_resp.status_code == 422
+
+    update_resp = await client.patch(
+        f"/api/v1/categories/{category['id']}", json={"theme_color": "#22c55e"}, headers=headers
+    )
+    assert update_resp.json()["theme_color"] == "#22c55e"
+
+    clear_resp = await client.patch(
+        f"/api/v1/categories/{category['id']}", json={"theme_color": None}, headers=headers
+    )
+    assert clear_resp.json()["theme_color"] is None

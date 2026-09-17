@@ -252,3 +252,64 @@ async def test_hierarchy_flat_lists_every_node_in_category(client):
     assert flat_resp.status_code == 200
     titles = {node["title"] for node in flat_resp.json()}
     assert titles == {"Analysis", "Limits"}
+
+
+async def test_node_detail_includes_ancestors_and_child_counts(client):
+    headers = await _register_and_login(client, "ancestors@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    ).json()["id"]
+
+    analysis = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={"category_id": category_id, "node_kind": "group", "title": "Analysis"},
+            headers=headers,
+        )
+    ).json()
+    limits = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={
+                "category_id": category_id,
+                "parent_id": analysis["id"],
+                "node_kind": "group",
+                "title": "Limits",
+            },
+            headers=headers,
+        )
+    ).json()
+    lesson = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={
+                "category_id": category_id,
+                "parent_id": limits["id"],
+                "node_kind": "lesson",
+                "title": "Epsilon-delta",
+            },
+            headers=headers,
+        )
+    ).json()
+    await client.post(
+        "/api/v1/cards",
+        json={"category_id": category_id, "lesson_node_id": limits["id"], "front_text": "q", "back_text": "a"},
+        headers=headers,
+    )
+
+    # The root has one child group and no ancestors.
+    analysis_resp = (await client.get(f"/api/v1/hierarchy/{analysis['id']}", headers=headers)).json()
+    assert analysis_resp["ancestors"] == []
+    assert analysis_resp["child_counts"] == {"groups": 1, "lessons": 0, "cards": 0}
+    assert analysis_resp["has_children"] is True
+
+    # Limits has one lesson child, one card directly on it, and Analysis as its only ancestor.
+    limits_resp = (await client.get(f"/api/v1/hierarchy/{limits['id']}", headers=headers)).json()
+    assert [a["title"] for a in limits_resp["ancestors"]] == ["Analysis"]
+    assert limits_resp["child_counts"] == {"groups": 0, "lessons": 1, "cards": 1}
+
+    # The lesson has no children of its own but two ancestors, in root-to-leaf order.
+    lesson_resp = (await client.get(f"/api/v1/hierarchy/{lesson['id']}", headers=headers)).json()
+    assert [a["title"] for a in lesson_resp["ancestors"]] == ["Analysis", "Limits"]
+    assert lesson_resp["child_counts"] == {"groups": 0, "lessons": 0, "cards": 0}
+    assert lesson_resp["has_children"] is False
