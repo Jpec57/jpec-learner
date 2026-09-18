@@ -30,6 +30,7 @@ export async function listCards(input: {
   lessonNodeId?: string | null;
   owner?: "me" | "public";
   search?: string;
+  answerLanguage?: string;
   limit?: number;
   offset?: number;
 }): Promise<CardPage> {
@@ -39,6 +40,7 @@ export async function listCards(input: {
       lesson_node_id: input.lessonNodeId ?? undefined,
       owner: input.owner ?? "me",
       search: input.search || undefined,
+      answer_language: input.answerLanguage || undefined,
       limit: input.limit,
       offset: input.offset,
     },

@@ -54,6 +54,28 @@ export async function listFlat(categoryId: string): Promise<FlatHierarchyNode[]>
   return data;
 }
 
+export interface HierarchyNodePage {
+  items: HierarchyNode[];
+  total: number;
+}
+
+export async function searchLessons(input: {
+  categoryId: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<HierarchyNodePage> {
+  const { data } = await api.get<HierarchyNodePage>("/hierarchy/search", {
+    params: {
+      category_id: input.categoryId,
+      search: input.search || undefined,
+      limit: input.limit,
+      offset: input.offset,
+    },
+  });
+  return data;
+}
+
 export async function getNode(id: string): Promise<HierarchyNode> {
   const { data } = await api.get<HierarchyNode>(`/hierarchy/${id}`);
   return data;

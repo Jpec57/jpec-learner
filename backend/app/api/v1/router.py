@@ -1,12 +1,14 @@
 from fastapi import APIRouter
 
 from app.api.v1.routes import (
+    assistant,
     auth,
     cards,
     categories,
     hierarchy,
     images,
     notifications,
+    ocr,
     progression,
     reviews,
 )
@@ -20,3 +22,5 @@ api_router.include_router(images.router)
 api_router.include_router(reviews.router)
 api_router.include_router(progression.router)
 api_router.include_router(notifications.router)
+api_router.include_router(assistant.router)
+api_router.include_router(ocr.router)

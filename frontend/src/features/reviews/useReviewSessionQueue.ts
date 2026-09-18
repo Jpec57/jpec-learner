@@ -27,13 +27,21 @@ function requeueRandomly<T>(remaining: T[], item: T): T[] {
 /**
  * Owns the in-session review queue, independent from the server's due list:
  * a failing rating (< "Good") keeps the item in this session, reappearing
- * later at a random position, until it's rated "Good" or better. Passing
- * items just leave the queue. Server-side SRS scheduling (interval/due_at)
- * is unaffected -- that still happens on every submit via the normal API call,
- * this only controls what the *current session* shows next.
+ * later at a random position, until it's confirmed OK. Passing items just
+ * leave the queue. Server-side SRS scheduling (interval/due_at) is
+ * unaffected by the requeue itself -- that happens on every real submit via
+ * the normal API call, this only controls what the *current session* shows
+ * next.
+ *
+ * Once an item has failed once this session, its retry can only ever be
+ * "OK" (confirmRetry, no further API call -- the earlier failing submit
+ * already set the real SRS state) or "Not OK" (another failing submit,
+ * still handled by submitResult). Either way it can never level up further
+ * within the same session -- see failedIds and srs.py's own level cap.
  */
 export function useReviewSessionQueue(fetchedItems: DueItem[] | undefined) {
   const [queue, setQueue] = useState<DueItem[]>([]);
+  const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
   const [sessionAttempts, setSessionAttempts] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [incorrectCount, setIncorrectCount] = useState(0);
@@ -41,6 +49,7 @@ export function useReviewSessionQueue(fetchedItems: DueItem[] | undefined) {
   useEffect(() => {
     if (fetchedItems) {
       setQueue(shuffled(fetchedItems));
+      setFailedIds(new Set());
       setSessionAttempts(0);
       setCorrectCount(0);
       setIncorrectCount(0);
@@ -58,8 +67,21 @@ export function useReviewSessionQueue(fetchedItems: DueItem[] | undefined) {
     setQueue((current) => {
       const [current_item, ...rest] = current;
       if (!current_item) return current;
-      return passed ? rest : requeueRandomly(rest, current_item);
+      if (!passed) {
+        setFailedIds((prev) => new Set(prev).add(current_item.review_state_id));
+        return requeueRandomly(rest, current_item);
+      }
+      return rest;
     });
+  }
+
+  /** The "OK" outcome on a forced redo after a fail: leaves the session
+   * queue without a further backend submission -- the earlier failing
+   * submitResult already recorded the real SRS state (and its capped
+   * level), so this confirmation is for the learner's benefit only. */
+  function confirmRetry() {
+    setCorrectCount((n) => n + 1);
+    setQueue((current) => current.slice(1));
   }
 
   function updateCurrentItem(patch: Partial<DueItem>) {
@@ -68,13 +90,17 @@ export function useReviewSessionQueue(fetchedItems: DueItem[] | undefined) {
     );
   }
 
+  const currentItem = queue[0] as DueItem | undefined;
+
   return {
-    currentItem: queue[0] as DueItem | undefined,
+    currentItem,
     remainingCount: queue.length,
+    hasFailedThisSession: !!currentItem && failedIds.has(currentItem.review_state_id),
     sessionAttempts,
     correctCount,
     incorrectCount,
     submitResult,
+    confirmRetry,
     updateCurrentItem,
   };
 }

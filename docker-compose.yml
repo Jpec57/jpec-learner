@@ -21,9 +21,6 @@ services:
       context: ./backend
       dockerfile: Dockerfile.dev
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
     volumes:
       - ./backend:/app
       - images_data:/data/images
@@ -37,6 +34,36 @@ services:
       REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-30}
       IMAGE_STORAGE_PATH: ${IMAGE_STORAGE_PATH:-/data/images}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      OCR_SERVICE_URL: ${OCR_SERVICE_URL:-http://ocr:8090}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_BUCKET_NAME: ${R2_BUCKET_NAME:-jpeclearner-ocr-scans}
+    depends_on:
+      db:
+        condition: service_healthy
+      ocr:
+        condition: service_started
+
+  ocr:
+    build:
+      context: ./ocr_service
+    restart: unless-stopped
+    # Deliberately capped: this runs on a memory/CPU-constrained VPS, not a
+    # workstation, so the lightweight PP-OCR/PP-FormulaNet + manga-ocr models
+    # (see ocr_service/main.py) are chosen to fit well under this -- measured
+    # ~1.3-1.6GB working set across both models plus a real inference request
+    # in each mode. Raise it if you size up the models later; it exists so a
+    # runaway OCR request can't take down Postgres/backend on the same box.
+    mem_limit: 2000m
+    volumes:
+      # manga-ocr's weights (via Hugging Face transformers) live under
+      # ~/.cache/huggingface; PP-StructureV3's own pipeline models (PP-OCRv5,
+      # PP-FormulaNet, PP-DocLayout) are cached under ~/.paddlex instead --
+      # both need to persist across restarts so models aren't re-downloaded
+      # every time the container recreates.
+      - ocr_hf_cache:/root/.cache/huggingface
+      - ocr_paddlex_cache:/root/.paddlex
 
   frontend:
     build:
@@ -65,3 +92,5 @@ volumes:
   pgdata:
   images_data:
   frontend_node_modules:
+  ocr_hf_cache:
+  ocr_paddlex_cache:

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { CardListSection } from "@/features/cards/CardListSection";
@@ -9,12 +9,17 @@ import { getCategory } from "@/features/categories/api";
 import { getNode, updateNode } from "@/features/hierarchy/api";
 import { NodeBreadcrumb } from "@/features/hierarchy/NodeBreadcrumb";
 import { ImageUploadInput } from "@/features/images/ImageUploadInput";
+import { linkOcrScan } from "@/features/ocr/api";
+import { OcrCaptureButton } from "@/features/ocr/OcrCaptureButton";
+import { ScannedFromThumbnails } from "@/features/ocr/ScannedFromThumbnails";
 
 type EditorView = "edit" | "preview";
 
 export function LessonDetailPage() {
   const { t } = useTranslation(["hierarchy", "common"]);
   const { categoryId, nodeId } = useParams<{ categoryId: string; nodeId: string }>();
+  const [searchParams] = useSearchParams();
+  const cardQuery = searchParams.get("cardQuery") ?? undefined;
   const queryClient = useQueryClient();
   const [body, setBody] = useState<string | null>(null);
   const [view, setView] = useState<EditorView>("edit");
@@ -54,6 +59,17 @@ export function LessonDetailPage() {
 
       <section className="mt-6">
         <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">{t("lesson.content")}</h2>
+
+        <div className="mt-2">
+          <OcrCaptureButton
+            onResult={(result) => {
+              setBody(currentBody ? `${currentBody}\n\n${result.text}` : result.text);
+              linkOcrScan(result.scanId, { lesson_node_id: nodeId }).then(() =>
+                queryClient.invalidateQueries({ queryKey: ["ocrScans", "lesson", nodeId] })
+              );
+            }}
+          />
+        </div>
 
         <div className="mt-2 flex gap-1 lg:hidden">
           <button
@@ -116,6 +132,7 @@ export function LessonDetailPage() {
             target={{ lesson_node_id: nodeId }}
             onChange={() => queryClient.invalidateQueries({ queryKey: ["hierarchyNode", nodeId] })}
           />
+          <ScannedFromThumbnails target={{ lesson_node_id: nodeId }} />
         </div>
       </section>
 
@@ -124,7 +141,7 @@ export function LessonDetailPage() {
           {t("lesson.cardsInLesson")}
         </h2>
         <div className="mt-2">
-          <CardListSection categoryId={categoryId} lessonNodeId={nodeId} />
+          <CardListSection categoryId={categoryId} lessonNodeId={nodeId} initialSearch={cardQuery} />
         </div>
       </section>
     </div>

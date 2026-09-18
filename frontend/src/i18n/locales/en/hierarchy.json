@@ -45,5 +45,9 @@
   "group": {
     "subgroups": "Groups and lessons",
     "cardsInGroup": "Cards in this group"
+  },
+  "search": {
+    "placeholder": "Search lesson titles/descriptions…",
+    "noResults": "No lessons match your search."
   }
 }

@@ -4,12 +4,14 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { SettingsPage } from "@/features/auth/SettingsPage";
+import { DeckLayout } from "@/components/layout/DeckLayout";
+import { CardSearchPage } from "@/features/cards/CardSearchPage";
 import { CategoryDashboardPage } from "@/features/categories/CategoryDashboardPage";
-import { CategoryLayout } from "@/features/categories/CategoryLayout";
 import { CategoryPickerPage } from "@/features/categories/CategoryPickerPage";
 import { CategoryBrowsePage } from "@/features/hierarchy/CategoryBrowsePage";
 import { GroupDetailPage } from "@/features/hierarchy/GroupDetailPage";
 import { LessonDetailPage } from "@/features/hierarchy/LessonDetailPage";
+import { SrsGuidePage } from "@/features/help/SrsGuidePage";
 import { ProgressionPage } from "@/features/progression/ProgressionPage";
 import { ReviewSessionPage } from "@/features/reviews/ReviewSessionPage";
 import { RequireAuth } from "@/routes/RequireAuth";
@@ -23,15 +25,17 @@ export function App() {
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
             <Route path="/" element={<CategoryPickerPage />} />
-            <Route path="/categories/:categoryId" element={<CategoryLayout />}>
-              <Route index element={<CategoryDashboardPage />} />
-              <Route path="browse" element={<CategoryBrowsePage />} />
-              <Route path="lessons/:nodeId" element={<LessonDetailPage />} />
-              <Route path="groups/:nodeId" element={<GroupDetailPage />} />
-              <Route path="review" element={<ReviewSessionPage />} />
-              <Route path="progression" element={<ProgressionPage />} />
-            </Route>
+            <Route path="/srs-guide" element={<SrsGuidePage />} />
             <Route path="/settings" element={<SettingsPage />} />
+          </Route>
+          <Route path="/categories/:categoryId" element={<DeckLayout />}>
+            <Route index element={<CategoryDashboardPage />} />
+            <Route path="browse" element={<CategoryBrowsePage />} />
+            <Route path="lessons/:nodeId" element={<LessonDetailPage />} />
+            <Route path="groups/:nodeId" element={<GroupDetailPage />} />
+            <Route path="review" element={<ReviewSessionPage />} />
+            <Route path="progression" element={<ProgressionPage />} />
+            <Route path="search" element={<CardSearchPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

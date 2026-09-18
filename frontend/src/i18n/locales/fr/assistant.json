@@ -1,0 +1,34 @@
+{
+  "settings": {
+    "title": "Assistant IA",
+    "description": "Connectez un fournisseur IA pour discuter avec un assistant capable de créer des catégories, leçons et cartes pour vous.",
+    "provider": "Fournisseur",
+    "apiKey": "Clé API",
+    "apiKeyPlaceholder": "Collez votre clé API",
+    "model": "Modèle (optionnel)",
+    "modelPlaceholder": "Utilise une valeur par défaut si laissé vide",
+    "save": "Enregistrer",
+    "saved": "Enregistré",
+    "configuredAs": "Configuré avec {{provider}}",
+    "notConfigured": "Aucun fournisseur configuré pour l'instant",
+    "remove": "Supprimer la clé",
+    "providers": {
+      "gemini": "Google Gemini",
+      "claude": "Anthropic Claude",
+      "chatgpt": "OpenAI ChatGPT"
+    }
+  },
+  "chat": {
+    "openButton": "Assistant IA",
+    "title": "Assistant IA",
+    "subtitle": "Demandez-lui de créer des leçons, groupes ou cartes dans cette catégorie.",
+    "placeholder": "ex. Ajoute 10 cartes sur les verbes espagnols",
+    "send": "Envoyer",
+    "thinking": "Réflexion…",
+    "emptyState": "Demandez-moi de créer des catégories, leçons ou cartes pour vous.",
+    "notConfigured": "Ajoutez une clé API dans les Paramètres pour utiliser l'assistant.",
+    "goToSettings": "Aller aux paramètres",
+    "toolFailed": "Échec",
+    "toolSucceeded": "Fait"
+  }
+}

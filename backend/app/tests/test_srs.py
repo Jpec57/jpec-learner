@@ -14,6 +14,7 @@ def test_first_review_good_sets_interval_to_one_day():
     assert result.repetitions == 1
     assert result.interval_days == 1
     assert result.due_at == NOW + timedelta(days=1)
+    assert result.current_level == 2
 
 
 def test_due_at_rounds_up_to_the_next_hour():
@@ -62,6 +63,27 @@ def test_again_rating_resets_repetitions_and_interval():
     assert result.repetitions == 0
     assert result.interval_days == 1
     assert result.ease_factor == pytest.approx(2.8 - const.AGAIN_EASE_PENALTY, abs=0.001)
+
+
+def test_again_on_a_fresh_card_never_advances_past_level_one():
+    # Bare reset interval (1 day) coincides with level 2's own threshold, but
+    # a fail is never progress -- it must stay capped at the level going in.
+    result = apply_review(rating=1, repetitions=0, ease_factor=2.5, interval_days=0, now=NOW)
+    assert result.current_level == 1
+
+
+def test_again_on_a_mastered_card_can_still_drop_levels():
+    # Forgetting a well-known card is a real regression, not a fake level-up --
+    # the cap only prevents an *increase*, so dropping to level 2 is expected.
+    result = apply_review(rating=1, repetitions=6, ease_factor=2.8, interval_days=90, now=NOW)
+    assert result.current_level == 2
+
+
+def test_hard_rating_never_advances_a_level_even_across_a_threshold():
+    # 25 days * 1.2 = 30, which alone would cross into level 6's threshold.
+    result = apply_review(rating=2, repetitions=4, ease_factor=2.5, interval_days=25, now=NOW)
+    assert compute_level(result.interval_days) == 6
+    assert result.current_level == 5
 
 
 def test_ease_factor_floored_at_minimum():

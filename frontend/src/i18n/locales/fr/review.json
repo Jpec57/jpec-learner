@@ -24,6 +24,11 @@
     "easy": "Facile",
     "perfect": "Parfait"
   },
+  "retry": {
+    "hint": "Vous avez déjà manqué cette carte pendant cette session — cette reprise ne peut pas la faire monter de niveau, elle sert juste à vérifier que c'est bien retenu.",
+    "ok": "OK, je sais",
+    "notOk": "Pas OK"
+  },
   "filter": {
     "all": "Tout",
     "cards": "Cartes",

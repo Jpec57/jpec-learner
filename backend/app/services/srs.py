@@ -47,6 +47,7 @@ def apply_review(
         raise ValueError(f"rating must be 1-5, got {rating}")
     now = now or datetime.now(timezone.utc)
     quality = RATING_TO_QUALITY[rating]
+    level_before = compute_level(interval_days)
 
     if quality >= 3:
         if repetitions == 0:
@@ -71,10 +72,20 @@ def apply_review(
     new_ease = max(const.MIN_EASE_FACTOR, new_ease)
     new_interval = min(new_interval, const.MAX_INTERVAL_DAYS)
 
+    if quality >= 3:
+        new_level = compute_level(new_interval)
+    else:
+        # Hard/Again are failing ratings -- never real progress, even though
+        # the reset/softened interval can land past the next threshold (e.g.
+        # Again's 1-day reset also happens to be level 2's own floor). Capping
+        # at level_before still lets a forgotten, previously-mastered item
+        # drop levels; it just can never count as leveling *up*.
+        new_level = min(compute_level(new_interval), level_before)
+
     return ReviewResult(
         repetitions=new_repetitions,
         ease_factor=round(new_ease, 2),
         interval_days=new_interval,
         due_at=_round_up_to_hour(now + timedelta(days=new_interval)),
-        current_level=compute_level(new_interval),
+        current_level=new_level,
     )

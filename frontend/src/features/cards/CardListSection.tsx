@@ -2,12 +2,17 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 
 import { useConfirm } from "@/components/ui/useConfirm";
-import { ANSWER_LANGUAGE_OPTIONS, answerLanguageDisplay } from "@/features/cards/answerLanguages";
+import { answerLanguageDisplay } from "@/features/cards/answerLanguages";
 import { createCard, deleteCard, listCards, updateCard, type AnswerMode, type Card } from "@/features/cards/api";
+import { LanguageSelect } from "@/features/cards/LanguageSelect";
 import { listFlat } from "@/features/hierarchy/api";
 import { ImageUploadInput } from "@/features/images/ImageUploadInput";
+import { linkOcrScan } from "@/features/ocr/api";
+import { OcrCaptureButton } from "@/features/ocr/OcrCaptureButton";
+import { ScannedFromThumbnails } from "@/features/ocr/ScannedFromThumbnails";
 import { getReviewState } from "@/features/reviews/api";
 import { formatDateTime } from "@/lib/formatDate";
 
@@ -21,36 +26,27 @@ function parseAcceptedAnswers(raw: string): string[] {
     .filter(Boolean);
 }
 
-function LanguageSelect({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="rounded-md border border-slate-300 px-2 py-1.5 text-xs text-slate-600"
-    >
-      <option value="">{placeholder}</option>
-      {ANSWER_LANGUAGE_OPTIONS.map((option) => (
-        <option key={option.code} value={option.code}>
-          {option.flag} {option.label}
-        </option>
-      ))}
-    </select>
-  );
+export interface CardNodeInfo {
+  title: string;
+  href: string;
 }
 
-function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: string; lessonNodeId: string | null }) {
+export function CardRow({
+  card,
+  categoryId,
+  nodeInfo,
+}: {
+  card: Card;
+  categoryId: string;
+  nodeInfo?: CardNodeInfo;
+}) {
   const { t, i18n } = useTranslation(["cards", "common"]);
   const { confirm, dialog } = useConfirm();
   const queryClient = useQueryClient();
-  const queryKey = ["cards", categoryId, lessonNodeId ?? null];
+  // Broad prefix rather than this row's own node id: a card can be edited
+  // from a per-node list OR the category-wide search page, whose query key
+  // doesn't share the node id, so invalidation must cover both.
+  const queryKey = ["cards", categoryId];
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [front, setFront] = useState(card.front_text);
@@ -106,7 +102,10 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
         onClick={() => setExpanded(true)}
         className="flex w-full items-center justify-between rounded-lg border border-slate-200 p-3 text-left hover:border-primary/50"
       >
-        <span className="truncate text-sm text-slate-800">{card.front_text}</span>
+        <span className="flex min-w-0 flex-col">
+          <span className="truncate text-sm text-slate-800">{card.front_text}</span>
+          {nodeInfo && <span className="mt-0.5 truncate text-xs text-slate-400">{nodeInfo.title}</span>}
+        </span>
         <span className="ml-3 flex shrink-0 items-center gap-2">
           {card.answer_mode === "typed" && (
             <span className="rounded-full bg-accent-light px-1.5 py-0.5 text-[10px] font-medium text-accent-dark">
@@ -132,6 +131,13 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
       >
         <ChevronUp size={14} /> {t("collapse")}
       </button>
+      {nodeInfo && (
+        <p className="mb-2 text-xs text-slate-400">
+          <Link to={nodeInfo.href} className="hover:text-primary hover:underline">
+            {nodeInfo.title} →
+          </Link>
+        </p>
+      )}
       {reviewState && (
         <p className="mb-2 text-xs text-slate-400">
           {t("levelLabel", { level: reviewState.current_level })} ·{" "}
@@ -154,25 +160,28 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
             className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
             placeholder={t("back")}
           />
-          <div className="flex gap-1">
-            <button
-              type="button"
-              onClick={() => setAnswerMode("reveal")}
-              className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-                answerMode === "reveal" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
-              }`}
-            >
-              {t("answerMode.reveal")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setAnswerMode("typed")}
-              className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-                answerMode === "typed" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
-              }`}
-            >
-              {t("answerMode.typed")}
-            </button>
+          <div>
+            <label className="text-[10px] uppercase tracking-wide text-slate-400">{t("answerModeLabel")}</label>
+            <div className="mt-1 flex gap-1">
+              <button
+                type="button"
+                onClick={() => setAnswerMode("reveal")}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+                  answerMode === "reveal" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
+                }`}
+              >
+                {t("answerMode.reveal")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAnswerMode("typed")}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+                  answerMode === "typed" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
+                }`}
+              >
+                {t("answerMode.typed")}
+              </button>
+            </div>
           </div>
           {answerMode === "typed" && (
             <>
@@ -252,6 +261,7 @@ function CardRow({ card, categoryId, lessonNodeId }: { card: Card; categoryId: s
           target={{ card_id: card.id }}
           onChange={() => queryClient.invalidateQueries({ queryKey })}
         />
+        <ScannedFromThumbnails target={{ card_id: card.id }} />
       </div>
 
       <div className="mt-3 flex items-center gap-3">
@@ -291,6 +301,7 @@ interface AddCardInput {
   hint: string;
   createReverse: boolean;
   reverseAnswerLanguage: string;
+  scanId?: string;
 }
 
 function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<unknown> }) {
@@ -304,6 +315,7 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<
   const [hint, setHint] = useState("");
   const [createReverse, setCreateReverse] = useState(false);
   const [reverseAnswerLanguage, setReverseAnswerLanguage] = useState("");
+  const [scanId, setScanId] = useState<string | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
@@ -319,6 +331,7 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<
         hint,
         createReverse,
         reverseAnswerLanguage,
+        scanId,
       });
       setFront("");
       setBack("");
@@ -327,6 +340,7 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<
       setHint("");
       setCreateReverse(false);
       setReverseAnswerLanguage("");
+      setScanId(undefined);
       setOpen(false);
     } finally {
       setSubmitting(false);
@@ -343,6 +357,12 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<
 
   return (
     <form onSubmit={handleSubmit} className="space-y-2 rounded-lg border border-primary/30 bg-primary-light/30 p-3">
+      <OcrCaptureButton
+        onResult={(result) => {
+          setFront(result.text);
+          setScanId(result.scanId);
+        }}
+      />
       <textarea
         autoFocus
         required
@@ -361,25 +381,28 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<
         className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
       />
 
-      <div className="flex gap-1">
-        <button
-          type="button"
-          onClick={() => setAnswerMode("reveal")}
-          className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-            answerMode === "reveal" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
-          }`}
-        >
-          {t("answerMode.reveal")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setAnswerMode("typed")}
-          className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-            answerMode === "typed" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
-          }`}
-        >
-          {t("answerMode.typed")}
-        </button>
+      <div>
+        <label className="text-[10px] uppercase tracking-wide text-slate-400">{t("answerModeLabel")}</label>
+        <div className="mt-1 flex gap-1">
+          <button
+            type="button"
+            onClick={() => setAnswerMode("reveal")}
+            className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+              answerMode === "reveal" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
+            }`}
+          >
+            {t("answerMode.reveal")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setAnswerMode("typed")}
+            className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+              answerMode === "typed" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
+            }`}
+          >
+            {t("answerMode.typed")}
+          </button>
+        </div>
       </div>
 
       {answerMode === "typed" && (
@@ -438,15 +461,17 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<
 export function CardListSection({
   categoryId,
   lessonNodeId,
+  initialSearch,
 }: {
   categoryId: string;
   lessonNodeId: string | null;
+  initialSearch?: string;
 }) {
   const { t } = useTranslation(["cards", "common"]);
   const queryClient = useQueryClient();
   const baseQueryKey = ["cards", categoryId, lessonNodeId ?? null];
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState(initialSearch ?? "");
+  const [search, setSearch] = useState(initialSearch ?? "");
   const [page, setPage] = useState(0);
 
   useEffect(() => {
@@ -469,8 +494,8 @@ export function CardListSection({
   const pageEnd = Math.min(total, page * PAGE_SIZE + PAGE_SIZE);
 
   const addCard = useMutation({
-    mutationFn: (input: AddCardInput) =>
-      createCard({
+    mutationFn: async (input: AddCardInput) => {
+      const card = await createCard({
         category_id: categoryId,
         lesson_node_id: lessonNodeId,
         front_text: input.front,
@@ -482,7 +507,12 @@ export function CardListSection({
         create_reverse: input.createReverse,
         reverse_answer_language:
           input.answerMode === "typed" && input.createReverse ? input.reverseAnswerLanguage || null : null,
-      }),
+      });
+      // The card didn't exist yet when the photo was scanned, so the source
+      // photo can only be linked back to it now that we have an id.
+      if (input.scanId) await linkOcrScan(input.scanId, { card_id: card.id });
+      return card;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: baseQueryKey }),
   });
 
@@ -496,7 +526,7 @@ export function CardListSection({
       />
 
       {cards.map((card) => (
-        <CardRow key={card.id} card={card} categoryId={categoryId} lessonNodeId={lessonNodeId} />
+        <CardRow key={card.id} card={card} categoryId={categoryId} />
       ))}
       {total === 0 && <p className="text-sm text-slate-400">{search ? t("noSearchResults") : t("noCards")}</p>}
 

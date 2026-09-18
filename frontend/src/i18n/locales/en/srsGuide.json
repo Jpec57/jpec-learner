@@ -1,0 +1,31 @@
+{
+  "title": "How spaced repetition works",
+  "intro": "Every card and lesson has its own review schedule. Each time you review one, you rate how well you remembered it on a 1-5 scale, and that rating decides how long JpecLearner waits before showing it to you again.",
+  "ratingsTitle": "The 5 ratings",
+  "ratings": {
+    "again": { "label": "1 · Again", "description": "You didn't remember at all. Resets progress: back to a 1-day interval and repetition count drops to zero." },
+    "hard": { "label": "2 · Hard", "description": "You got it, but it was a struggle. Progress isn't reset, but the next interval only grows a little and the ease factor drops." },
+    "good": { "label": "3 · Good", "description": "You remembered it with normal effort. This is the standard case that grows the interval." },
+    "easy": { "label": "4 · Easy", "description": "You remembered it comfortably. The interval grows a bit more than Good." },
+    "perfect": { "label": "5 · Perfect", "description": "Instant, effortless recall. The interval grows the most and the ease factor increases." }
+  },
+  "intervalsTitle": "How the interval grows",
+  "intervalsIntro": "\"Interval\" is the number of days until a card comes back due. On a Good/Easy/Perfect rating:",
+  "intervalSteps": {
+    "first": "1st successful review: due in 1 day",
+    "second": "2nd successful review: due in 6 days",
+    "later": "Every review after that: previous interval × ease factor (rounded), capped at {{maxDays}} days"
+  },
+  "easeTitle": "The ease factor",
+  "easeIntro": "Each card also tracks its own \"ease factor\", starting at {{defaultEase}}. It's the multiplier used in the step above — a higher ease means faster-growing intervals for cards you find easy, a lower one means slower growth for cards you struggle with. It never drops below {{minEase}}.",
+  "easeChanges": {
+    "goodEasyPerfect": "Good / Easy / Perfect: ease adjusts up or down slightly depending on exactly how easy it felt",
+    "hard": "Hard: ease decreases by {{penalty}}, interval only grows ×{{multiplier}} instead of resetting",
+    "again": "Again: ease decreases by {{penalty}}, interval resets to 1 day and the repetition streak restarts from zero"
+  },
+  "levelsTitle": "Levels",
+  "levelsIntro": "A card's level (shown throughout the app) is derived directly from its current interval — the longer you've successfully gone without forgetting it, the higher its level.",
+  "levelStart": "Level {{level}} · {{name}} — the starting level for every new card",
+  "levelThreshold": "Level {{level}} · {{name}} — reached once the interval is at least {{days}} day(s)",
+  "backLink": "← Back"
+}

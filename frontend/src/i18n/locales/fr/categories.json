@@ -26,6 +26,10 @@
       "title": "Progression",
       "itemsTracked_one": "{{count}} élément suivi",
       "itemsTracked_other": "{{count}} éléments suivis"
+    },
+    "search": {
+      "title": "Recherche",
+      "subtitle": "Trouver une carte dans ce deck"
     }
   },
   "insights": {

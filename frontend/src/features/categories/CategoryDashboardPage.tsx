@@ -146,7 +146,7 @@ export function CategoryDashboardPage() {
 
       {editing && <EditCategoryForm category={category} onDone={() => setEditing(false)} />}
 
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link
           to={`/categories/${category.id}/browse`}
           className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
@@ -182,6 +182,13 @@ export function CategoryDashboardPage() {
               ? t("categories:dashboard.progression.itemsTracked", { count: progression.total_items })
               : "…"}
           </p>
+        </Link>
+        <Link
+          to={`/categories/${category.id}/search`}
+          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
+        >
+          <h3 className="font-semibold text-slate-900">{t("categories:dashboard.search.title")}</h3>
+          <p className="mt-1 text-sm text-slate-500">{t("categories:dashboard.search.subtitle")}</p>
         </Link>
       </div>
 

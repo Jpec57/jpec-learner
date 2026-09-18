@@ -2,7 +2,7 @@ import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -21,6 +21,7 @@ from app.schemas.hierarchy import (
     HierarchyNodeFlatOut,
     HierarchyNodeMove,
     HierarchyNodeOut,
+    HierarchyNodePageOut,
     HierarchyNodeUpdate,
 )
 from app.services.enrollment import ensure_review_state
@@ -184,6 +185,54 @@ async def list_flat(
         query = query.where(HierarchyNode.is_public.is_(True))
     nodes = (await db.scalars(query.order_by(HierarchyNode.title))).all()
     return list(nodes)
+
+
+@router.get("/search", response_model=HierarchyNodePageOut)
+async def search_lessons(
+    category_id: uuid.UUID,
+    search: str | None = Query(None),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Search lesson nodes (title/description/content) across the whole
+    category -- the search-page counterpart to /cards for "find any lesson in
+    this deck", kept to node_kind='lesson' since groups are just
+    organizational folders, not content someone would search the text of."""
+    category = await _get_category_or_404(db, category_id)
+    assert_visible(category, current_user.id)
+
+    query = (
+        select(HierarchyNode)
+        .join(Lesson, Lesson.id == HierarchyNode.id)
+        .where(HierarchyNode.category_id == category_id, HierarchyNode.node_kind == "lesson")
+    )
+    if category.owner_id != current_user.id:
+        query = query.where(HierarchyNode.is_public.is_(True))
+    if search:
+        pattern = f"%{search}%"
+        query = query.where(
+            or_(
+                HierarchyNode.title.ilike(pattern),
+                HierarchyNode.description.ilike(pattern),
+                Lesson.body_markdown.ilike(pattern),
+            )
+        )
+
+    total = await db.scalar(select(func.count()).select_from(query.subquery()))
+
+    page_query = (
+        query.options(selectinload(HierarchyNode.lesson), selectinload(HierarchyNode.images))
+        .order_by(HierarchyNode.title)
+        .limit(limit)
+        .offset(offset)
+    )
+    nodes = (await db.scalars(page_query)).all()
+    items = await _with_has_children(db, list(nodes))
+    for item, node in zip(items, nodes):
+        item.ancestors = await _ancestors_for(db, node)
+    return HierarchyNodePageOut(items=items, total=total or 0)
 
 
 @router.get("/{node_id}", response_model=HierarchyNodeOut)

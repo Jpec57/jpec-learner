@@ -3,7 +3,8 @@
   "nav": {
     "logOut": "Log out",
     "allCategories": "All categories",
-    "settings": "Settings"
+    "settings": "Settings",
+    "srsGuide": "How it works"
   },
   "actions": {
     "save": "Save",

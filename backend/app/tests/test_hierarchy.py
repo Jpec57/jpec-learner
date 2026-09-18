@@ -313,3 +313,95 @@ async def test_node_detail_includes_ancestors_and_child_counts(client):
     assert [a["title"] for a in lesson_resp["ancestors"]] == ["Analysis", "Limits"]
     assert lesson_resp["child_counts"] == {"groups": 0, "lessons": 0, "cards": 0}
     assert lesson_resp["has_children"] is False
+
+
+async def test_lesson_search_matches_title_and_description_only_lessons(client):
+    headers = await _register_and_login(client, "lesson-search@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    ).json()["id"]
+
+    group = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={"category_id": category_id, "node_kind": "group", "title": "Integral calculus"},
+            headers=headers,
+        )
+    ).json()
+    lesson = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={
+                "category_id": category_id,
+                "parent_id": group["id"],
+                "node_kind": "lesson",
+                "title": "Riemann sums",
+                "description": "Approximating integrals",
+            },
+            headers=headers,
+        )
+    ).json()
+    await client.post(
+        "/api/v1/hierarchy",
+        json={"category_id": category_id, "parent_id": group["id"], "node_kind": "lesson", "title": "Unrelated"},
+        headers=headers,
+    )
+
+    # Matches a group title -> nothing, groups are excluded from lesson search.
+    group_search = await client.get(
+        "/api/v1/hierarchy/search",
+        params={"category_id": category_id, "search": "Integral calculus"},
+        headers=headers,
+    )
+    assert group_search.json()["total"] == 0
+
+    # Matches the lesson's description, not just its title.
+    desc_search = await client.get(
+        "/api/v1/hierarchy/search",
+        params={"category_id": category_id, "search": "integrals"},
+        headers=headers,
+    )
+    desc_result = desc_search.json()
+    assert desc_result["total"] == 1
+    assert desc_result["items"][0]["id"] == lesson["id"]
+    assert [a["title"] for a in desc_result["items"][0]["ancestors"]] == ["Integral calculus"]
+
+    # No search term -> every lesson in the category.
+    all_resp = await client.get(
+        "/api/v1/hierarchy/search", params={"category_id": category_id}, headers=headers
+    )
+    assert all_resp.json()["total"] == 2
+
+
+async def test_lesson_search_matches_body_content(client):
+    headers = await _register_and_login(client, "lesson-content-search@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    ).json()["id"]
+
+    lesson = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={"category_id": category_id, "node_kind": "lesson", "title": "Derivatives"},
+            headers=headers,
+        )
+    ).json()
+    await client.patch(
+        f"/api/v1/hierarchy/{lesson['id']}",
+        json={"body_markdown": "The chain rule lets you differentiate composite functions."},
+        headers=headers,
+    )
+    await client.post(
+        "/api/v1/hierarchy",
+        json={"category_id": category_id, "node_kind": "lesson", "title": "Unrelated"},
+        headers=headers,
+    )
+
+    content_search = await client.get(
+        "/api/v1/hierarchy/search",
+        params={"category_id": category_id, "search": "chain rule"},
+        headers=headers,
+    )
+    result = content_search.json()
+    assert result["total"] == 1
+    assert result["items"][0]["id"] == lesson["id"]

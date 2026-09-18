@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
+import { AssistantSettingsSection } from "@/features/assistant/AssistantSettingsSection";
 import { me, updateMe } from "@/features/auth/api";
 
 export function SettingsPage() {
@@ -70,6 +71,8 @@ export function SettingsPage() {
 
         {saved && <p className="text-xs text-emerald-600">{t("auth:settings.saved")}</p>}
       </div>
+
+      <AssistantSettingsSection />
     </div>
   );
 }

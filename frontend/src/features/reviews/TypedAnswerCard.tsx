@@ -6,6 +6,7 @@ import { answerLanguageDisplay } from "@/features/cards/answerLanguages";
 import { acceptedAnswersFor, classifyTypedAnswer } from "@/features/reviews/answerGrading";
 import type { DueItem } from "@/features/reviews/api";
 import { RatingButtons } from "@/features/reviews/RatingButtons";
+import { RetryConfirmButtons } from "@/features/reviews/RetryConfirmButtons";
 import { normalizeAnswer } from "@/lib/textMatch";
 
 const AUTO_PASS_RATING = 4;
@@ -15,11 +16,15 @@ type Phase = "answering" | "typoWarning" | "revealed";
 export function TypedAnswerCard({
   item,
   onRate,
+  hasFailedThisSession,
+  onConfirmOk,
   disabled,
   onAddAcceptedAnswer,
 }: {
   item: DueItem;
   onRate: (rating: number) => void;
+  hasFailedThisSession: boolean;
+  onConfirmOk: () => void;
   disabled?: boolean;
   onAddAcceptedAnswer: (answer: string) => void;
 }) {
@@ -38,7 +43,11 @@ export function TypedAnswerCard({
     if (phase !== "answering") return;
     const { verdict, closest } = classifyTypedAnswer(input, rawAcceptedAnswers);
     if (verdict === "correct") {
-      onRate(AUTO_PASS_RATING);
+      if (hasFailedThisSession) {
+        onConfirmOk();
+      } else {
+        onRate(AUTO_PASS_RATING);
+      }
       return;
     }
     if (verdict === "typo") {
@@ -144,8 +153,14 @@ export function TypedAnswerCard({
           )}
           {added && <p className="mt-2 text-xs text-emerald-600">{t("typed.added")}</p>}
 
-          <p className="mt-4 text-sm text-slate-500">{t("typed.selfRatePrompt")}</p>
-          <RatingButtons onRate={onRate} disabled={disabled} />
+          {hasFailedThisSession ? (
+            <RetryConfirmButtons onOk={onConfirmOk} onNotOk={() => onRate(1)} disabled={disabled} />
+          ) : (
+            <>
+              <p className="mt-4 text-sm text-slate-500">{t("typed.selfRatePrompt")}</p>
+              <RatingButtons onRate={onRate} disabled={disabled} />
+            </>
+          )}
         </div>
       )}
     </div>

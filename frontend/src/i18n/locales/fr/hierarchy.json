@@ -45,5 +45,9 @@
   "group": {
     "subgroups": "Groupes et leçons",
     "cardsInGroup": "Cartes de ce groupe"
+  },
+  "search": {
+    "placeholder": "Rechercher un titre/une description de leçon…",
+    "noResults": "Aucune leçon ne correspond à votre recherche."
   }
 }

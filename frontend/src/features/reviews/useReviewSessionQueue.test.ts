@@ -136,4 +136,41 @@ describe("useReviewSessionQueue", () => {
 
     expect(result.current.currentItem?.front_text).toBe("edited");
   });
+
+  it("marks an item as having failed this session once it gets a failing rating", () => {
+    const items = [makeItem("a")];
+    const { result } = renderHook(() => useReviewSessionQueue(items));
+
+    expect(result.current.hasFailedThisSession).toBe(false);
+    act(() => result.current.submitResult(1));
+    expect(result.current.hasFailedThisSession).toBe(true);
+  });
+
+  it("confirmRetry removes the current item without affecting attempt counts", () => {
+    const items = [makeItem("a")];
+    const { result } = renderHook(() => useReviewSessionQueue(items));
+
+    act(() => result.current.submitResult(1)); // fail, requeued, sessionAttempts=1
+    expect(result.current.sessionAttempts).toBe(1);
+
+    act(() => result.current.confirmRetry());
+
+    expect(result.current.remainingCount).toBe(0);
+    expect(result.current.correctCount).toBe(1);
+    // confirmRetry is not a real submission -- it never touches sessionAttempts.
+    expect(result.current.sessionAttempts).toBe(1);
+  });
+
+  it("clears failedIds when a new batch of fetched items arrives", () => {
+    const initial = [makeItem("a")];
+    const { result, rerender } = renderHook(({ fetched }) => useReviewSessionQueue(fetched), {
+      initialProps: { fetched: initial as DueItem[] | undefined },
+    });
+    act(() => result.current.submitResult(1));
+    expect(result.current.hasFailedThisSession).toBe(true);
+
+    rerender({ fetched: [makeItem("a")] });
+
+    expect(result.current.hasFailedThisSession).toBe(false);
+  });
 });

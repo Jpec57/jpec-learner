@@ -2,20 +2,26 @@ import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
 
+import assistantEn from "@/i18n/locales/en/assistant.json";
 import authEn from "@/i18n/locales/en/auth.json";
 import cardsEn from "@/i18n/locales/en/cards.json";
 import categoriesEn from "@/i18n/locales/en/categories.json";
 import commonEn from "@/i18n/locales/en/common.json";
 import hierarchyEn from "@/i18n/locales/en/hierarchy.json";
+import ocrEn from "@/i18n/locales/en/ocr.json";
 import progressionEn from "@/i18n/locales/en/progression.json";
 import reviewEn from "@/i18n/locales/en/review.json";
+import srsGuideEn from "@/i18n/locales/en/srsGuide.json";
+import assistantFr from "@/i18n/locales/fr/assistant.json";
 import authFr from "@/i18n/locales/fr/auth.json";
 import cardsFr from "@/i18n/locales/fr/cards.json";
 import categoriesFr from "@/i18n/locales/fr/categories.json";
 import commonFr from "@/i18n/locales/fr/common.json";
 import hierarchyFr from "@/i18n/locales/fr/hierarchy.json";
+import ocrFr from "@/i18n/locales/fr/ocr.json";
 import progressionFr from "@/i18n/locales/fr/progression.json";
 import reviewFr from "@/i18n/locales/fr/review.json";
+import srsGuideFr from "@/i18n/locales/fr/srsGuide.json";
 
 export const defaultNS = "common";
 
@@ -28,6 +34,9 @@ export const resources = {
     cards: cardsEn,
     review: reviewEn,
     progression: progressionEn,
+    srsGuide: srsGuideEn,
+    assistant: assistantEn,
+    ocr: ocrEn,
   },
   fr: {
     common: commonFr,
@@ -37,6 +46,9 @@ export const resources = {
     cards: cardsFr,
     review: reviewFr,
     progression: progressionFr,
+    srsGuide: srsGuideFr,
+    assistant: assistantFr,
+    ocr: ocrFr,
   },
 } as const;
 
@@ -47,7 +59,7 @@ i18n
     resources,
     fallbackLng: "en",
     defaultNS,
-    ns: ["common", "auth", "categories", "hierarchy", "cards", "review", "progression"],
+    ns: ["common", "auth", "categories", "hierarchy", "cards", "review", "progression", "srsGuide", "assistant", "ocr"],
     interpolation: { escapeValue: false },
     detection: {
       // Once the user's profile loads, App.tsx calls i18n.changeLanguage(user.locale)

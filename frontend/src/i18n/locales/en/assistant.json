@@ -1,0 +1,34 @@
+{
+  "settings": {
+    "title": "AI assistant",
+    "description": "Connect an AI provider to chat with an assistant that can create categories, lessons and cards for you.",
+    "provider": "Provider",
+    "apiKey": "API key",
+    "apiKeyPlaceholder": "Paste your API key",
+    "model": "Model (optional)",
+    "modelPlaceholder": "Uses a sensible default if left blank",
+    "save": "Save",
+    "saved": "Saved",
+    "configuredAs": "Configured with {{provider}}",
+    "notConfigured": "No provider configured yet",
+    "remove": "Remove key",
+    "providers": {
+      "gemini": "Google Gemini",
+      "claude": "Anthropic Claude",
+      "chatgpt": "OpenAI ChatGPT"
+    }
+  },
+  "chat": {
+    "openButton": "AI assistant",
+    "title": "AI assistant",
+    "subtitle": "Ask it to create lessons, groups or cards in this category.",
+    "placeholder": "e.g. Add 10 flashcards about Spanish verbs",
+    "send": "Send",
+    "thinking": "Thinking…",
+    "emptyState": "Ask me to create categories, lessons or flashcards for you.",
+    "notConfigured": "Add an API key in Settings to use the assistant.",
+    "goToSettings": "Go to settings",
+    "toolFailed": "Failed",
+    "toolSucceeded": "Done"
+  }
+}

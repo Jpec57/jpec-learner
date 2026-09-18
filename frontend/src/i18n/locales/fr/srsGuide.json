@@ -1,0 +1,31 @@
+{
+  "title": "Comment fonctionne la répétition espacée",
+  "intro": "Chaque carte et chaque leçon a son propre calendrier de révision. À chaque révision, vous notez votre souvenir sur une échelle de 1 à 5, et cette note détermine combien de temps JpecLearner attendra avant de vous la représenter.",
+  "ratingsTitle": "Les 5 notes",
+  "ratings": {
+    "again": { "label": "1 · À revoir", "description": "Vous ne vous en souveniez pas du tout. La progression est réinitialisée : retour à un intervalle d'1 jour et le compteur de répétitions repart de zéro." },
+    "hard": { "label": "2 · Difficile", "description": "Vous avez trouvé la réponse, mais avec effort. La progression n'est pas réinitialisée, mais le prochain intervalle n'augmente que légèrement et le facteur de facilité diminue." },
+    "good": { "label": "3 · Bien", "description": "Vous vous en êtes souvenu avec un effort normal. C'est le cas standard qui fait grandir l'intervalle." },
+    "easy": { "label": "4 · Facile", "description": "Vous vous en êtes souvenu sans difficulté. L'intervalle augmente un peu plus qu'avec « Bien »." },
+    "perfect": { "label": "5 · Parfait", "description": "Souvenir instantané et sans effort. L'intervalle augmente le plus possible et le facteur de facilité augmente." }
+  },
+  "intervalsTitle": "Comment l'intervalle augmente",
+  "intervalsIntro": "L'« intervalle » est le nombre de jours avant qu'une carte redevienne due. Pour une note Bien/Facile/Parfait :",
+  "intervalSteps": {
+    "first": "1ère révision réussie : due dans 1 jour",
+    "second": "2ème révision réussie : due dans 6 jours",
+    "later": "Chaque révision suivante : intervalle précédent × facteur de facilité (arrondi), plafonné à {{maxDays}} jours"
+  },
+  "easeTitle": "Le facteur de facilité",
+  "easeIntro": "Chaque carte a aussi son propre « facteur de facilité », qui démarre à {{defaultEase}}. C'est le multiplicateur utilisé à l'étape précédente — plus il est élevé, plus les intervalles grandissent vite pour les cartes que vous trouvez faciles ; plus il est bas, plus la progression est lente pour les cartes difficiles. Il ne descend jamais en dessous de {{minEase}}.",
+  "easeChanges": {
+    "goodEasyPerfect": "Bien / Facile / Parfait : le facteur de facilité s'ajuste légèrement à la hausse ou à la baisse selon la facilité ressentie",
+    "hard": "Difficile : le facteur de facilité diminue de {{penalty}}, l'intervalle augmente seulement ×{{multiplier}} au lieu d'être réinitialisé",
+    "again": "À revoir : le facteur de facilité diminue de {{penalty}}, l'intervalle repart à 1 jour et le compteur de répétitions repart de zéro"
+  },
+  "levelsTitle": "Niveaux",
+  "levelsIntro": "Le niveau d'une carte (affiché partout dans l'application) découle directement de son intervalle actuel — plus vous êtes allé longtemps sans l'oublier, plus son niveau est élevé.",
+  "levelStart": "Niveau {{level}} · {{name}} — le niveau de départ de chaque nouvelle carte",
+  "levelThreshold": "Niveau {{level}} · {{name}} — atteint dès que l'intervalle est d'au moins {{days}} jour(s)",
+  "backLink": "← Retour"
+}

@@ -158,6 +158,50 @@ async def test_cards_can_be_searched_and_paginated(client):
     assert all("Question" in c["front_text"] for c in search_result["items"])
 
 
+async def test_cards_can_be_filtered_by_answer_language(client):
+    owner_headers = await _register_and_login(client, "card-lang-owner@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Japanese"}, headers=owner_headers)
+    ).json()["id"]
+
+    await client.post(
+        "/api/v1/cards",
+        json={
+            "category_id": category_id,
+            "front_text": "犬",
+            "back_text": "inu",
+            "answer_mode": "typed",
+            "answer_language": "ja-romaji",
+        },
+        headers=owner_headers,
+    )
+    await client.post(
+        "/api/v1/cards",
+        json={
+            "category_id": category_id,
+            "front_text": "cat",
+            "back_text": "chat",
+            "answer_mode": "typed",
+            "answer_language": "fr",
+        },
+        headers=owner_headers,
+    )
+    await client.post(
+        "/api/v1/cards",
+        json={"category_id": category_id, "front_text": "no language", "back_text": "n/a"},
+        headers=owner_headers,
+    )
+
+    filtered_resp = await client.get(
+        "/api/v1/cards",
+        params={"category_id": category_id, "answer_language": "ja-romaji"},
+        headers=owner_headers,
+    )
+    filtered = filtered_resp.json()
+    assert filtered["total"] == 1
+    assert filtered["items"][0]["front_text"] == "犬"
+
+
 async def test_typed_card_with_reverse_and_accepted_answers(client):
     owner_headers = await _register_and_login(client, "card-typed-owner@example.com")
     category_id = (

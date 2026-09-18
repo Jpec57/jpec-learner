@@ -45,6 +45,7 @@ def _filtered_cards_query(
     lesson_node_id: uuid.UUID | None,
     owner: Literal["me", "public"],
     search: str | None,
+    answer_language: str | None,
     current_user_id: uuid.UUID,
 ) -> Select:
     query = select(Card).where(Card.category_id == category_id, Card.deleted_at.is_(None))
@@ -57,6 +58,8 @@ def _filtered_cards_query(
     if search:
         pattern = f"%{search}%"
         query = query.where(or_(Card.front_text.ilike(pattern), Card.back_text.ilike(pattern)))
+    if answer_language:
+        query = query.where(Card.answer_language == answer_language)
     return query
 
 
@@ -66,6 +69,7 @@ async def list_cards(
     lesson_node_id: uuid.UUID | None = Query(None),
     owner: Literal["me", "public"] = Query("me"),
     search: str | None = Query(None),
+    answer_language: str | None = Query(None),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
@@ -74,7 +78,7 @@ async def list_cards(
     category = await _get_category_or_404(db, category_id)
     assert_visible(category, current_user.id)
 
-    base_query = _filtered_cards_query(category_id, lesson_node_id, owner, search, current_user.id)
+    base_query = _filtered_cards_query(category_id, lesson_node_id, owner, search, answer_language, current_user.id)
 
     total = await db.scalar(select(func.count()).select_from(base_query.subquery()))
 

@@ -1,0 +1,17 @@
+# paddlepaddle and torch are installed separately in the Dockerfile (CPU wheels
+# from their own package indexes) before this file is installed.
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-multipart==0.0.9
+pillow==10.4.0
+numpy<2.0
+# [doc-parser] pulls in the markdown/table export dependencies (latex2mathml,
+# lxml, etc.) that PP-StructureV3's res.markdown output needs -- it's not
+# just for the (unused here) PaddleOCR-VL pipeline.
+paddleocr[doc-parser]>=3.0,<4.0
+manga-ocr==0.1.11
+# manga-ocr (unmaintained since ~2022) uses transformers' legacy
+# AutoFeatureExtractor auto-detection for its ViT encoder, which newer
+# transformers releases (5.x rewrote this) no longer recognize -- pin to a
+# 4.x release known to still support it.
+transformers==4.46.3

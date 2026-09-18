@@ -24,6 +24,11 @@
     "easy": "Easy",
     "perfect": "Perfect"
   },
+  "retry": {
+    "hint": "You already missed this one this session — this redo can't level it up, it's just to make sure it sticks.",
+    "ok": "OK, got it",
+    "notOk": "Not OK"
+  },
   "filter": {
     "all": "All",
     "cards": "Flashcards",

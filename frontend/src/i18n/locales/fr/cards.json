@@ -17,6 +17,7 @@
   "removeImage": "Retirer l'image",
   "uploadError": "Impossible d'envoyer cette image.",
   "typedBadge": "Saisie",
+  "answerModeLabel": "Méthode de réponse",
   "answerMode": {
     "reveal": "Retourner & noter",
     "typed": "Saisir la réponse"
@@ -29,5 +30,11 @@
   "hintPlaceholder": "Indice affichable pendant la révision (optionnel)",
   "levelLabel": "Niveau {{level}}",
   "nextReviewLabel": "prochaine révision {{date}}",
-  "moveToNode": "Groupe / leçon"
+  "moveToNode": "Groupe / leçon",
+  "search": {
+    "title": "Recherche",
+    "modeCards": "Cartes",
+    "modeLessons": "Leçons",
+    "allLanguages": "Toutes les langues"
+  }
 }

@@ -26,6 +26,10 @@
       "title": "Progression",
       "itemsTracked_one": "{{count}} item tracked",
       "itemsTracked_other": "{{count}} items tracked"
+    },
+    "search": {
+      "title": "Search",
+      "subtitle": "Find any card in this deck"
     }
   },
   "insights": {

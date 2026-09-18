@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 import { CardListSection } from "@/features/cards/CardListSection";
 import { getCategory } from "@/features/categories/api";
@@ -11,6 +11,8 @@ import { NodeBreadcrumb } from "@/features/hierarchy/NodeBreadcrumb";
 export function GroupDetailPage() {
   const { t } = useTranslation("hierarchy");
   const { categoryId, nodeId } = useParams<{ categoryId: string; nodeId: string }>();
+  const [searchParams] = useSearchParams();
+  const cardQuery = searchParams.get("cardQuery") ?? undefined;
 
   const { data: category } = useQuery({
     queryKey: ["category", categoryId],
@@ -46,7 +48,7 @@ export function GroupDetailPage() {
       <section className="mt-8">
         <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">{t("group.cardsInGroup")}</h2>
         <div className="mt-2">
-          <CardListSection categoryId={categoryId} lessonNodeId={nodeId} />
+          <CardListSection categoryId={categoryId} lessonNodeId={nodeId} initialSearch={cardQuery} />
         </div>
       </section>
     </div>

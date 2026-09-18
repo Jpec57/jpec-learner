@@ -17,6 +17,7 @@
   "removeImage": "Remove image",
   "uploadError": "Couldn't upload that image.",
   "typedBadge": "Typed",
+  "answerModeLabel": "Answer method",
   "answerMode": {
     "reveal": "Flip & rate",
     "typed": "Type answer"
@@ -29,5 +30,11 @@
   "hintPlaceholder": "Hint shown on request during review (optional)",
   "levelLabel": "Level {{level}}",
   "nextReviewLabel": "next review {{date}}",
-  "moveToNode": "Group / lesson"
+  "moveToNode": "Group / lesson",
+  "search": {
+    "title": "Search",
+    "modeCards": "Cards",
+    "modeLessons": "Lessons",
+    "allLanguages": "All languages"
+  }
 }

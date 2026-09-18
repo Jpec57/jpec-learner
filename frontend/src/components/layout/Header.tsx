@@ -21,6 +21,9 @@ export function Header() {
           {user && (
             <span className="hidden text-slate-500 sm:inline">{user.display_name ?? user.email}</span>
           )}
+          <Link to="/srs-guide" className="text-slate-500 hover:text-primary">
+            {t("nav.srsGuide")}
+          </Link>
           <Link to="/settings" className="text-slate-500 hover:text-primary">
             {t("nav.settings")}
           </Link>

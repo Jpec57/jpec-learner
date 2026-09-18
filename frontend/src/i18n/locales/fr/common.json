@@ -3,7 +3,8 @@
   "nav": {
     "logOut": "Se déconnecter",
     "allCategories": "Toutes les catégories",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "srsGuide": "Comment ça marche"
   },
   "actions": {
     "save": "Enregistrer",

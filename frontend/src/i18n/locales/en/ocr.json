@@ -1,0 +1,14 @@
+{
+  "scanButton": "Scan photo",
+  "mode": {
+    "general": "Text / math",
+    "manga": "Manga (JP)"
+  },
+  "takePhoto": "Take or choose a photo",
+  "extracting": "Reading text…",
+  "extractError": "Couldn't read that photo.",
+  "noTextFound": "No text found.",
+  "useThisText": "Use this text",
+  "retake": "Retake",
+  "scannedFrom": "Scanned from:"
+}

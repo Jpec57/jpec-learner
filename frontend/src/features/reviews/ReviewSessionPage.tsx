@@ -9,6 +9,7 @@ import { ALL_REVIEW_ITEM_TYPES, getDue, submitReview, type ReviewItemType } from
 import { EditCardForm } from "@/features/reviews/EditCardForm";
 import { Flashcard } from "@/features/reviews/Flashcard";
 import { RatingButtons } from "@/features/reviews/RatingButtons";
+import { RetryConfirmButtons } from "@/features/reviews/RetryConfirmButtons";
 import { TypedAnswerCard } from "@/features/reviews/TypedAnswerCard";
 import { TypeFilter } from "@/features/reviews/TypeFilter";
 import { useReviewSessionQueue } from "@/features/reviews/useReviewSessionQueue";
@@ -39,8 +40,16 @@ export function ReviewSessionPage() {
     enabled: !!categoryId,
   });
 
-  const { currentItem, remainingCount, correctCount, incorrectCount, submitResult, updateCurrentItem } =
-    useReviewSessionQueue(fetchedDue);
+  const {
+    currentItem,
+    remainingCount,
+    hasFailedThisSession,
+    correctCount,
+    incorrectCount,
+    submitResult,
+    confirmRetry,
+    updateCurrentItem,
+  } = useReviewSessionQueue(fetchedDue);
 
   const addAcceptedAnswer = useMutation({
     mutationFn: (answer: string) => {
@@ -66,6 +75,15 @@ export function ReviewSessionPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // The "OK" outcome on a forced redo after this item already failed once
+  // this session: purely a session-local confirmation, no further API call --
+  // the earlier failing rating already set (and capped) the real SRS state.
+  function handleConfirmOk() {
+    confirmRetry();
+    setRevealed(false);
+    setEditing(false);
   }
 
   return (
@@ -109,6 +127,8 @@ export function ReviewSessionPage() {
                 key={currentItem.review_state_id}
                 item={currentItem}
                 onRate={handleRate}
+                hasFailedThisSession={hasFailedThisSession}
+                onConfirmOk={handleConfirmOk}
                 disabled={submitting}
                 onAddAcceptedAnswer={(answer) => addAcceptedAnswer.mutate(answer)}
               />
@@ -146,7 +166,12 @@ export function ReviewSessionPage() {
                   {t("revealAnswer")}
                 </button>
               ) : (
-                !editing && <RatingButtons onRate={handleRate} disabled={submitting} />
+                !editing &&
+                (hasFailedThisSession ? (
+                  <RetryConfirmButtons onOk={handleConfirmOk} onNotOk={() => handleRate(1)} disabled={submitting} />
+                ) : (
+                  <RatingButtons onRate={handleRate} disabled={submitting} />
+                ))
               )}
             </>
           )}
