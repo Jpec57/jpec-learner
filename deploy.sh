@@ -99,12 +99,14 @@ if compose config | grep -Eq 'VITE_API_BASE_URL: .*localhost'; then
   exit 1
 fi
 
-compose up -d --build --remove-orphans --wait --wait-timeout 300
+# </dev/null everywhere: this script arrives on ssh's stdin, and docker would
+# otherwise swallow the rest of it (the nginx step silently never ran).
+compose up -d --build --remove-orphans --wait --wait-timeout 300 </dev/null
 
 # The backend only runs `alembic upgrade head` when its container starts. If a
 # deploy changed just migrations, compose leaves the container untouched, so
 # run it explicitly (a no-op when already up to date).
-compose exec -T backend alembic upgrade head
+compose exec -T backend alembic upgrade head </dev/null
 
 # Host nginx: symlink the site from the repo, validate, reload. A broken config
 # never stays enabled (that would also break every other site on reload).
