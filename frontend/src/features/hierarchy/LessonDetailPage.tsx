@@ -41,6 +41,16 @@ export function LessonDetailPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["hierarchyNode", nodeId] }),
   });
 
+  const toggleExclude = useMutation({
+    mutationFn: (value: boolean) => updateNode(nodeId!, { exclude_from_review: value }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hierarchyNode", nodeId] });
+      queryClient.invalidateQueries({ queryKey: ["progression"] });
+      queryClient.invalidateQueries({ queryKey: ["nodeProgression"] });
+      queryClient.invalidateQueries({ queryKey: ["reviewsDue"] });
+    },
+  });
+
   if (!categoryId || !nodeId || !category || !node) return null;
 
   const savedBody = node.body_markdown ?? "";
@@ -56,6 +66,20 @@ export function LessonDetailPage() {
         currentTitle={node.title}
       />
       <h1 className="mt-2 text-2xl font-semibold text-slate-900">{node.title}</h1>
+
+      <label className="mt-3 flex items-start gap-2 text-sm text-slate-600">
+        <input
+          type="checkbox"
+          checked={node.exclude_from_review}
+          disabled={toggleExclude.isPending}
+          onChange={(e) => toggleExclude.mutate(e.target.checked)}
+          className="mt-0.5"
+        />
+        <span>
+          {t("lesson.excludeFromReview")}
+          <span className="block text-xs text-slate-400">{t("lesson.excludeFromReviewHint")}</span>
+        </span>
+      </label>
 
       <section className="mt-6">
         <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">{t("lesson.content")}</h2>

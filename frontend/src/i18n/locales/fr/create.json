@@ -25,7 +25,8 @@
   "lesson": {
     "titlePlaceholder": "Titre de la leçon (ex. Limites)",
     "bodyPlaceholder": "Contenu de la leçon (Markdown, facultatif)",
-    "submit": "Créer la leçon"
+    "submit": "Créer la leçon",
+    "excludeFromReview": "Exclure des révisions (simple conteneur de cartes)"
   },
   "ai": {
     "promptPlaceholder": "Décrivez les cartes voulues, ex. 10 cartes sur les verbes irréguliers espagnols",

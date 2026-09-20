@@ -40,7 +40,9 @@
     "previewTab": "Aperçu",
     "previewEmpty": "Rien à prévisualiser pour l'instant.",
     "images": "Images",
-    "cardsInLesson": "Cartes de cette leçon"
+    "cardsInLesson": "Cartes de cette leçon",
+    "excludeFromReview": "Exclure des révisions",
+    "excludeFromReviewHint": "Pour les leçons qui ne servent qu'à regrouper des cartes — la leçon elle-même n'apparaîtra pas en révision (ses cartes, si)."
   },
   "group": {
     "subgroups": "Groupes et leçons",

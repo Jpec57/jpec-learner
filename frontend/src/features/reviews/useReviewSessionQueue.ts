@@ -90,6 +90,12 @@ export function useReviewSessionQueue(fetchedItems: DueItem[] | undefined) {
     );
   }
 
+  /** Drops the current item from the session without counting it as an
+   * attempt (used when its card gets deleted mid-review). */
+  function removeCurrentItem() {
+    setQueue((current) => current.slice(1));
+  }
+
   const currentItem = queue[0] as DueItem | undefined;
 
   return {
@@ -102,5 +108,6 @@ export function useReviewSessionQueue(fetchedItems: DueItem[] | undefined) {
     submitResult,
     confirmRetry,
     updateCurrentItem,
+    removeCurrentItem,
   };
 }

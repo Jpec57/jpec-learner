@@ -4,12 +4,13 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { listChildren, type HierarchyNode } from "@/features/hierarchy/api";
-import { getNodeProgression } from "@/features/progression/api";
+import { getNodeCardsProgression, getNodeProgression } from "@/features/progression/api";
 import { LevelBadge } from "@/features/progression/LevelBadge";
 import { ProgressBar } from "@/features/progression/ProgressBar";
+import { formatDateTime } from "@/lib/formatDate";
 
 export function ProgressionTreeNode({ node, categoryId }: { node: HierarchyNode; categoryId: string }) {
-  const { t } = useTranslation(["hierarchy", "progression"]);
+  const { t, i18n } = useTranslation(["hierarchy", "progression"]);
   const [expanded, setExpanded] = useState(false);
 
   const { data: progress } = useQuery({
@@ -23,10 +24,19 @@ export function ProgressionTreeNode({ node, categoryId }: { node: HierarchyNode;
     enabled: expanded,
   });
 
+  const { data: cards } = useQuery({
+    queryKey: ["nodeCardsProgression", node.id],
+    queryFn: () => getNodeCardsProgression(node.id),
+    enabled: expanded,
+  });
+
+  const expandable = node.node_kind === "group" || node.has_children || node.child_counts.cards > 0;
+  const nodeLink = `/categories/${categoryId}/${node.node_kind === "lesson" ? "lessons" : "groups"}/${node.id}`;
+
   return (
     <div className="border-l border-slate-100 pl-3">
       <div className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50">
-        {node.node_kind === "group" ? (
+        {expandable ? (
           <button
             onClick={() => setExpanded((v) => !v)}
             className="w-4 text-slate-400"
@@ -41,7 +51,7 @@ export function ProgressionTreeNode({ node, categoryId }: { node: HierarchyNode;
         <span>{node.node_kind === "group" ? "📁" : "📄"}</span>
 
         <Link
-          to={`/categories/${categoryId}/${node.node_kind === "lesson" ? "lessons" : "groups"}/${node.id}`}
+          to={nodeLink}
           className="text-sm font-medium text-slate-800 hover:text-primary hover:underline"
         >
           {node.title}
@@ -70,7 +80,47 @@ export function ProgressionTreeNode({ node, categoryId }: { node: HierarchyNode;
           {children?.map((child) => (
             <ProgressionTreeNode key={child.id} node={child} categoryId={categoryId} />
           ))}
-          {children?.length === 0 && <p className="py-1 pl-6 text-xs text-slate-400">{t("tree.empty")}</p>}
+          {cards?.map((card) => (
+            <div
+              key={card.card_id}
+              className="ml-2 flex items-center gap-2 rounded-md border-l border-slate-100 px-2 py-1 pl-3 hover:bg-slate-50"
+            >
+              <span className="w-4" />
+              <span>🃏</span>
+              <Link
+                to={`${nodeLink}?cardQuery=${encodeURIComponent(card.front_text.split("\n")[0])}`}
+                className="min-w-0 truncate text-sm text-slate-700 hover:text-primary hover:underline"
+              >
+                {card.front_text.split("\n")[0]}
+              </Link>
+              <div className="ml-auto flex shrink-0 items-center gap-3">
+                {card.current_level === null ? (
+                  <span className="text-xs text-slate-400">{t("progression:notEnrolled")}</span>
+                ) : (
+                  <>
+                    {card.repetitions === 0 ? (
+                      <span className="text-xs text-slate-400">{t("progression:newCard")}</span>
+                    ) : (
+                      card.due_at && (
+                        <span className="text-xs text-slate-400">
+                          {new Date(card.due_at) <= new Date()
+                            ? t("progression:dueLabel")
+                            : t("progression:nextReview", { date: formatDateTime(card.due_at, i18n.language) })}
+                        </span>
+                      )
+                    )}
+                    <div className="w-20">
+                      <ProgressBar value={card.current_level} />
+                    </div>
+                    <LevelBadge level={card.current_level} />
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+          {children?.length === 0 && cards?.length === 0 && (
+            <p className="py-1 pl-6 text-xs text-slate-400">{t("tree.empty")}</p>
+          )}
         </div>
       )}
     </div>

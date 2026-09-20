@@ -28,6 +28,7 @@ export interface HierarchyNode {
   child_counts: ChildCounts;
   ancestors: Ancestor[];
   body_markdown: string | null;
+  exclude_from_review: boolean;
   images: ImageOut[];
   created_at: string;
   updated_at: string;
@@ -89,6 +90,7 @@ export async function createNode(input: {
   description?: string;
   is_public?: boolean;
   body_markdown?: string;
+  exclude_from_review?: boolean;
 }): Promise<HierarchyNode> {
   const { data } = await api.post<HierarchyNode>("/hierarchy", input);
   return data;
@@ -96,7 +98,13 @@ export async function createNode(input: {
 
 export async function updateNode(
   id: string,
-  input: { title?: string; description?: string; is_public?: boolean; body_markdown?: string }
+  input: {
+    title?: string;
+    description?: string;
+    is_public?: boolean;
+    body_markdown?: string;
+    exclude_from_review?: boolean;
+  }
 ): Promise<HierarchyNode> {
   const { data } = await api.patch<HierarchyNode>(`/hierarchy/${id}`, input);
   return data;

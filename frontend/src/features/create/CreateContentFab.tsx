@@ -73,6 +73,7 @@ function CreateContentDialog({
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [hint, setHint] = useState("");
+  const [excludeFromReview, setExcludeFromReview] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [scanIds, setScanIds] = useState<string[]>([]);
@@ -167,6 +168,7 @@ function CreateContentDialog({
         node_kind: "lesson",
         title: title.trim(),
         body_markdown: body || undefined,
+        exclude_from_review: excludeFromReview || undefined,
       });
       await linkScans({ lesson_node_id: node.id });
       return node;
@@ -427,6 +429,14 @@ function CreateContentDialog({
                 className={`${inputClass} font-mono`}
               />
             </div>
+            <label className="flex items-center gap-2 text-xs text-slate-600">
+              <input
+                type="checkbox"
+                checked={excludeFromReview}
+                onChange={(e) => setExcludeFromReview(e.target.checked)}
+              />
+              {t("create:lesson.excludeFromReview")}
+            </label>
           </>
         )}
 

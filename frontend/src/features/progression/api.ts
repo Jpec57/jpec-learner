@@ -8,6 +8,16 @@ export interface ThemeProgress {
   due_count: number;
 }
 
+export interface CardProgress {
+  card_id: string;
+  front_text: string;
+  back_text: string;
+  current_level: number | null;
+  due_at: string | null;
+  repetitions: number | null;
+  last_reviewed_at: string | null;
+}
+
 export interface LevelCount {
   level: number;
   count: number;
@@ -41,5 +51,10 @@ export async function listLevels(): Promise<LevelDefinition[]> {
 
 export async function getNodeProgression(nodeId: string): Promise<ThemeProgress> {
   const { data } = await api.get<ThemeProgress>(`/progression/nodes/${nodeId}`);
+  return data;
+}
+
+export async function getNodeCardsProgression(nodeId: string): Promise<CardProgress[]> {
+  const { data } = await api.get<CardProgress[]>(`/progression/nodes/${nodeId}/cards`);
   return data;
 }

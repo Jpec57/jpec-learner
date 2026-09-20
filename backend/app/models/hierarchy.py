@@ -65,5 +65,10 @@ class Lesson(TimestampMixin, Base):
         UUID(as_uuid=True), ForeignKey("hierarchy_nodes.id", ondelete="CASCADE"), primary_key=True
     )
     body_markdown: Mapped[str | None] = mapped_column(Text)
+    # Pure container lessons (only there to group cards) shouldn't show up as a
+    # reviewable item themselves; their cards are still reviewed normally.
+    exclude_from_review: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
 
     node: Mapped["HierarchyNode"] = relationship(back_populates="lesson")

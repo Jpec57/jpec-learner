@@ -173,4 +173,17 @@ describe("useReviewSessionQueue", () => {
 
     expect(result.current.hasFailedThisSession).toBe(false);
   });
+
+  it("removeCurrentItem drops the current item without counting an attempt", () => {
+    const items = [makeItem("a"), makeItem("b")];
+    const { result } = renderHook(() => useReviewSessionQueue(items));
+    const first = result.current.currentItem!.review_state_id;
+
+    act(() => result.current.removeCurrentItem());
+
+    expect(result.current.remainingCount).toBe(1);
+    expect(result.current.currentItem!.review_state_id).not.toBe(first);
+    expect(result.current.correctCount).toBe(0);
+    expect(result.current.incorrectCount).toBe(0);
+  });
 });

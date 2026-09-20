@@ -10,5 +10,9 @@
   "noStreak": "Pas encore de série — révisez quelque chose aujourd'hui pour en commencer une.",
   "streak_one": "🔥 série de {{count}} jour",
   "streak_other": "🔥 série de {{count}} jours",
-  "level": "Niv."
+  "level": "Niv.",
+  "notEnrolled": "Non suivie",
+  "dueLabel": "à réviser",
+  "nextReview": "Prochaine : {{date}}",
+  "newCard": "Nouvelle"
 }

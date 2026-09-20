@@ -213,3 +213,57 @@ async def test_category_theme_color_can_be_set_updated_and_cleared(client):
         f"/api/v1/categories/{category['id']}", json={"theme_color": None}, headers=headers
     )
     assert clear_resp.json()["theme_color"] is None
+
+
+async def test_excluded_lesson_is_not_reviewable_and_node_cards_progression_lists_cards(client):
+    headers = await _register_and_login(client, "prog-exclude@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Kanji"}, headers=headers)
+    ).json()["id"]
+    lesson = (
+        await client.post(
+            "/api/v1/hierarchy",
+            json={
+                "category_id": category_id,
+                "node_kind": "lesson",
+                "title": "Container",
+                "exclude_from_review": True,
+            },
+            headers=headers,
+        )
+    ).json()
+    assert lesson["exclude_from_review"] is True
+    card = (
+        await client.post(
+            "/api/v1/cards",
+            json={
+                "category_id": category_id,
+                "lesson_node_id": lesson["id"],
+                "front_text": "q",
+                "back_text": "a",
+            },
+            headers=headers,
+        )
+    ).json()
+
+    # Only the card is tracked -- the lesson itself never got a review state.
+    progression = (await client.get(f"/api/v1/progression/categories/{category_id}", headers=headers)).json()
+    assert progression["total_items"] == 1
+    due = (await client.get(f"/api/v1/reviews/due?category_id={category_id}", headers=headers)).json()
+    assert [item["item_kind"] for item in due] == ["card"]
+
+    enroll = await client.post("/api/v1/reviews/enroll", json={"lesson_node_id": lesson["id"]}, headers=headers)
+    assert enroll.status_code == 400
+
+    cards = (await client.get(f"/api/v1/progression/nodes/{lesson['id']}/cards", headers=headers)).json()
+    assert len(cards) == 1
+    assert cards[0]["card_id"] == card["id"]
+    assert cards[0]["current_level"] == 1
+
+    # Toggling back re-enrolls the owner; toggling on again drops the state.
+    await client.patch(f"/api/v1/hierarchy/{lesson['id']}", json={"exclude_from_review": False}, headers=headers)
+    progression = (await client.get(f"/api/v1/progression/categories/{category_id}", headers=headers)).json()
+    assert progression["total_items"] == 2
+    await client.patch(f"/api/v1/hierarchy/{lesson['id']}", json={"exclude_from_review": True}, headers=headers)
+    progression = (await client.get(f"/api/v1/progression/categories/{category_id}", headers=headers)).json()
+    assert progression["total_items"] == 1

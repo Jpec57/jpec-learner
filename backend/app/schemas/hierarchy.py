@@ -20,11 +20,14 @@ class HierarchyNodeCreate(BaseModel):
     order_index: int | None = None
     is_public: bool = False
     body_markdown: str | None = None
+    exclude_from_review: bool = False
 
     @model_validator(mode="after")
     def body_only_for_lessons(self):
         if self.node_kind == "group" and self.body_markdown is not None:
             raise ValueError("body_markdown is only valid for node_kind='lesson'")
+        if self.node_kind == "group" and self.exclude_from_review:
+            raise ValueError("exclude_from_review is only valid for node_kind='lesson'")
         return self
 
 
@@ -35,6 +38,7 @@ class HierarchyNodeUpdate(BaseModel):
     description: str | None = None
     is_public: bool | None = None
     body_markdown: str | None = None
+    exclude_from_review: bool | None = None
 
 
 class HierarchyNodeFlatOut(BaseModel):
@@ -80,6 +84,7 @@ class HierarchyNodeOut(BaseModel):
     child_counts: ChildCountsOut = ChildCountsOut()
     ancestors: list[AncestorOut] = []
     body_markdown: str | None = None
+    exclude_from_review: bool = False
     images: list[ImageOut] = []
     created_at: datetime
     updated_at: datetime

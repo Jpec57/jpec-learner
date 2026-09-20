@@ -40,7 +40,9 @@
     "previewTab": "Preview",
     "previewEmpty": "Nothing to preview yet.",
     "images": "Images",
-    "cardsInLesson": "Cards in this lesson"
+    "cardsInLesson": "Cards in this lesson",
+    "excludeFromReview": "Exclude from review",
+    "excludeFromReviewHint": "Use for lessons that only hold cards — the lesson itself won't come up in reviews (its cards still do)."
   },
   "group": {
     "subgroups": "Groups and lessons",

@@ -25,7 +25,8 @@
   "lesson": {
     "titlePlaceholder": "Lesson title (e.g. Limits)",
     "bodyPlaceholder": "Lesson content (Markdown, optional)",
-    "submit": "Create lesson"
+    "submit": "Create lesson",
+    "excludeFromReview": "Exclude from review (container for cards)"
   },
   "ai": {
     "promptPlaceholder": "Describe the cards you want, e.g. 10 flashcards about Spanish irregular verbs",

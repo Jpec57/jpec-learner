@@ -39,6 +39,10 @@
     "front": "Front",
     "back": "Back"
   },
+  "deleteCard": {
+    "trigger": "Delete this card",
+    "confirm": "Delete this card? It will be removed from all reviews."
+  },
   "typed": {
     "placeholder": "Type your answer…",
     "submit": "Check",

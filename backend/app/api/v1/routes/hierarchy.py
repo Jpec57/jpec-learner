@@ -2,7 +2,7 @@ import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, or_, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -13,6 +13,7 @@ from app.db.base import get_db
 from app.models.card import Card
 from app.models.category import Category
 from app.models.hierarchy import SIBLING_TITLE_UNIQUE_CONSTRAINT, UNCLASSIFIED_NODE_TITLE, HierarchyNode, Lesson
+from app.models.review import ReviewState
 from app.models.user import User
 from app.schemas.hierarchy import (
     AncestorOut,
@@ -122,6 +123,7 @@ async def _with_has_children(db: AsyncSession, nodes: list[HierarchyNode]) -> li
         item.child_counts = node_counts
         if node.lesson is not None:
             item.body_markdown = node.lesson.body_markdown
+            item.exclude_from_review = node.lesson.exclude_from_review
         out.append(item)
     return out
 
@@ -289,9 +291,16 @@ async def create_node(
 
     async with _sibling_title_conflict_guard(db):
         if payload.node_kind == "lesson":
-            db.add(Lesson(id=node.id, body_markdown=payload.body_markdown))
+            db.add(
+                Lesson(
+                    id=node.id,
+                    body_markdown=payload.body_markdown,
+                    exclude_from_review=payload.exclude_from_review,
+                )
+            )
             await db.flush()
-            await ensure_review_state(db, user_id=current_user.id, lesson_node_id=node.id)
+            if not payload.exclude_from_review:
+                await ensure_review_state(db, user_id=current_user.id, lesson_node_id=node.id)
         await db.commit()
     await db.refresh(node, attribute_names=["lesson", "images"])
     return (await _with_has_children(db, [node]))[0]
@@ -319,6 +328,16 @@ async def update_node(
         if node.lesson is None:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Node is not a lesson")
         node.lesson.body_markdown = payload.body_markdown
+    if payload.exclude_from_review is not None:
+        if node.lesson is None:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Node is not a lesson")
+        node.lesson.exclude_from_review = payload.exclude_from_review
+        if payload.exclude_from_review:
+            # Drop everyone's review state for it so it leaves the due queue,
+            # upcoming/insights lists and progression counts in one go.
+            await db.execute(delete(ReviewState).where(ReviewState.lesson_node_id == node.id))
+        else:
+            await ensure_review_state(db, user_id=current_user.id, lesson_node_id=node.id)
 
     async with _sibling_title_conflict_guard(db):
         await db.commit()

@@ -1,17 +1,19 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user
 from app.core.permissions import assert_visible
 from app.db.base import get_db
+from app.models.card import Card
 from app.models.category import Category
 from app.models.hierarchy import HierarchyNode
 from app.models.level import LevelDefinition
+from app.models.review import ReviewState
 from app.models.user import User
-from app.schemas.progression import ProgressionOut, ThemeProgressOut
+from app.schemas.progression import CardProgressOut, ProgressionOut, ThemeProgressOut
 from app.schemas.review import LevelDefinitionOut
 from app.services.progression import category_totals, compute_streak, level_distribution, theme_rollup
 
@@ -93,3 +95,42 @@ async def get_node_progression(
         avg_level=rollup["avg_level"],
         due_count=rollup["due_count"],
     )
+
+
+@router.get("/nodes/{node_id}/cards", response_model=list[CardProgressOut])
+async def get_node_cards_progression(
+    node_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Cards attached directly to this node with the caller's SRS state, so
+    the progression tree can show per-card detail under a lesson/group."""
+    node = await db.get(HierarchyNode, node_id)
+    if node is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Node not found")
+    assert_visible(node, current_user.id)
+
+    rows = await db.execute(
+        select(Card, ReviewState)
+        .outerjoin(
+            ReviewState, (ReviewState.card_id == Card.id) & (ReviewState.user_id == current_user.id)
+        )
+        .where(
+            Card.lesson_node_id == node_id,
+            Card.deleted_at.is_(None),
+            or_(Card.owner_id == current_user.id, Card.is_public.is_(True)),
+        )
+        .order_by(Card.created_at)
+    )
+    return [
+        CardProgressOut(
+            card_id=card.id,
+            front_text=card.front_text,
+            back_text=card.back_text,
+            current_level=state.current_level if state else None,
+            due_at=state.due_at if state else None,
+            repetitions=state.repetitions if state else None,
+            last_reviewed_at=state.last_reviewed_at if state else None,
+        )
+        for card, state in rows.all()
+    ]

@@ -10,5 +10,9 @@
   "noStreak": "No streak yet — review something today to start one.",
   "streak_one": "🔥 {{count}} day streak",
   "streak_other": "🔥 {{count}} day streak",
-  "level": "Lv."
+  "level": "Lv.",
+  "notEnrolled": "Not tracked",
+  "dueLabel": "due",
+  "nextReview": "Next: {{date}}",
+  "newCard": "New"
 }

@@ -39,6 +39,10 @@
     "front": "Recto",
     "back": "Verso"
   },
+  "deleteCard": {
+    "trigger": "Supprimer cette carte",
+    "confirm": "Supprimer cette carte ? Elle sera retirée de toutes les révisions."
+  },
   "typed": {
     "placeholder": "Tapez votre réponse…",
     "submit": "Vérifier",

@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
-import { updateCard } from "@/features/cards/api";
+import { useConfirm } from "@/components/ui/useConfirm";
+import { deleteCard, updateCard } from "@/features/cards/api";
 import { getCategory } from "@/features/categories/api";
 import { ALL_REVIEW_ITEM_TYPES, getDue, submitReview, type ReviewItemType } from "@/features/reviews/api";
 import { EditCardForm } from "@/features/reviews/EditCardForm";
@@ -23,6 +24,7 @@ export function ReviewSessionPage() {
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirm();
 
   const { data: category } = useQuery({
     queryKey: ["category", categoryId],
@@ -49,6 +51,7 @@ export function ReviewSessionPage() {
     submitResult,
     confirmRetry,
     updateCurrentItem,
+    removeCurrentItem,
   } = useReviewSessionQueue(fetchedDue);
 
   const addAcceptedAnswer = useMutation({
@@ -57,6 +60,17 @@ export function ReviewSessionPage() {
       return updateCard(currentItem!.card_id!, { accepted_answers: [...existing, answer] });
     },
     onSuccess: (updated) => updateCurrentItem({ accepted_answers: updated.accepted_answers }),
+  });
+
+  const removeCard = useMutation({
+    mutationFn: (cardId: string) => deleteCard(cardId),
+    onSuccess: () => {
+      removeCurrentItem();
+      setRevealed(false);
+      setEditing(false);
+      setError(null);
+    },
+    onError: (err) => setError(getErrorMessage(err, t("common:errors.generic"))),
   });
 
   if (!categoryId || !category || isLoading) return null;
@@ -176,9 +190,24 @@ export function ReviewSessionPage() {
             </>
           )}
 
+          {currentItem.card_id && (
+            <button
+              onClick={async () => {
+                if (await confirm(t("common:actions.delete"), t("deleteCard.confirm"))) {
+                  removeCard.mutate(currentItem.card_id!);
+                }
+              }}
+              disabled={removeCard.isPending || submitting}
+              className="mt-4 text-xs text-slate-400 hover:text-red-600 disabled:opacity-50"
+            >
+              {t("deleteCard.trigger")}
+            </button>
+          )}
+
           {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         </div>
       )}
+      {dialog}
     </div>
   );
 }

@@ -12,7 +12,7 @@ from app.core.deps import get_current_user
 from app.core.permissions import assert_visible
 from app.db.base import get_db
 from app.models.card import Card
-from app.models.hierarchy import HierarchyNode
+from app.models.hierarchy import HierarchyNode, Lesson
 from app.models.review import ReviewLog, ReviewState
 from app.models.user import User
 from app.schemas.review import (
@@ -293,6 +293,10 @@ async def enroll(
         if node is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Node not found")
         assert_visible(node, current_user.id)
+        if node.node_kind == "lesson":
+            lesson = await db.get(Lesson, node.id)
+            if lesson is not None and lesson.exclude_from_review:
+                raise HTTPException(status.HTTP_400_BAD_REQUEST, "Lesson is excluded from review")
 
     state = await ensure_review_state(
         db, user_id=current_user.id, card_id=payload.card_id, lesson_node_id=payload.lesson_node_id
