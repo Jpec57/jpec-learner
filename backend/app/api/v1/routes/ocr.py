@@ -14,7 +14,7 @@ from app.models.user import User
 from app.schemas.ocr import OcrMode, OcrScanLink, OcrScanOut
 from app.services.image_storage import ALLOWED_CONTENT_TYPES
 from app.services.ocr.client import OcrServiceError, extract_text
-from app.services.ocr.r2_storage import presigned_scan_url, upload_scan_image
+from app.services.ocr.r2_storage import OcrStorageNotConfiguredError, presigned_scan_url, upload_scan_image
 
 router = APIRouter(prefix="/ocr", tags=["ocr"])
 
@@ -49,6 +49,8 @@ async def extract(
     try:
         object_key, size_bytes = await upload_scan_image(raw, owner_id=current_user.id)
         text = await extract_text(raw, mode=mode, content_type=file.content_type)
+    except OcrStorageNotConfiguredError as exc:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
     except OcrServiceError as exc:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(exc)) from exc
 

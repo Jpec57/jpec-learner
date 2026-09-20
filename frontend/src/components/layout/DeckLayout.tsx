@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { AssistantChatPanel } from "@/features/assistant/AssistantChatPanel";
 import { getCategory } from "@/features/categories/api";
+import { CreateContentFab } from "@/features/create/CreateContentFab";
 import { deckThemeVars } from "@/lib/deckTheme";
 
 // Replaces AppLayout for /categories/:categoryId/* routes so the deck's
@@ -38,6 +39,7 @@ export function DeckLayout() {
         <Outlet />
       </main>
       <Footer />
+      {categoryId && <CreateContentFab categoryId={categoryId} />}
       <AssistantChatPanel categoryId={categoryId} />
     </div>
   );

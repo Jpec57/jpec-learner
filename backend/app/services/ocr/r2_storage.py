@@ -11,8 +11,18 @@ from app.core.config import settings
 PRESIGNED_URL_TTL_SECONDS = 3600
 
 
+class OcrStorageNotConfiguredError(RuntimeError):
+    """Raised when the R2 credentials are missing, so the route can answer with
+    a readable 503 instead of an unhandled 500 (which also skips the CORS
+    middleware and surfaces in the browser as a misleading CORS error)."""
+
+
 @lru_cache(maxsize=1)
 def _client():
+    if not (settings.r2_account_id and settings.r2_access_key_id and settings.r2_secret_access_key):
+        raise OcrStorageNotConfiguredError(
+            "OCR image storage is not configured: set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY"
+        )
     return boto3.client(
         "s3",
         endpoint_url=settings.r2_endpoint_url,

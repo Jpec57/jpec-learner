@@ -8,6 +8,7 @@ import { createCategory, listCategories, type Category } from "@/features/catego
 import { DEFAULT_CATEGORY_ICON } from "@/features/categories/iconOptions";
 import { IconPicker } from "@/features/categories/IconPicker";
 import { ThemeColorPicker } from "@/features/categories/ThemeColorPicker";
+import { CreateContentFab } from "@/features/create/CreateContentFab";
 import { DueBanner } from "@/features/notifications/DueBanner";
 
 function CategoryCard({ category, mine }: { category: Category; mine: boolean }) {
@@ -158,6 +159,8 @@ export function CategoryPickerPage() {
           </div>
         </>
       )}
+
+      <CreateContentFab />
     </div>
   );
 }

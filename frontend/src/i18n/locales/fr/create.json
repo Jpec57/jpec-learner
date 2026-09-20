@@ -1,0 +1,29 @@
+{
+  "fabLabel": "Créer une carte ou une leçon",
+  "title": "Créer",
+  "close": "Fermer",
+  "deck": {
+    "label": "Deck",
+    "placeholder": "Choisir un deck…",
+    "none": "Vous n'avez pas encore de deck — créez-en un d'abord."
+  },
+  "kind": {
+    "card": "Carte",
+    "lesson": "Leçon"
+  },
+  "destination": {
+    "cardLabel": "Ajouter à",
+    "lessonLabel": "Dans le groupe",
+    "none": "Aucune leçon (Non classé)",
+    "root": "Niveau supérieur"
+  },
+  "card": {
+    "submit": "Ajouter la carte",
+    "added": "Carte ajoutée. Ajoutez-en une autre, ou fermez."
+  },
+  "lesson": {
+    "titlePlaceholder": "Titre de la leçon (ex. Limites)",
+    "bodyPlaceholder": "Contenu de la leçon (Markdown, facultatif)",
+    "submit": "Créer la leçon"
+  }
+}

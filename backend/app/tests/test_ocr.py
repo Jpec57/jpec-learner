@@ -3,6 +3,7 @@ import io
 from PIL import Image
 
 from app.api.v1.routes import ocr as ocr_routes
+from app.core.config import settings
 from app.services.ocr.client import OcrServiceError
 
 
@@ -69,6 +70,21 @@ async def test_extract_maps_ocr_service_failure_to_502(client, monkeypatch):
         headers=headers,
     )
     assert resp.status_code == 502
+
+
+async def test_extract_without_r2_credentials_returns_503(client, monkeypatch):
+    headers = await _register_and_login(client, "ocr-noconfig@example.com")
+    for name in ("r2_account_id", "r2_access_key_id", "r2_secret_access_key"):
+        monkeypatch.setattr(settings, name, "")
+
+    resp = await client.post(
+        "/api/v1/ocr/extract",
+        files={"file": ("scan.jpg", _fake_jpeg_bytes(), "image/jpeg")},
+        data={"mode": "general"},
+        headers=headers,
+    )
+    assert resp.status_code == 503
+    assert "R2_ACCOUNT_ID" in resp.json()["detail"]
 
 
 async def test_link_scan_to_own_card_succeeds(client, monkeypatch):

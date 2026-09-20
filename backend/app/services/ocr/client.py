@@ -2,7 +2,8 @@ import httpx
 
 from app.core.config import settings
 
-REQUEST_TIMEOUT_SECONDS = 60.0
+# A CPU-only inference takes ~25s warm; leave headroom for a slower host.
+REQUEST_TIMEOUT_SECONDS = 120.0
 
 
 class OcrServiceError(RuntimeError):
@@ -18,7 +19,7 @@ async def extract_text(raw: bytes, *, mode: str, content_type: str) -> str:
         async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT_SECONDS) as client:
             response = await client.post(f"{settings.ocr_service_url}/extract", files=files, data=data)
     except httpx.HTTPError as exc:
-        raise OcrServiceError(f"OCR service unreachable: {exc}") from exc
+        raise OcrServiceError(f"OCR service unreachable: {type(exc).__name__}: {exc}") from exc
 
     if response.is_error:
         raise OcrServiceError(f"OCR service returned {response.status_code}: {response.text}")

@@ -1,0 +1,29 @@
+{
+  "fabLabel": "Create a card or lesson",
+  "title": "Create",
+  "close": "Close",
+  "deck": {
+    "label": "Deck",
+    "placeholder": "Choose a deck…",
+    "none": "You have no decks yet — create one first."
+  },
+  "kind": {
+    "card": "Card",
+    "lesson": "Lesson"
+  },
+  "destination": {
+    "cardLabel": "Add to",
+    "lessonLabel": "Inside group",
+    "none": "No lesson (Unclassified)",
+    "root": "Top level"
+  },
+  "card": {
+    "submit": "Add card",
+    "added": "Card added. Add another, or close."
+  },
+  "lesson": {
+    "titlePlaceholder": "Lesson title (e.g. Limits)",
+    "bodyPlaceholder": "Lesson content (Markdown, optional)",
+    "submit": "Create lesson"
+  }
+}
