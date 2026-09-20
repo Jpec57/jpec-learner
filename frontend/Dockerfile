@@ -4,8 +4,12 @@ FROM node:22-alpine AS build
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install -g pnpm@10.28.1
+
+# Frozen install straight from pnpm-lock.yaml (includes every platform's native
+# optional deps, e.g. rollup/esbuild for the x86-64 VPS as well as arm64 Macs).
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
@@ -13,7 +17,7 @@ COPY . .
 # by the browser (e.g. https://learn.enter-train-me.fr/api/v1).
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-RUN npm run build
+RUN pnpm run build
 
 FROM nginx:1.27-alpine
 
