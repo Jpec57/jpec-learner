@@ -1,3 +1,12 @@
+# Production stack (used by deploy.sh):
+#
+#   docker compose -f docker-compose.prod.yml --env-file .env --env-file .env.local up -d --build
+#
+# Every published port is bound to 127.0.0.1. The only public entry point is
+# the host nginx (deploy/nginx/learn.enter-train-me.fr.conf), which proxies
+# /api/ and /media/ to the backend and everything else to the frontend.
+# docker-compose.yml remains the development setup.
+
 services:
   db:
     image: postgres:16-alpine
@@ -19,13 +28,12 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     restart: unless-stopped
     volumes:
-      - ./backend:/app
       - images_data:/data/images
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://jpeclearner:jpeclearner@db:5432/jpeclearner}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-secret-change-me}
@@ -50,36 +58,24 @@ services:
     build:
       context: ./ocr_service
     restart: unless-stopped
-    # Deliberately capped: this runs on a memory/CPU-constrained VPS, not a
-    # workstation, so the lightweight PP-OCR/PP-FormulaNet + manga-ocr models
-    # (see ocr_service/main.py) are chosen to fit well under this -- measured
-    # ~1.3-1.6GB working set across both models plus a real inference request
-    # in each mode. Raise it if you size up the models later; it exists so a
-    # runaway OCR request can't take down Postgres/backend on the same box.
+    # Same cap as docker-compose.yml (see the note there): keeps a runaway OCR
+    # request from taking down Postgres/backend on this shared box.
     mem_limit: 2000m
     volumes:
-      # manga-ocr's weights (via Hugging Face transformers) live under
-      # ~/.cache/huggingface; PP-StructureV3's own pipeline models (PP-OCRv5,
-      # PP-FormulaNet, PP-DocLayout) are cached under ~/.paddlex instead --
-      # both need to persist across restarts so models aren't re-downloaded
-      # every time the container recreates.
       - ocr_hf_cache:/root/.cache/huggingface
       - ocr_paddlex_cache:/root/.paddlex
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
+      args:
+        # Baked into the bundle at build time; must be the public URL, set in
+        # .env.local (https://learn.enter-train-me.fr/api/v1).
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
     restart: unless-stopped
-    depends_on:
-      - backend
-    volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
     ports:
-      - "5173:5173"
-    environment:
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
+      - "127.0.0.1:5173:80"
 
   adminer:
     image: adminer:latest
@@ -92,6 +88,5 @@ services:
 volumes:
   pgdata:
   images_data:
-  frontend_node_modules:
   ocr_hf_cache:
   ocr_paddlex_cache:
