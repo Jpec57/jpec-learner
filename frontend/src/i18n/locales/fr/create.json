@@ -9,7 +9,8 @@
   },
   "kind": {
     "card": "Carte",
-    "lesson": "Leçon"
+    "lesson": "Leçon",
+    "ai": "IA"
   },
   "destination": {
     "cardLabel": "Ajouter à",
@@ -25,5 +26,12 @@
     "titlePlaceholder": "Titre de la leçon (ex. Limites)",
     "bodyPlaceholder": "Contenu de la leçon (Markdown, facultatif)",
     "submit": "Créer la leçon"
+  },
+  "ai": {
+    "promptPlaceholder": "Décrivez les cartes voulues, ex. 10 cartes sur les verbes irréguliers espagnols",
+    "submit": "Générer avec l'IA",
+    "generating": "Génération…",
+    "notConfigured": "Ajoutez une clé d'API dans les réglages pour utiliser l'assistant IA.",
+    "goToSettings": "Aller aux réglages"
   }
 }

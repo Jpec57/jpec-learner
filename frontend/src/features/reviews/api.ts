@@ -70,6 +70,9 @@ export async function getDue(
 ): Promise<DueItem[]> {
   const { data } = await api.get<DueItem[]>("/reviews/due", {
     params: { category_id: categoryId, types, limit },
+    // FastAPI reads repeated keys (types=card&types=lesson); axios's default
+    // would send types[]=card, which it ignores and falls back to "all types".
+    paramsSerializer: { indexes: null },
   });
   return data;
 }

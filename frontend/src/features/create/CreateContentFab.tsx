@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, X } from "lucide-react";
+import { CheckCircle2, Plus, Sparkles, X, XCircle } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMatch, useNavigate } from "react-router-dom";
+import { Link, useMatch, useNavigate } from "react-router-dom";
 
+import { getCredential, sendChatMessage, type ChatResponse } from "@/features/assistant/api";
 import { listCategories } from "@/features/categories/api";
 import { createCard } from "@/features/cards/api";
 import { createNode, listFlat, type FlatHierarchyNode } from "@/features/hierarchy/api";
@@ -11,7 +12,7 @@ import { linkOcrScan } from "@/features/ocr/api";
 import { OcrCaptureButton } from "@/features/ocr/OcrCaptureButton";
 import { getErrorMessage } from "@/lib/errors";
 
-type Kind = "card" | "lesson";
+type Kind = "card" | "lesson" | "ai";
 
 function withDepth(nodes: FlatHierarchyNode[]) {
   const byId = new Map(nodes.map((node) => [node.id, node]));
@@ -41,9 +42,7 @@ export function CreateContentFab({ categoryId }: { categoryId?: string }) {
         onClick={() => setOpen(true)}
         aria-label={t("fabLabel")}
         title={t("fabLabel")}
-        className={`fixed right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark ${
-          categoryId ? "bottom-20" : "bottom-6"
-        }`}
+        className="fixed bottom-20 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark"
       >
         <Plus className="h-6 w-6" />
       </button>
@@ -79,6 +78,8 @@ function CreateContentDialog({
   const [scanIds, setScanIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiResult, setAiResult] = useState<ChatResponse | null>(null);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -178,7 +179,32 @@ function CreateContentDialog({
     onError: (err) => setError(getErrorMessage(err, t("common:errors.generic"))),
   });
 
-  const pending = addCard.isPending || addLesson.isPending;
+  const { data: credential } = useQuery({
+    queryKey: ["assistant-credential"],
+    queryFn: getCredential,
+    enabled: kind === "ai",
+  });
+
+  // The assistant writes through the same tools as the chat panel, so the
+  // destination is passed as text: the chat API only knows the open category.
+  const generateWithAi = useMutation({
+    mutationFn: () => {
+      const destination = flat?.find((node) => node.id === cardNodeId);
+      const content = destination
+        ? `${aiPrompt.trim()}\n\nAdd the cards to the ${destination.node_kind} "${destination.title}" (id=${destination.id}).`
+        : aiPrompt.trim();
+      return sendChatMessage({ messages: [{ role: "user", content }], categoryId });
+    },
+    onSuccess: (response) => {
+      invalidateAll();
+      setAiResult(response);
+      setAiPrompt("");
+      setError(null);
+    },
+    onError: (err) => setError(getErrorMessage(err, t("common:errors.generic"))),
+  });
+
+  const pending = addCard.isPending || addLesson.isPending || generateWithAi.isPending;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -186,13 +212,18 @@ function CreateContentDialog({
     setError(null);
     setNotice(null);
     if (kind === "card") addCard.mutate();
-    else addLesson.mutate();
+    else if (kind === "lesson") addLesson.mutate();
+    else {
+      setAiResult(null);
+      generateWithAi.mutate();
+    }
   }
 
   function switchKind(next: Kind) {
     setKind(next);
     setError(null);
     setNotice(null);
+    setAiResult(null);
   }
 
   const inputClass = "w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm";
@@ -214,15 +245,16 @@ function CreateContentDialog({
         </div>
 
         <div className="flex gap-1">
-          {(["card", "lesson"] as const).map((option) => (
+          {(["card", "lesson", "ai"] as const).map((option) => (
             <button
               key={option}
               type="button"
               onClick={() => switchKind(option)}
-              className={`rounded-md px-3 py-1 text-sm font-medium ${
+              className={`inline-flex items-center gap-1 rounded-md px-3 py-1 text-sm font-medium ${
                 kind === option ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
               }`}
             >
+              {option === "ai" && <Sparkles className="h-3.5 w-3.5" />}
               {t(`create:kind.${option}`)}
             </button>
           ))}
@@ -250,7 +282,7 @@ function CreateContentDialog({
           </div>
         )}
 
-        {kind === "card" ? (
+        {kind === "card" || kind === "ai" ? (
           <>
             <div>
               <label className="text-[10px] uppercase tracking-wide text-slate-400">{t("create:destination.cardLabel")}</label>
@@ -270,45 +302,89 @@ function CreateContentDialog({
               </select>
             </div>
 
-            <div className="space-y-1">
-              <OcrCaptureButton
-                onResult={({ text, scanId }) => {
-                  setFront(text);
-                  setScanIds((prev) => [...prev, scanId]);
-                }}
-              />
-              <textarea
-                autoFocus
-                required
-                value={front}
-                onChange={(e) => setFront(e.target.value)}
-                rows={2}
-                placeholder={t("cards:frontPlaceholder")}
-                className={inputClass}
-              />
-            </div>
-            <div className="space-y-1">
-              <OcrCaptureButton
-                onResult={({ text, scanId }) => {
-                  setBack(text);
-                  setScanIds((prev) => [...prev, scanId]);
-                }}
-              />
-              <textarea
-                required
-                value={back}
-                onChange={(e) => setBack(e.target.value)}
-                rows={2}
-                placeholder={t("cards:backPlaceholder")}
-                className={inputClass}
-              />
-            </div>
-            <input
-              value={hint}
-              onChange={(e) => setHint(e.target.value)}
-              placeholder={t("cards:hintPlaceholder")}
-              className={inputClass}
-            />
+            {kind === "ai" ? (
+              <>
+                {credential && !credential.configured && (
+                  <p className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+                    {t("create:ai.notConfigured")}{" "}
+                    <Link to="/settings" onClick={onClose} className="font-medium underline">
+                      {t("create:ai.goToSettings")}
+                    </Link>
+                  </p>
+                )}
+                <textarea
+                  autoFocus
+                  required
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  rows={4}
+                  placeholder={t("create:ai.promptPlaceholder")}
+                  className={inputClass}
+                />
+                {generateWithAi.isPending && <p className="text-xs text-slate-400">{t("create:ai.generating")}</p>}
+                {aiResult && (
+                  <div className="space-y-2 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
+                    <p className="whitespace-pre-wrap">{aiResult.message.content}</p>
+                    {aiResult.tool_events.length > 0 && (
+                      <ul className="space-y-1 border-t border-slate-200 pt-2">
+                        {aiResult.tool_events.map((event, index) => (
+                          <li key={index} className="flex items-start gap-1.5 text-xs text-slate-600">
+                            {event.ok ? (
+                              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                            ) : (
+                              <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500" />
+                            )}
+                            <span className="whitespace-pre-wrap">{event.summary}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="space-y-1">
+                  <OcrCaptureButton
+                    onResult={({ text, scanId }) => {
+                      setFront(text);
+                      setScanIds((prev) => [...prev, scanId]);
+                    }}
+                  />
+                  <textarea
+                    autoFocus
+                    required
+                    value={front}
+                    onChange={(e) => setFront(e.target.value)}
+                    rows={2}
+                    placeholder={t("cards:frontPlaceholder")}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <OcrCaptureButton
+                    onResult={({ text, scanId }) => {
+                      setBack(text);
+                      setScanIds((prev) => [...prev, scanId]);
+                    }}
+                  />
+                  <textarea
+                    required
+                    value={back}
+                    onChange={(e) => setBack(e.target.value)}
+                    rows={2}
+                    placeholder={t("cards:backPlaceholder")}
+                    className={inputClass}
+                  />
+                </div>
+                <input
+                  value={hint}
+                  onChange={(e) => setHint(e.target.value)}
+                  placeholder={t("cards:hintPlaceholder")}
+                  className={inputClass}
+                />
+              </>
+            )}
           </>
         ) : (
           <>
@@ -363,7 +439,7 @@ function CreateContentDialog({
             disabled={pending}
             className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
           >
-            {kind === "card" ? t("create:card.submit") : t("create:lesson.submit")}
+            {kind === "card" ? t("create:card.submit") : kind === "lesson" ? t("create:lesson.submit") : t("create:ai.submit")}
           </button>
           <button type="button" onClick={onClose} className="text-sm text-slate-500 hover:underline">
             {t("common:actions.cancel")}

@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { FuriganaText } from "@/components/ui/FuriganaText";
+import { CardText } from "@/components/ui/CardText";
 import { answerLanguageDisplay } from "@/features/cards/answerLanguages";
 import { acceptedAnswersFor, classifyTypedAnswer } from "@/features/reviews/answerGrading";
 import type { DueItem } from "@/features/reviews/api";
@@ -73,7 +73,7 @@ export function TypedAnswerCard({
           </span>
         )}
       </div>
-      <FuriganaText text={item.front_text ?? ""} className="mt-3 block text-2xl text-slate-900" />
+      <CardText text={item.front_text ?? ""} size="prose-lg" className="mt-3 block text-2xl text-slate-900" />
 
       {phase === "answering" && (
         <form onSubmit={handleSubmit} className="mt-6">
@@ -94,7 +94,10 @@ export function TypedAnswerCard({
           {item.hint && (
             <div className="mt-3">
               {showHint ? (
-                <p className="text-sm text-slate-500">💡 {item.hint}</p>
+                <div className="text-sm text-slate-500">
+                  <span aria-hidden>💡 </span>
+                  <CardText text={item.hint} size="prose-base" className="inline-block align-top" />
+                </div>
               ) : (
                 <button
                   type="button"
@@ -141,7 +144,7 @@ export function TypedAnswerCard({
             {rawAcceptedAnswers.map((answer, index) => (
               <span key={answer}>
                 {index > 0 && ", "}
-                <FuriganaText text={answer} />
+                <CardText text={answer} inline />
               </span>
             ))}
           </p>

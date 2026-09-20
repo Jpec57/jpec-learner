@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { AssistantChatPanel } from "@/features/assistant/AssistantChatPanel";
 
 export function AppLayout() {
   return (
@@ -19,6 +20,7 @@ export function AppLayout() {
         <Outlet />
       </main>
       <Footer />
+      <AssistantChatPanel />
     </div>
   );
 }

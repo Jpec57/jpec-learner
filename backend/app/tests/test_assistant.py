@@ -152,3 +152,85 @@ async def test_chat_reports_tool_failure_without_crashing(client, monkeypatch):
     assert resp.status_code == 200
     body = resp.json()
     assert body["tool_events"][0]["ok"] is False
+
+
+def _walk_schema_keys(node):
+    """Every JSON-Schema keyword used anywhere in a schema (property names excluded)."""
+    if isinstance(node, dict):
+        for key, value in node.items():
+            yield key
+            if key == "properties":
+                for sub in value.values():
+                    yield from _walk_schema_keys(sub)
+            else:
+                yield from _walk_schema_keys(value)
+    elif isinstance(node, list):
+        for item in node:
+            yield from _walk_schema_keys(item)
+
+
+def test_gemini_function_declarations_only_use_supported_schema_keywords():
+    from app.services.assistant.providers import _GEMINI_SCHEMA_KEYS, to_gemini_function_declaration
+    from app.services.assistant.tools import TOOL_SPECS
+
+    for tool in TOOL_SPECS:
+        declaration = to_gemini_function_declaration(tool)
+        assert set(_walk_schema_keys(declaration.get("parameters", {}))) <= _GEMINI_SCHEMA_KEYS, tool.name
+
+    # additionalProperties is what Gemini rejected in production (400 Unknown name)
+    assert any("additionalProperties" in tool.parameters for tool in TOOL_SPECS)
+
+
+def test_gemini_omits_parameters_for_parameterless_tools_and_keeps_property_names():
+    from app.services.assistant.providers import to_gemini_function_declaration
+    from app.services.assistant.tools import TOOL_SPECS
+
+    by_name = {t.name: to_gemini_function_declaration(t) for t in TOOL_SPECS}
+    assert "parameters" not in by_name["list_categories"]
+
+    bulk = by_name["create_cards_bulk"]["parameters"]
+    assert set(bulk["properties"]) == {"category_id", "lesson_node_id", "cards"}
+    assert bulk["properties"]["cards"]["items"]["properties"]["front_text"] == {"type": "string"}
+    assert bulk["properties"]["cards"]["maxItems"] == 50
+    assert bulk["required"] == ["category_id", "cards"]
+
+
+async def test_gemini_tool_round_trip_uses_only_roles_the_api_accepts(monkeypatch):
+    """Gemini rejected role "function" (400) when returning tool results."""
+    import httpx
+
+    from app.schemas.assistant import ChatMessageIn
+    from app.services.assistant import providers
+    from app.services.assistant.tools import TOOL_SPECS
+
+    requests: list[dict] = []
+    replies = [
+        {"candidates": [{"content": {"parts": [{"functionCall": {"name": "list_categories", "args": {}}}]}}]},
+        {"candidates": [{"content": {"parts": [{"text": "You have no decks."}]}}]},
+    ]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json
+
+        requests.append(json.loads(request.content))
+        return httpx.Response(200, json=replies[len(requests) - 1])
+
+    real_client = httpx.AsyncClient
+    monkeypatch.setattr(
+        providers.httpx, "AsyncClient", lambda **kw: real_client(transport=httpx.MockTransport(handler), **kw)
+    )
+
+    provider = providers.GeminiProvider("key", "gemini-test")
+    first = await provider.start(
+        system="sys", history=[ChatMessageIn(role="user", content="list my decks")], tools=TOOL_SPECS
+    )
+    assert [c.name for c in first.tool_calls] == ["list_categories"]
+
+    second = await provider.continue_with_tool_results(
+        [providers.ToolResult(id=first.tool_calls[0].id, name="list_categories", content="No categories exist yet.")]
+    )
+    assert second.text == "You have no decks."
+
+    roles = [c["role"] for c in requests[1]["contents"]]
+    assert roles == ["user", "model", "user"]
+    assert requests[1]["contents"][-1]["parts"][0]["functionResponse"]["name"] == "list_categories"

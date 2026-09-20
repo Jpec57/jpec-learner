@@ -9,7 +9,8 @@
   },
   "kind": {
     "card": "Card",
-    "lesson": "Lesson"
+    "lesson": "Lesson",
+    "ai": "AI"
   },
   "destination": {
     "cardLabel": "Add to",
@@ -25,5 +26,12 @@
     "titlePlaceholder": "Lesson title (e.g. Limits)",
     "bodyPlaceholder": "Lesson content (Markdown, optional)",
     "submit": "Create lesson"
+  },
+  "ai": {
+    "promptPlaceholder": "Describe the cards you want, e.g. 10 flashcards about Spanish irregular verbs",
+    "submit": "Generate with AI",
+    "generating": "Generating…",
+    "notConfigured": "Add an API key in Settings to use the AI assistant.",
+    "goToSettings": "Go to settings"
   }
 }

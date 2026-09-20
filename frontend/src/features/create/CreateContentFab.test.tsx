@@ -4,12 +4,14 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import "@/i18n/i18n";
+import { getCredential, sendChatMessage } from "@/features/assistant/api";
 import { createCard } from "@/features/cards/api";
 import { listCategories } from "@/features/categories/api";
 import { CreateContentFab } from "@/features/create/CreateContentFab";
 import { createNode, listFlat } from "@/features/hierarchy/api";
 import { linkOcrScan } from "@/features/ocr/api";
 
+vi.mock("@/features/assistant/api", () => ({ getCredential: vi.fn(), sendChatMessage: vi.fn() }));
 vi.mock("@/features/cards/api", () => ({ createCard: vi.fn() }));
 vi.mock("@/features/categories/api", () => ({ listCategories: vi.fn() }));
 vi.mock("@/features/hierarchy/api", () => ({ createNode: vi.fn(), listFlat: vi.fn() }));
@@ -46,6 +48,7 @@ beforeEach(() => {
     { id: "lesson-1", parent_id: "group-1", node_kind: "lesson", title: "Limits" },
   ]);
   vi.mocked(linkOcrScan).mockResolvedValue({} as never);
+  vi.mocked(getCredential).mockResolvedValue({ configured: true, provider: "gemini", model: null, updated_at: null });
 });
 
 describe("CreateContentFab", () => {
@@ -111,6 +114,43 @@ describe("CreateContentFab", () => {
     await waitFor(() => expect(linkOcrScan).toHaveBeenCalledWith("scan-1", { lesson_node_id: "node-9" }));
     await waitFor(() => expect(screen.getByTestId("path").textContent).toBe("/categories/cat-1/lessons/node-9"));
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("generates cards with the AI assistant into the chosen lesson and shows what it did", async () => {
+    vi.mocked(sendChatMessage).mockResolvedValue({
+      message: { role: "assistant", content: "Added 2 cards." },
+      tool_events: [{ tool: "create_cards_bulk", args: {}, ok: true, summary: "Created 2 card(s)" }],
+    });
+    renderFab();
+    fireEvent.click(screen.getByLabelText("Create a card or lesson"));
+    await screen.findByText(/Limits/);
+    fireEvent.click(screen.getByRole("button", { name: "AI" }));
+
+    fireEvent.change(screen.getAllByRole("combobox")[0], { target: { value: "lesson-1" } });
+    fireEvent.change(screen.getByPlaceholderText(/Describe the cards you want/), {
+      target: { value: "2 cards about limits" },
+    });
+    fireEvent.submit(screen.getByRole("dialog"));
+
+    await waitFor(() =>
+      expect(sendChatMessage).toHaveBeenCalledWith({
+        messages: [{ role: "user", content: expect.stringContaining("2 cards about limits") }],
+        categoryId: "cat-1",
+      })
+    );
+    const sent = vi.mocked(sendChatMessage).mock.calls[0][0].messages[0].content;
+    expect(sent).toContain('lesson "Limits" (id=lesson-1)');
+    expect(await screen.findByText("Added 2 cards.")).toBeDefined();
+    expect(screen.getByText("Created 2 card(s)")).toBeDefined();
+    expect(createCard).not.toHaveBeenCalled();
+  });
+
+  it("points to Settings in the AI tab when no provider is configured", async () => {
+    vi.mocked(getCredential).mockResolvedValue({ configured: false, provider: null, model: null, updated_at: null });
+    renderFab();
+    fireEvent.click(screen.getByLabelText("Create a card or lesson"));
+    fireEvent.click(screen.getByRole("button", { name: "AI" }));
+    expect(await screen.findByText(/Add an API key in Settings/)).toBeDefined();
   });
 
   describe("without a fixed deck (main page)", () => {

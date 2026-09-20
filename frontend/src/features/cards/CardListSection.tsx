@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
+import { CardText } from "@/components/ui/CardText";
 import { useConfirm } from "@/components/ui/useConfirm";
 import { answerLanguageDisplay } from "@/features/cards/answerLanguages";
 import { createCard, deleteCard, listCards, updateCard, type AnswerMode, type Card } from "@/features/cards/api";
@@ -103,7 +104,11 @@ export function CardRow({
         className="flex w-full items-center justify-between rounded-lg border border-slate-200 p-3 text-left hover:border-primary/50"
       >
         <span className="flex min-w-0 flex-col">
-          <span className="truncate text-sm text-slate-800">{card.front_text}</span>
+          <CardText
+            text={card.front_text.split("\n")[0]}
+            inline
+            className="truncate text-sm text-slate-800"
+          />
           {nodeInfo && <span className="mt-0.5 truncate text-xs text-slate-400">{nodeInfo.title}</span>}
         </span>
         <span className="ml-3 flex shrink-0 items-center gap-2">
@@ -235,11 +240,11 @@ export function CardRow({
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <div>
             <p className="text-[10px] uppercase tracking-wide text-slate-400">{t("front")}</p>
-            <p className="text-sm text-slate-800">{card.front_text}</p>
+            <CardText text={card.front_text} className="text-sm text-slate-800" />
           </div>
           <div>
             <p className="text-[10px] uppercase tracking-wide text-slate-400">{t("back")}</p>
-            <p className="text-sm text-slate-800">{card.back_text}</p>
+            <CardText text={card.back_text} className="text-sm text-slate-800" />
             {card.answer_mode === "typed" && card.accepted_answers.length > 0 && (
               <p className="mt-1 text-xs text-slate-400">
                 {t("alsoAccepts", { answers: card.accepted_answers.join(", ") })}
@@ -250,7 +255,12 @@ export function CardRow({
                 {answerLanguageDisplay(card.answer_language).flag} {answerLanguageDisplay(card.answer_language).label}
               </p>
             )}
-            {card.hint && <p className="mt-1 text-xs text-slate-400">💡 {card.hint}</p>}
+            {card.hint && (
+              <div className="mt-1 text-xs text-slate-400">
+                <span aria-hidden>💡 </span>
+                <CardText text={card.hint} size="prose-sm" className="inline-block align-top" />
+              </div>
+            )}
           </div>
         </div>
       )}

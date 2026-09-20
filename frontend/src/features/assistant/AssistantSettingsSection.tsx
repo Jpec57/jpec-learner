@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -42,30 +43,42 @@ export function AssistantSettingsSection() {
         <p className="mt-1 text-sm text-slate-500">{t("assistant:settings.description")}</p>
       </div>
 
-      <p className="text-sm text-slate-600">
-        {credential?.configured
-          ? t("assistant:settings.configuredAs", {
-              provider: t(`assistant:settings.providers.${credential.provider}`),
-            })
-          : t("assistant:settings.notConfigured")}
-      </p>
+      {credential?.configured ? (
+        <p className="inline-flex items-center gap-2 rounded-md bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
+          <Check size={16} aria-hidden />
+          {t("assistant:settings.configuredAs", {
+            provider: t(`assistant:settings.providers.${credential.provider}`),
+          })}
+        </p>
+      ) : (
+        <p className="text-sm text-slate-600">{t("assistant:settings.notConfigured")}</p>
+      )}
 
       <div>
         <label className="text-sm font-medium text-slate-700">{t("assistant:settings.provider")}</label>
         <div className="mt-2 flex flex-wrap gap-2">
-          {PROVIDERS.map((p) => (
-            <button
-              key={p}
-              onClick={() => setProvider(p)}
-              className={`rounded-md border px-3 py-1.5 text-sm ${
-                provider === p
-                  ? "border-primary bg-primary-light text-primary-dark"
-                  : "border-slate-300 text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              {t(`assistant:settings.providers.${p}`)}
-            </button>
-          ))}
+          {PROVIDERS.map((p) => {
+            // Green = this provider already has a working key saved (semantic
+            // "success", see DESIGN.md); primary = merely selected for editing.
+            const isConfigured = credential?.configured === true && credential.provider === p;
+            const isSelected = provider === p;
+            const style = isConfigured
+              ? `border-emerald-500 bg-emerald-50 font-medium text-emerald-700 ${isSelected ? "ring-2 ring-emerald-200" : ""}`
+              : isSelected
+                ? "border-primary bg-primary-light text-primary-dark"
+                : "border-slate-300 text-slate-600 hover:bg-slate-50";
+            return (
+              <button
+                key={p}
+                onClick={() => setProvider(p)}
+                aria-pressed={isSelected}
+                className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm ${style}`}
+              >
+                {isConfigured && <Check size={14} aria-hidden />}
+                {t(`assistant:settings.providers.${p}`)}
+              </button>
+            );
+          })}
         </div>
       </div>
 

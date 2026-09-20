@@ -12,7 +12,7 @@ REQUEST_TIMEOUT_SECONDS = 60.0
 DEFAULT_MODELS: dict[LLMProviderName, str] = {
     "claude": "claude-sonnet-4-5",
     "chatgpt": "gpt-4o",
-    "gemini": "gemini-2.0-flash",
+    "gemini": "gemini-3.6-flash",
 }
 
 
@@ -172,6 +172,54 @@ class OpenAIProvider:
         return ProviderResult(text=message.get("content"), tool_calls=tool_calls)
 
 
+# Gemini's function-declaration `parameters` is a strict OpenAPI-schema subset:
+# any other JSON-Schema keyword (e.g. `additionalProperties`, `$schema`,
+# `default`) is rejected with a 400 "Unknown name ... Cannot find field".
+_GEMINI_SCHEMA_KEYS = {
+    "type",
+    "format",
+    "description",
+    "nullable",
+    "enum",
+    "items",
+    "properties",
+    "required",
+    "minItems",
+    "maxItems",
+    "minimum",
+    "maximum",
+    "anyOf",
+}
+
+
+def to_gemini_schema(schema: dict[str, Any]) -> dict[str, Any]:
+    """Reduces a JSON Schema to the keywords Gemini accepts, recursively."""
+    cleaned: dict[str, Any] = {}
+    for key, value in schema.items():
+        if key not in _GEMINI_SCHEMA_KEYS:
+            continue
+        if key == "properties":
+            # Keys here are property *names* (arbitrary), values are schemas.
+            cleaned[key] = {name: to_gemini_schema(sub) for name, sub in value.items()}
+        elif key == "items":
+            cleaned[key] = to_gemini_schema(value)
+        elif key == "anyOf":
+            cleaned[key] = [to_gemini_schema(sub) for sub in value]
+        else:
+            cleaned[key] = value
+    return cleaned
+
+
+def to_gemini_function_declaration(tool: ToolSpec) -> dict[str, Any]:
+    declaration: dict[str, Any] = {"name": tool.name, "description": tool.description}
+    parameters = to_gemini_schema(tool.parameters)
+    # Gemini rejects an OBJECT schema with no properties ("should be non-empty
+    # for OBJECT type"); a parameterless function must omit `parameters` entirely.
+    if parameters.get("properties"):
+        declaration["parameters"] = parameters
+    return declaration
+
+
 class GeminiProvider:
     _API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
@@ -184,18 +232,17 @@ class GeminiProvider:
 
     async def start(self, *, system: str, history: list[ChatMessageIn], tools: list[ToolSpec]) -> ProviderResult:
         self._system = system
-        self._function_declarations = [
-            {"name": t.name, "description": t.description, "parameters": t.parameters} for t in tools
-        ]
+        self._function_declarations = [to_gemini_function_declaration(t) for t in tools]
         self._contents = [
             {"role": "model" if m.role == "assistant" else "user", "parts": [{"text": m.content}]} for m in history
         ]
         return await self._send()
 
     async def continue_with_tool_results(self, results: list[ToolResult]) -> ProviderResult:
+        # Tool results go in a "user" turn: Gemini rejects the legacy "function" role.
         self._contents.append(
             {
-                "role": "function",
+                "role": "user",
                 "parts": [
                     {"functionResponse": {"name": r.name, "response": {"result": r.content}}} for r in results
                 ],
