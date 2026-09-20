@@ -17,14 +17,16 @@ export function ScannedFromThumbnails({
     queryFn: () => listOcrScans(target),
   });
 
-  if (!scans || scans.length === 0) return null;
+  // Only kept scans are listed, and those always have an uploaded photo.
+  const kept = scans?.filter((scan) => scan.image_url) ?? [];
+  if (kept.length === 0) return null;
 
   return (
     <div className="mt-2 flex flex-wrap items-center gap-2">
       <span className="text-[10px] uppercase tracking-wide text-slate-400">{t("scannedFrom")}</span>
-      {scans.map((scan) => (
-        <a key={scan.id} href={scan.image_url} target="_blank" rel="noreferrer">
-          <img src={scan.image_url} alt="" className="h-12 w-12 rounded-md border border-slate-200 object-cover" />
+      {kept.map((scan) => (
+        <a key={scan.id} href={scan.image_url ?? undefined} target="_blank" rel="noreferrer">
+          <img src={scan.image_url ?? undefined} alt="" className="h-12 w-12 rounded-md border border-slate-200 object-cover" />
         </a>
       ))}
     </div>

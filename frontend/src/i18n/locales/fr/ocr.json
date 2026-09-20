@@ -9,6 +9,7 @@
   "extractError": "Impossible de lire cette photo.",
   "noTextFound": "Aucun texte trouvé.",
   "useThisText": "Utiliser ce texte",
+  "keepPhoto": "Conserver la photo avec ce contenu",
   "retake": "Reprendre",
   "scannedFrom": "Scanné depuis :"
 }

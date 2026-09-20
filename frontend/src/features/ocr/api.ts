@@ -6,7 +6,7 @@ export interface OcrScanOut {
   id: string;
   mode: OcrMode;
   text: string;
-  image_url: string;
+  image_url: string | null; // null until the photo is kept
   card_id: string | null;
   lesson_node_id: string | null;
   created_at: string;
@@ -35,4 +35,9 @@ export async function listOcrScans(
 ): Promise<OcrScanOut[]> {
   const { data } = await api.get<OcrScanOut[]>("/ocr/scans", { params: target });
   return data;
+}
+
+// Drops a scan whose photo the user doesn't want to keep (deletes its temp file).
+export async function discardOcrScan(scanId: string): Promise<void> {
+  await api.delete(`/ocr/scans/${scanId}`);
 }

@@ -11,7 +11,7 @@ class OcrScanOut(BaseModel):
     id: uuid.UUID
     mode: OcrMode
     text: str
-    image_url: str
+    image_url: str | None  # None until the photo is kept (uploaded to R2)
     card_id: uuid.UUID | None
     lesson_node_id: uuid.UUID | None
     created_at: datetime

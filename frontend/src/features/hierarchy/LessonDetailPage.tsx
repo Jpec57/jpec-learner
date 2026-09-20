@@ -64,9 +64,11 @@ export function LessonDetailPage() {
           <OcrCaptureButton
             onResult={(result) => {
               setBody(currentBody ? `${currentBody}\n\n${result.text}` : result.text);
-              linkOcrScan(result.scanId, { lesson_node_id: nodeId }).then(() =>
-                queryClient.invalidateQueries({ queryKey: ["ocrScans", "lesson", nodeId] })
-              );
+              if (result.scanId) {
+                linkOcrScan(result.scanId, { lesson_node_id: nodeId }).then(() =>
+                  queryClient.invalidateQueries({ queryKey: ["ocrScans", "lesson", nodeId] })
+                );
+              }
             }}
           />
         </div>

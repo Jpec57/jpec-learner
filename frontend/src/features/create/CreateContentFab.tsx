@@ -348,7 +348,7 @@ function CreateContentDialog({
                   <OcrCaptureButton
                     onResult={({ text, scanId }) => {
                       setFront(text);
-                      setScanIds((prev) => [...prev, scanId]);
+                      if (scanId) setScanIds((prev) => [...prev, scanId]);
                     }}
                   />
                   <textarea
@@ -365,7 +365,7 @@ function CreateContentDialog({
                   <OcrCaptureButton
                     onResult={({ text, scanId }) => {
                       setBack(text);
-                      setScanIds((prev) => [...prev, scanId]);
+                      if (scanId) setScanIds((prev) => [...prev, scanId]);
                     }}
                   />
                   <textarea
@@ -416,7 +416,7 @@ function CreateContentDialog({
               <OcrCaptureButton
                 onResult={({ text, scanId }) => {
                   setBody((prev) => (prev ? `${prev}\n\n${text}` : text));
-                  setScanIds((prev) => [...prev, scanId]);
+                  if (scanId) setScanIds((prev) => [...prev, scanId]);
                 }}
               />
               <textarea

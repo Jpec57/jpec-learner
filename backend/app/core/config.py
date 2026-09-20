@@ -25,8 +25,15 @@ class Settings(BaseSettings):
     # docker-compose network.
     ocr_service_url: str = "http://ocr:8090"
 
+    # Where OCR source photos are held locally until the user keeps them (then
+    # they go to R2) or drops them. scripts/cleanup_ocr_temp.py purges leftovers.
+    ocr_temp_dir: str = "/tmp/jpeclearner-ocr"
+    # Leftover temp photos (and their pending scan rows) older than this are
+    # purged in the background after each scan request.
+    ocr_temp_max_age_minutes: float = 60
+
     # Cloudflare R2 (S3-compatible) bucket that OCR source photos are
-    # uploaded to, kept separate from the local-disk card/lesson image
+    # uploaded to -- only when the user chooses to keep a photo -- kept separate from the local-disk card/lesson image
     # storage above.
     r2_account_id: str = ""
     r2_access_key_id: str = ""
