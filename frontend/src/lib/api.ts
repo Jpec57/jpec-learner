@@ -16,8 +16,8 @@ api.interceptors.request.use((config) => {
 
 type RetriableConfig = InternalAxiosRequestConfig & { _retried?: boolean };
 
-// Access tokens expire after 15 minutes; without this, any session left open
-// longer than that would 401 on every request with nothing telling the user
+// Access tokens expire (14 days by default); without this, any session left open
+// past that would 401 on every request with nothing telling the user
 // why the app suddenly looks empty. Shared across concurrent 401s so a burst
 // of requests triggers one refresh call, not one per request (each refresh
 // call rotates and invalidates the previous refresh token).

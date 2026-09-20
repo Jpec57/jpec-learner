@@ -24,4 +24,18 @@ describe("getDue", () => {
     expect(new URLSearchParams(query).getAll("types")).toEqual(["card", "lesson"]);
     expect(query).not.toContain("%5B%5D");
   });
+
+  it("sends node_id only when a node filter is set", async () => {
+    let query = "";
+    mock.onGet("/reviews/due").reply((config) => {
+      query = api.getUri(config).split("?")[1] ?? "";
+      return [200, []];
+    });
+
+    await getDue("cat-1", ["card"], undefined, "node-1");
+    expect(new URLSearchParams(query).get("node_id")).toBe("node-1");
+
+    await getDue("cat-1", ["card"], undefined, null);
+    expect(new URLSearchParams(query).has("node_id")).toBe(false);
+  });
 });

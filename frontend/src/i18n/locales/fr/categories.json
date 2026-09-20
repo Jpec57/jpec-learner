@@ -42,5 +42,14 @@
     "levelAttempts": "Niveau {{level}} · {{count}} tentatives"
   },
   "themeColor": "Couleur du thème du deck",
-  "clearTheme": "Utiliser le thème par défaut"
+  "clearTheme": "Utiliser le thème par défaut",
+  "deckType": {
+    "label": "Type de deck",
+    "general": "Général",
+    "language": "Langue",
+    "scientific": "Scientifique",
+    "generalHint": "Cartes et leçons sur n'importe quel sujet.",
+    "languageHint": "Choisissez une langue source et une langue cible en ajoutant des cartes, et traduisez la réponse automatiquement.",
+    "scientificHint": "Barre d'outils et raccourcis LaTeX pour écrire les leçons."
+  }
 }

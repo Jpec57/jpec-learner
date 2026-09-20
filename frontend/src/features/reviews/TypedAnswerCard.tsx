@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { CardText } from "@/components/ui/CardText";
+import { GapText } from "@/components/ui/GapText";
 import { answerLanguageDisplay } from "@/features/cards/answerLanguages";
 import { acceptedAnswersFor, classifyTypedAnswer } from "@/features/reviews/answerGrading";
 import type { DueItem } from "@/features/reviews/api";
@@ -36,6 +37,11 @@ export function TypedAnswerCard({
   const [showHint, setShowHint] = useState(false);
 
   const rawAcceptedAnswers = acceptedAnswersFor(item.back_text ?? "", item.accepted_answers);
+  // back_text is context only when explicit answers exist and it isn't just
+  // one of them repeated.
+  const backText = item.back_text ?? "";
+  const details =
+    item.accepted_answers.length > 0 && backText.trim() && !rawAcceptedAnswers.includes(backText) ? backText : null;
   const language = item.answer_language ? answerLanguageDisplay(item.answer_language) : null;
 
   function handleSubmit(event: FormEvent) {
@@ -73,7 +79,12 @@ export function TypedAnswerCard({
           </span>
         )}
       </div>
-      <CardText text={item.front_text ?? ""} size="prose-lg" className="mt-3 block text-2xl text-slate-900" />
+      <GapText
+        text={item.front_text ?? ""}
+        fill={phase === "revealed" ? rawAcceptedAnswers[0] : null}
+        size="prose-lg"
+        className="mt-3 block text-2xl text-slate-900"
+      />
 
       {phase === "answering" && (
         <form onSubmit={handleSubmit} className="mt-6">
@@ -148,6 +159,7 @@ export function TypedAnswerCard({
               </span>
             ))}
           </p>
+          {details && <CardText text={details} size="prose-base" className="mt-3 block text-sm text-slate-600" />}
 
           {input.trim() && !added && (
             <button onClick={handleAddAsAccepted} className="mt-2 text-xs text-slate-400 hover:text-primary">

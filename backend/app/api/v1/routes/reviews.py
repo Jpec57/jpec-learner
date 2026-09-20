@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -41,7 +41,12 @@ async def get_due_count(
     total = await db.scalar(
         select(func.count())
         .select_from(ReviewState)
-        .where(ReviewState.user_id == current_user.id, ReviewState.due_at <= func.now())
+        .outerjoin(Card, ReviewState.card_id == Card.id)
+        .where(
+            ReviewState.user_id == current_user.id,
+            ReviewState.due_at <= func.now(),
+            Card.deleted_at.is_(None),
+        )
     )
     return DueCountOut(total_due=total or 0)
 
@@ -54,14 +59,27 @@ ALL_REVIEW_ITEM_TYPES: tuple[ReviewItemType, ...] = ("card", "lesson")
 async def get_due(
     category_id: uuid.UUID,
     types: list[ReviewItemType] = Query(default=list(ALL_REVIEW_ITEM_TYPES)),
+    node_id: uuid.UUID | None = Query(None),
     limit: int = Query(20, ge=1, le=200),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """`types` selects which content types to include in the review queue --
     the foundation for future "review decks" filtered by content type. Defaults
-    to every known type; pass e.g. `types=card` to review only flashcards."""
+    to every known type; pass e.g. `types=card` to review only flashcards.
+
+    `node_id` restricts the queue to that group/lesson and everything beneath it
+    (its cards, sub-lessons and their cards), so a chapter can be reviewed on its
+    own. Cards outside the tree, including unclassified ones, are left out."""
     now = datetime.now(timezone.utc)
+
+    in_subtree = None
+    if node_id is not None:
+        root = await db.get(HierarchyNode, node_id)
+        if root is None or root.category_id != category_id:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Node not found in this category")
+        assert_visible(root, current_user.id)
+        in_subtree = text("hierarchy_nodes.path <@ (:root_path)::ltree").bindparams(root_path=root.path)
 
     card_rows = []
     if "card" in types:
@@ -76,6 +94,10 @@ async def get_due(
                 Card.deleted_at.is_(None),
             )
         )
+        if in_subtree is not None:
+            card_query = card_query.where(
+                Card.lesson_node_id.in_(select(HierarchyNode.id).where(in_subtree))
+            )
         card_rows = (await db.execute(card_query)).all()
 
     node_rows = []
@@ -90,6 +112,8 @@ async def get_due(
                 HierarchyNode.category_id == category_id,
             )
         )
+        if in_subtree is not None:
+            node_query = node_query.where(in_subtree)
         node_rows = (await db.execute(node_query)).all()
 
     items: list[DueItemOut] = []

@@ -2,15 +2,26 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Plus, Sparkles, X, XCircle } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useMatch, useNavigate } from "react-router-dom";
+import { Link, useMatch } from "react-router-dom";
 
 import { getCredential, sendChatMessage, type ChatResponse } from "@/features/assistant/api";
-import { listCategories } from "@/features/categories/api";
-import { createCard } from "@/features/cards/api";
+import { getCategory, listCategories } from "@/features/categories/api";
+import { AnswerModeToggle, ReverseCardFields, TypedAnswerFields } from "@/features/cards/AnswerModeFields";
+import { cleanAnswers } from "@/features/cards/AnswersInput";
+import { createCard, type AnswerMode } from "@/features/cards/api";
+import { FrontTextarea } from "@/features/cards/FrontTextarea";
+import {
+  answerLanguageForTarget,
+  LanguageDirectionFields,
+  useLanguageDirection,
+} from "@/features/cards/LanguageDirection";
+import { TranslateAssist } from "@/features/cards/TranslateAssist";
 import { createNode, listFlat, type FlatHierarchyNode } from "@/features/hierarchy/api";
 import { linkOcrScan } from "@/features/ocr/api";
+import { MathTextarea } from "@/components/ui/MathTextarea";
 import { OcrCaptureButton } from "@/features/ocr/OcrCaptureButton";
 import { getErrorMessage } from "@/lib/errors";
+import { hasGap } from "@/lib/gaps";
 
 type Kind = "card" | "lesson" | "ai";
 
@@ -64,7 +75,6 @@ function CreateContentDialog({
 }) {
   const { t } = useTranslation(["create", "cards", "common"]);
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   const [kind, setKind] = useState<Kind>("card");
   const [deckOverride, setDeckOverride] = useState<string | null>(null);
@@ -73,12 +83,18 @@ function CreateContentDialog({
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [hint, setHint] = useState("");
+  const [answerMode, setAnswerMode] = useState<AnswerMode>("reveal");
+  const [acceptedAnswers, setAcceptedAnswers] = useState<string[]>([]);
+  const [answerLanguage, setAnswerLanguage] = useState("");
+  const [createReverse, setCreateReverse] = useState(false);
+  const [reverseAnswerLanguage, setReverseAnswerLanguage] = useState("");
   const [excludeFromReview, setExcludeFromReview] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [scanIds, setScanIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  // What was just created, with a link to it (opened in a new tab so the dialog stays put).
+  const [notice, setNotice] = useState<{ text: string; href: string } | null>(null);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiResult, setAiResult] = useState<ChatResponse | null>(null);
 
@@ -98,6 +114,13 @@ function CreateContentDialog({
 
   // A lone deck is preselected so the common single-deck case needs no extra click.
   const categoryId = fixedCategoryId ?? deckOverride ?? (decks?.length === 1 ? decks[0].id : "");
+
+  const { data: category } = useQuery({
+    queryKey: ["category", categoryId],
+    queryFn: () => getCategory(categoryId),
+    enabled: !!categoryId,
+  });
+  const direction = useLanguageDirection(category);
 
   const { data: flat } = useQuery({
     queryKey: ["hierarchyFlat", categoryId],
@@ -136,26 +159,46 @@ function CreateContentDialog({
     await Promise.allSettled(scanIds.map((scanId) => linkOcrScan(scanId, target)));
   }
 
+  const typedAnswers = answerMode === "typed" ? cleanAnswers(acceptedAnswers) : [];
+  // On a language deck a typed card's answers *are* its verso (all of them
+  // joined), and the answer/reverse languages come from the deck's direction.
+  const languageTyped = direction.enabled && answerMode === "typed";
+
   const addCard = useMutation({
     mutationFn: async () => {
       const card = await createCard({
         category_id: categoryId,
         lesson_node_id: cardNodeId || null,
         front_text: front,
-        back_text: back,
+        // Optional once answers are listed; a card still needs a back.
+        back_text: !languageTyped && back.trim() ? back : typedAnswers.join(" / "),
+        answer_mode: answerMode,
+        accepted_answers: typedAnswers,
+        answer_language:
+          answerMode === "typed"
+            ? answerLanguage || (direction.enabled ? answerLanguageForTarget(direction.target) : "") || null
+            : null,
         hint: hint || null,
+        create_reverse: createReverse && !hasGap(front),
+        reverse_answer_language:
+          answerMode === "typed" && createReverse && !hasGap(front)
+            ? (direction.enabled ? direction.source : reverseAnswerLanguage) || null
+            : null,
       });
       await linkScans({ card_id: card.id });
+      await direction.remember().catch(() => undefined);
       return card;
     },
-    onSuccess: () => {
+    onSuccess: (card) => {
       invalidateAll();
       setFront("");
       setBack("");
       setHint("");
+      setAcceptedAnswers([]);
+      setCreateReverse(false);
       setScanIds([]);
       setError(null);
-      setNotice(t("create:card.added"));
+      setNotice({ text: t("create:card.added"), href: `/categories/${categoryId}/cards/${card.id}` });
     },
     onError: (err) => setError(getErrorMessage(err, t("common:errors.generic"))),
   });
@@ -175,8 +218,12 @@ function CreateContentDialog({
     },
     onSuccess: (node) => {
       invalidateAll();
-      onClose();
-      navigate(`/categories/${categoryId}/lessons/${node.id}`);
+      setTitle("");
+      setBody("");
+      setExcludeFromReview(false);
+      setScanIds([]);
+      setError(null);
+      setNotice({ text: t("create:lesson.created"), href: `/categories/${categoryId}/lessons/${node.id}` });
     },
     onError: (err) => setError(getErrorMessage(err, t("common:errors.generic"))),
   });
@@ -346,6 +393,8 @@ function CreateContentDialog({
               </>
             ) : (
               <>
+                {direction.enabled && <LanguageDirectionFields direction={direction} />}
+                <AnswerModeToggle mode={answerMode} onModeChange={setAnswerMode} />
                 <div className="space-y-1">
                   <OcrCaptureButton
                     onResult={({ text, scanId }) => {
@@ -353,37 +402,66 @@ function CreateContentDialog({
                       if (scanId) setScanIds((prev) => [...prev, scanId]);
                     }}
                   />
-                  <textarea
+                  <FrontTextarea
                     autoFocus
                     required
+                    allowBlank={answerMode === "typed"}
                     value={front}
-                    onChange={(e) => setFront(e.target.value)}
-                    rows={2}
+                    onChange={setFront}
                     placeholder={t("cards:frontPlaceholder")}
                     className={inputClass}
                   />
                 </div>
-                <div className="space-y-1">
-                  <OcrCaptureButton
-                    onResult={({ text, scanId }) => {
-                      setBack(text);
-                      if (scanId) setScanIds((prev) => [...prev, scanId]);
-                    }}
+                <TranslateAssist
+                  front={front}
+                  direction={direction}
+                  typed={answerMode === "typed"}
+                  answers={acceptedAnswers}
+                  onAnswersChange={setAcceptedAnswers}
+                  onBackChange={setBack}
+                />
+                {answerMode === "typed" && (
+                  <TypedAnswerFields
+                    answers={acceptedAnswers}
+                    onAnswersChange={setAcceptedAnswers}
+                    language={answerLanguage}
+                    onLanguageChange={setAnswerLanguage}
+                    showLanguage={!direction.enabled}
+                    requireAnswer={languageTyped}
                   />
-                  <textarea
-                    required
-                    value={back}
-                    onChange={(e) => setBack(e.target.value)}
-                    rows={2}
-                    placeholder={t("cards:backPlaceholder")}
-                    className={inputClass}
-                  />
-                </div>
+                )}
+                {!languageTyped && (
+                  <div className="space-y-1">
+                    <OcrCaptureButton
+                      onResult={({ text, scanId }) => {
+                        setBack(text);
+                        if (scanId) setScanIds((prev) => [...prev, scanId]);
+                      }}
+                    />
+                    <textarea
+                      required={typedAnswers.length === 0}
+                      value={back}
+                      onChange={(e) => setBack(e.target.value)}
+                      rows={2}
+                      placeholder={answerMode === "typed" ? t("cards:typedBackPlaceholder") : t("cards:backPlaceholder")}
+                      className={inputClass}
+                    />
+                  </div>
+                )}
                 <input
                   value={hint}
                   onChange={(e) => setHint(e.target.value)}
                   placeholder={t("cards:hintPlaceholder")}
                   className={inputClass}
+                />
+                <ReverseCardFields
+                  front={front}
+                  mode={answerMode}
+                  checked={createReverse}
+                  onCheckedChange={setCreateReverse}
+                  language={reverseAnswerLanguage}
+                  onLanguageChange={setReverseAnswerLanguage}
+                  showLanguage={!direction.enabled}
                 />
               </>
             )}
@@ -421,13 +499,23 @@ function CreateContentDialog({
                   if (scanId) setScanIds((prev) => [...prev, scanId]);
                 }}
               />
-              <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                rows={8}
-                placeholder={t("create:lesson.bodyPlaceholder")}
-                className={`${inputClass} font-mono`}
-              />
+              {category?.deck_type === "scientific" ? (
+                <MathTextarea
+                  value={body}
+                  onChange={setBody}
+                  rows={8}
+                  placeholder={t("create:lesson.bodyPlaceholder")}
+                  className={inputClass}
+                />
+              ) : (
+                <textarea
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  rows={8}
+                  placeholder={t("create:lesson.bodyPlaceholder")}
+                  className={`${inputClass} font-mono`}
+                />
+              )}
             </div>
             <label className="flex items-center gap-2 text-xs text-slate-600">
               <input
@@ -441,7 +529,14 @@ function CreateContentDialog({
         )}
 
         {error && <p className="text-xs text-red-600">{error}</p>}
-        {notice && <p className="text-xs text-emerald-700">{notice}</p>}
+        {notice && (
+          <p className="text-xs text-emerald-700">
+            {notice.text}{" "}
+            <Link to={notice.href} target="_blank" rel="noreferrer" className="font-medium underline">
+              {t("create:openLink")} ↗
+            </Link>
+          </p>
+        )}
 
         <div className="flex gap-2">
           <button

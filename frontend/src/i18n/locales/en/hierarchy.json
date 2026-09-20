@@ -51,5 +51,9 @@
   "search": {
     "placeholder": "Search lesson titles/descriptions…",
     "noResults": "No lessons match your search."
+  },
+  "node": {
+    "review_one": "Review ({{count}} due)",
+    "review_other": "Review ({{count}} due)"
   }
 }

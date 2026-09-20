@@ -22,8 +22,6 @@
     "reveal": "Retourner & noter",
     "typed": "Saisir la réponse"
   },
-  "acceptedAnswersPlaceholder": "Autres réponses acceptées, séparées par une virgule ou un retour à la ligne (optionnel)",
-  "alsoAccepts": "Accepte aussi : {{answers}}",
   "createReverse": "Créer aussi la carte inversée (verso → recto)",
   "answerLanguagePlaceholder": "Langue de réponse attendue (optionnel)",
   "reverseAnswerLanguagePlaceholder": "Langue de réponse attendue pour la carte inversée (optionnel)",
@@ -36,5 +34,31 @@
     "modeCards": "Cartes",
     "modeLessons": "Leçons",
     "allLanguages": "Toutes les langues"
+  },
+  "typedBackPlaceholder": "Détails affichés après la réponse — markdown, jamais à saisir (optionnel)",
+  "acceptedAnswersList": "Réponses acceptées : {{answers}}",
+  "detail": {
+    "back": "Retour",
+    "notFound": "Cette carte n'existe plus."
+  },
+  "gapLabel": "trou",
+  "answersLabel": "Réponses acceptées (une seule suffit)",
+  "answerInputPlaceholder": "Une réponse acceptée",
+  "addAnswer": "+ Ajouter une autre réponse",
+  "removeAnswer": "Supprimer cette réponse",
+  "insertBlank": "Insérer un trou",
+  "insertBlankTitle": "Insère __ à l'endroit de la réponse (phrase à trous)",
+  "language": {
+    "source": "De…",
+    "target": "Vers…",
+    "swap": "Inverser les langues"
+  },
+  "translate": {
+    "button": "Traduire",
+    "busy": "Traduction…",
+    "failed": "Aucune traduction trouvée — écrivez la réponse vous-même.",
+    "pickLanguages": "Choisissez d'abord deux langues différentes",
+    "alternatives": "Autres options",
+    "via": "via {{provider}}"
   }
 }

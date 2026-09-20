@@ -1,14 +1,18 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { useConfirm } from "@/components/ui/useConfirm";
 import { deleteCard, updateCard } from "@/features/cards/api";
 import { getCategory } from "@/features/categories/api";
+import { listFlat, updateNode } from "@/features/hierarchy/api";
 import { ALL_REVIEW_ITEM_TYPES, getDue, submitReview, type ReviewItemType } from "@/features/reviews/api";
+import { acceptedAnswersFor } from "@/features/reviews/answerGrading";
 import { EditCardForm } from "@/features/reviews/EditCardForm";
+import { EditLessonForm } from "@/features/reviews/EditLessonForm";
 import { Flashcard } from "@/features/reviews/Flashcard";
+import { NodeFilter } from "@/features/reviews/NodeFilter";
 import { RatingButtons } from "@/features/reviews/RatingButtons";
 import { RetryConfirmButtons } from "@/features/reviews/RetryConfirmButtons";
 import { TypedAnswerCard } from "@/features/reviews/TypedAnswerCard";
@@ -20,11 +24,16 @@ export function ReviewSessionPage() {
   const { t } = useTranslation(["review", "common"]);
   const { categoryId } = useParams<{ categoryId: string }>();
   const [types, setTypes] = useState<ReviewItemType[]>(ALL_REVIEW_ITEM_TYPES);
+  // The node filter lives in the URL (?node=<id>) so the "Review" button on a
+  // group/lesson page can deep-link to a scoped session.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const nodeParam = searchParams.get("node");
   const [revealed, setRevealed] = useState(false);
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { confirm, dialog } = useConfirm();
+  const queryClient = useQueryClient();
 
   const { data: category } = useQuery({
     queryKey: ["category", categoryId],
@@ -32,14 +41,36 @@ export function ReviewSessionPage() {
     enabled: !!categoryId,
   });
 
-  // Fetched once per (category, type filter) -- NOT invalidated after each
+  const { data: flatNodes } = useQuery({
+    queryKey: ["hierarchyFlat", categoryId],
+    queryFn: () => listFlat(categoryId!),
+    enabled: !!categoryId,
+  });
+  // A stale or foreign ?node= (deleted group, other deck) falls back to the whole deck.
+  const nodeId = flatNodes?.some((n) => n.id === nodeParam) ? nodeParam : null;
+  const nodeTitle = flatNodes?.find((n) => n.id === nodeId)?.title;
+  const nodeResolved = !nodeParam || !!flatNodes;
+
+  function handleNodeChange(next: string | null) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set("node", next);
+        else params.delete("node");
+        return params;
+      },
+      { replace: true }
+    );
+  }
+
+  // Fetched once per (category, node, type filter) -- NOT invalidated after each
   // submit. The local session queue (below) governs what's shown next; a
   // failing rating keeps an item in *this session* even though its new
   // server-side due_at has moved into the future.
   const { data: fetchedDue, isLoading } = useQuery({
-    queryKey: ["reviewsDue", categoryId, types.join(",")],
-    queryFn: () => getDue(categoryId!, types),
-    enabled: !!categoryId,
+    queryKey: ["reviewsDue", categoryId, nodeId, types.join(",")],
+    queryFn: () => getDue(categoryId!, types, undefined, nodeId),
+    enabled: !!categoryId && nodeResolved,
   });
 
   const {
@@ -56,7 +87,9 @@ export function ReviewSessionPage() {
 
   const addAcceptedAnswer = useMutation({
     mutationFn: (answer: string) => {
-      const existing = currentItem?.accepted_answers ?? [];
+      // With no explicit list, back_text is the sole answer -- keep it accepted
+      // once the list becomes explicit.
+      const existing = acceptedAnswersFor(currentItem?.back_text ?? "", currentItem?.accepted_answers ?? []);
       return updateCard(currentItem!.card_id!, { accepted_answers: [...existing, answer] });
     },
     onSuccess: (updated) => updateCurrentItem({ accepted_answers: updated.accepted_answers }),
@@ -73,7 +106,23 @@ export function ReviewSessionPage() {
     onError: (err) => setError(getErrorMessage(err, t("common:errors.generic"))),
   });
 
-  if (!categoryId || !category || isLoading) return null;
+  // Same session-local behaviour as deleting a card: the lesson leaves this
+  // session without counting as an attempt, and stops coming up in future ones.
+  const excludeLesson = useMutation({
+    mutationFn: (nodeId: string) => updateNode(nodeId, { exclude_from_review: true }),
+    onSuccess: (_updated, nodeId) => {
+      removeCurrentItem();
+      setRevealed(false);
+      setEditing(false);
+      setError(null);
+      queryClient.invalidateQueries({ queryKey: ["hierarchyNode", nodeId] });
+      queryClient.invalidateQueries({ queryKey: ["progression"] });
+      queryClient.invalidateQueries({ queryKey: ["nodeProgression"] });
+    },
+    onError: (err) => setError(getErrorMessage(err, t("common:errors.generic"))),
+  });
+
+  if (!categoryId || !category || !nodeResolved) return null;
 
   async function handleRate(rating: number) {
     if (!currentItem) return;
@@ -116,14 +165,19 @@ export function ReviewSessionPage() {
         )}
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
         <TypeFilter value={types} onChange={setTypes} />
+        {flatNodes && flatNodes.length > 0 && (
+          <NodeFilter nodes={flatNodes} value={nodeId} onChange={handleNodeChange} />
+        )}
       </div>
 
-      {!currentItem ? (
+      {isLoading ? null : !currentItem ? (
         <div className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
           <p className="text-lg font-medium text-slate-800">{t("allCaughtUp")}</p>
-          <p className="mt-1 text-sm text-slate-500">{t("nothingDueIn", { name: category.name })}</p>
+          <p className="mt-1 text-sm text-slate-500">
+            {nodeTitle ? t("nothingDueInNode", { name: nodeTitle }) : t("nothingDueIn", { name: category.name })}
+          </p>
           <Link
             to={`/categories/${categoryId}`}
             className="mt-4 inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark"
@@ -170,6 +224,48 @@ export function ReviewSessionPage() {
                   }}
                   onCancel={() => setEditing(false)}
                 />
+              )}
+
+              {currentItem.item_kind === "lesson" && currentItem.lesson_node_id && (
+                <>
+                  {!editing && (
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
+                      <button onClick={() => setEditing(true)} className="hover:text-primary">
+                        ✏️ {t("editLesson.trigger")}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (await confirm(t("excludeLesson.trigger"), t("excludeLesson.confirm"))) {
+                            excludeLesson.mutate(currentItem.lesson_node_id!);
+                          }
+                        }}
+                        disabled={excludeLesson.isPending || submitting}
+                        className="hover:text-red-600 disabled:opacity-50"
+                      >
+                        🚫 {t("excludeLesson.trigger")}
+                      </button>
+                      <Link
+                        to={`/categories/${categoryId}/lessons/${currentItem.lesson_node_id}`}
+                        className="hover:text-primary"
+                      >
+                        📄 {t("editLesson.openPage")}
+                      </Link>
+                    </div>
+                  )}
+                  {editing && (
+                    <EditLessonForm
+                      nodeId={currentItem.lesson_node_id}
+                      title={currentItem.title ?? ""}
+                      body={currentItem.body_markdown ?? ""}
+                      onSaved={(patch) => {
+                        updateCurrentItem(patch);
+                        queryClient.invalidateQueries({ queryKey: ["hierarchyNode", currentItem.lesson_node_id] });
+                        setEditing(false);
+                      }}
+                      onCancel={() => setEditing(false)}
+                    />
+                  )}
+                </>
               )}
 
               {!revealed ? (

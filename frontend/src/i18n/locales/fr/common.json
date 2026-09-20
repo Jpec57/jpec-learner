@@ -33,5 +33,8 @@
   },
   "footer": {
     "tagline": "La répétition espacée, en toute simplicité."
+  },
+  "math": {
+    "hint": "Dans $…$ : alpha, pi, inf, sqrt, frac, sum, int, lim, ->, <=, >=, != puis Espace. Ctrl/⌘+M pour une formule en ligne."
   }
 }

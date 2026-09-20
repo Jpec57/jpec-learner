@@ -26,7 +26,8 @@
     "titlePlaceholder": "Titre de la leçon (ex. Limites)",
     "bodyPlaceholder": "Contenu de la leçon (Markdown, facultatif)",
     "submit": "Créer la leçon",
-    "excludeFromReview": "Exclure des révisions (simple conteneur de cartes)"
+    "excludeFromReview": "Exclure des révisions (simple conteneur de cartes)",
+    "created": "Leçon créée. Ajoutez-en une autre, ou fermez."
   },
   "ai": {
     "promptPlaceholder": "Décrivez les cartes voulues, ex. 10 cartes sur les verbes irréguliers espagnols",
@@ -34,5 +35,6 @@
     "generating": "Génération…",
     "notConfigured": "Ajoutez une clé d'API dans les réglages pour utiliser l'assistant IA.",
     "goToSettings": "Aller aux réglages"
-  }
+  },
+  "openLink": "Ouvrir dans un nouvel onglet"
 }

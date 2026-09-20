@@ -1,5 +1,5 @@
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable
 
 from fastapi import HTTPException
@@ -9,12 +9,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.routes import cards as cards_routes
 from app.api.v1.routes import categories as categories_routes
 from app.api.v1.routes import hierarchy as hierarchy_routes
+from app.api.v1.routes import plan as plan_routes
 from app.models.category import Category
 from app.models.user import User
 from app.schemas.card import CardCreate
 from app.schemas.category import CategoryCreate
 from app.schemas.hierarchy import HierarchyNodeCreate
+from app.schemas.plan import PlanUpdate
 from app.services.assistant.providers import ToolSpec
+from app.services.plan import render_progress_summary
 
 # Cap on how many cards a single create_cards_bulk call can generate, so one
 # runaway model response can't try to write thousands of rows in one request.
@@ -22,9 +25,20 @@ MAX_BULK_CARDS = 50
 
 
 @dataclass
+class ToolRef:
+    kind: str  # "category" | "group" | "lesson" | "card" -- see schemas.assistant.RefKind
+    id: uuid.UUID
+    category_id: uuid.UUID
+    label: str
+
+
+@dataclass
 class ToolExecutionResult:
     ok: bool
+    # Text handed back to the model (keeps ids it needs for follow-up calls).
     summary: str
+    # Structured references the UI turns into links; never sent to the model.
+    refs: list[ToolRef] = field(default_factory=list)
 
 
 def _uuid(value: Any, field_name: str) -> uuid.UUID:
@@ -42,9 +56,22 @@ _CARD_ITEM_SCHEMA = {
     "type": "object",
     "properties": {
         "front_text": {"type": "string"},
-        "back_text": {"type": "string"},
+        "back_text": {
+            "type": "string",
+            "description": (
+                "Answer shown on reveal (markdown). For answer_mode 'typed' with accepted_answers "
+                "set, it is display-only context and need not be typed."
+            ),
+        },
         "answer_mode": {"type": "string", "enum": ["reveal", "typed"]},
-        "accepted_answers": {"type": "array", "items": {"type": "string"}},
+        "accepted_answers": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": (
+                "For 'typed' cards: every answer the learner may type (e.g. synonyms). "
+                "If empty, back_text itself must be typed."
+            ),
+        },
         "answer_language": {"type": "string", "description": "e.g. 'en', 'ja-romaji', 'ja-kanji'"},
         "hint": {"type": "string"},
     },
@@ -152,6 +179,50 @@ TOOL_SPECS: list[ToolSpec] = [
             "required": ["category_id", "cards"],
         },
     ),
+    ToolSpec(
+        name="get_plan",
+        description=(
+            "Read a category's main goal and its markdown study plan. In the plan, each '## ' heading is a "
+            "sub-goal (chapter), '### ' a topic inside it, and '- [ ]' / '- [x]' lines are milestones. "
+            "Sub-goals are linked to the category's groups/lessons by identical title."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {"category_id": {"type": "string"}},
+            "required": ["category_id"],
+        },
+    ),
+    ToolSpec(
+        name="update_plan",
+        description=(
+            "Overwrite the category's goal and/or markdown plan. The plan is replaced WHOLESALE, so call "
+            "get_plan first and send back the full edited text, keeping the user's own wording and headings "
+            "(renaming a heading breaks its link to the matching group). Only fields you pass are changed."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "category_id": {"type": "string"},
+                "goal": {"type": "string", "description": "The deck's main goal"},
+                "plan_markdown": {"type": "string", "description": "The complete new plan, in markdown"},
+            },
+            "required": ["category_id"],
+        },
+    ),
+    ToolSpec(
+        name="get_plan_progress",
+        description=(
+            "How the learner is doing on each plan sub-goal, from their real review history: status "
+            "(no_content = no matching group/cards yet, not_started, weak, in_progress, solid), item counts, "
+            "average SRS level (1-10), due count, 30-day lapse rate, milestones ticked, plus the weakest "
+            "individual cards. Use it to decide what to teach or drill next."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {"category_id": {"type": "string"}},
+            "required": ["category_id"],
+        },
+    ),
 ]
 
 
@@ -163,7 +234,8 @@ async def _tool_list_categories(db: AsyncSession, current_user: User, args: dict
     if not rows:
         return ToolExecutionResult(ok=True, summary="No categories exist yet.")
     lines = [f"- {c.name} (id={c.id}, slug={c.slug})" for c in rows]
-    return ToolExecutionResult(ok=True, summary="\n".join(lines))
+    refs = [ToolRef("category", c.id, c.id, c.name) for c in rows]
+    return ToolExecutionResult(ok=True, summary="\n".join(lines), refs=refs)
 
 
 async def _tool_list_hierarchy(db: AsyncSession, current_user: User, args: dict[str, Any]) -> ToolExecutionResult:
@@ -175,7 +247,8 @@ async def _tool_list_hierarchy(db: AsyncSession, current_user: User, args: dict[
     if not nodes:
         return ToolExecutionResult(ok=True, summary="This level is empty.")
     lines = [f"- [{n.node_kind}] {n.title} (id={n.id})" for n in nodes]
-    return ToolExecutionResult(ok=True, summary="\n".join(lines))
+    refs = [ToolRef(n.node_kind, n.id, n.category_id, n.title) for n in nodes]
+    return ToolExecutionResult(ok=True, summary="\n".join(lines), refs=refs)
 
 
 async def _tool_create_category(db: AsyncSession, current_user: User, args: dict[str, Any]) -> ToolExecutionResult:
@@ -187,7 +260,9 @@ async def _tool_create_category(db: AsyncSession, current_user: User, args: dict
     )
     category = await categories_routes.create_category(payload=payload, current_user=current_user, db=db)
     return ToolExecutionResult(
-        ok=True, summary=f"Created category '{category.name}' (id={category.id}, slug={category.slug})."
+        ok=True,
+        summary=f"Created category '{category.name}' (id={category.id}, slug={category.slug}).",
+        refs=[ToolRef("category", category.id, category.id, category.name)],
     )
 
 
@@ -203,7 +278,11 @@ async def _tool_create_node(
         body_markdown=args.get("body_markdown") if node_kind == "lesson" else None,
     )
     node = await hierarchy_routes.create_node(payload=payload, current_user=current_user, db=db)
-    return ToolExecutionResult(ok=True, summary=f"Created {node_kind} '{node.title}' (id={node.id}).")
+    return ToolExecutionResult(
+        ok=True,
+        summary=f"Created {node_kind} '{node.title}' (id={node.id}).",
+        refs=[ToolRef(node_kind, node.id, node.category_id, node.title)],
+    )
 
 
 def _card_payload(category_id: uuid.UUID, lesson_node_id: uuid.UUID | None, item: dict[str, Any]) -> CardCreate:
@@ -225,7 +304,11 @@ async def _tool_create_card(db: AsyncSession, current_user: User, args: dict[str
     lesson_node_id = _uuid(args["lesson_node_id"], "lesson_node_id") if args.get("lesson_node_id") else None
     payload = _card_payload(category_id, lesson_node_id, args)
     card = await cards_routes.create_card(payload=payload, current_user=current_user, db=db)
-    return ToolExecutionResult(ok=True, summary=f"Created card '{card.front_text}' -> '{card.back_text}' (id={card.id}).")
+    return ToolExecutionResult(
+        ok=True,
+        summary=f"Created card '{card.front_text}' -> '{card.back_text}' (id={card.id}).",
+        refs=[ToolRef("card", card.id, card.category_id, card.front_text)],
+    )
 
 
 async def _tool_create_cards_bulk(db: AsyncSession, current_user: User, args: dict[str, Any]) -> ToolExecutionResult:
@@ -245,7 +328,44 @@ async def _tool_create_cards_bulk(db: AsyncSession, current_user: User, args: di
 
     preview = "\n".join(f"- {c.front_text} -> {c.back_text}" for c in created[:10])
     more = f"\n(+{len(created) - 10} more)" if len(created) > 10 else ""
-    return ToolExecutionResult(ok=True, summary=f"Created {len(created)} card(s):\n{preview}{more}")
+    refs = [ToolRef("card", c.id, c.category_id, c.front_text) for c in created]
+    return ToolExecutionResult(ok=True, summary=f"Created {len(created)} card(s):\n{preview}{more}", refs=refs)
+
+
+async def _tool_get_plan(db: AsyncSession, current_user: User, args: dict[str, Any]) -> ToolExecutionResult:
+    plan = await plan_routes.get_plan(
+        category_id=_uuid(args["category_id"], "category_id"), current_user=current_user, db=db
+    )
+    if not plan.goal and not plan.plan_markdown:
+        return ToolExecutionResult(ok=True, summary="No goal or plan has been written for this category yet.")
+    return ToolExecutionResult(
+        ok=True,
+        summary=f"Goal: {plan.goal or '(not set)'}\n\nPlan (markdown):\n{plan.plan_markdown or '(empty)'}",
+    )
+
+
+async def _tool_update_plan(db: AsyncSession, current_user: User, args: dict[str, Any]) -> ToolExecutionResult:
+    fields = {key: args[key] for key in ("goal", "plan_markdown") if key in args}
+    if not fields:
+        raise ToolArgumentError("Provide 'goal' and/or 'plan_markdown'")
+    # Built from only the keys the model sent, so the route's model_fields_set
+    # check leaves the other field untouched.
+    await plan_routes.update_plan(
+        category_id=_uuid(args["category_id"], "category_id"),
+        payload=PlanUpdate(**fields),
+        current_user=current_user,
+        db=db,
+    )
+    return ToolExecutionResult(ok=True, summary=f"Updated the {' and '.join(fields)}.")
+
+
+async def _tool_get_plan_progress(db: AsyncSession, current_user: User, args: dict[str, Any]) -> ToolExecutionResult:
+    progress = await plan_routes.get_plan_progress(
+        category_id=_uuid(args["category_id"], "category_id"), current_user=current_user, db=db
+    )
+    category_id = _uuid(args["category_id"], "category_id")
+    refs = [ToolRef("card", c["card_id"], category_id, c["front_text"]) for c in progress["weakest_cards"]]
+    return ToolExecutionResult(ok=True, summary=render_progress_summary(progress), refs=refs)
 
 
 _HANDLERS: dict[str, Callable[[AsyncSession, User, dict[str, Any]], Awaitable[ToolExecutionResult]]] = {
@@ -256,7 +376,18 @@ _HANDLERS: dict[str, Callable[[AsyncSession, User, dict[str, Any]], Awaitable[To
     "create_lesson": lambda db, user, args: _tool_create_node(db, user, args, node_kind="lesson"),
     "create_card": _tool_create_card,
     "create_cards_bulk": _tool_create_cards_bulk,
+    "get_plan": _tool_get_plan,
+    "update_plan": _tool_update_plan,
+    "get_plan_progress": _tool_get_plan_progress,
 }
+
+
+async def _rollback(db: AsyncSession, current_user: User) -> None:
+    # Rolling back expires every loaded instance, including current_user, and an
+    # async session can't lazy-reload it on the next attribute access. The model
+    # recovers from a tool error by calling another tool, so reload it here.
+    await db.rollback()
+    await db.refresh(current_user)
 
 
 async def execute_tool(db: AsyncSession, current_user: User, name: str, arguments: dict[str, Any]) -> ToolExecutionResult:
@@ -266,11 +397,11 @@ async def execute_tool(db: AsyncSession, current_user: User, name: str, argument
     try:
         return await handler(db, current_user, arguments)
     except (ToolArgumentError, ValidationError) as exc:
-        await db.rollback()
+        await _rollback(db, current_user)
         return ToolExecutionResult(ok=False, summary=f"Invalid arguments: {exc}")
     except KeyError as exc:
-        await db.rollback()
+        await _rollback(db, current_user)
         return ToolExecutionResult(ok=False, summary=f"Missing required argument: {exc}")
     except HTTPException as exc:
-        await db.rollback()
+        await _rollback(db, current_user)
         return ToolExecutionResult(ok=False, summary=f"Could not complete: {exc.detail}")

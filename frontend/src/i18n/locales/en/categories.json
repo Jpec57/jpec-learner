@@ -42,5 +42,14 @@
     "levelAttempts": "Level {{level}} · {{count}} attempts"
   },
   "themeColor": "Deck theme color",
-  "clearTheme": "Use default theme"
+  "clearTheme": "Use default theme",
+  "deckType": {
+    "label": "Deck type",
+    "general": "General",
+    "language": "Language",
+    "scientific": "Scientific",
+    "generalHint": "Flashcards and lessons on any subject.",
+    "languageHint": "Pick a source and destination language when adding cards, and translate the answer automatically.",
+    "scientificHint": "LaTeX toolbar and shortcuts when writing lessons."
+  }
 }

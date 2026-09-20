@@ -225,3 +225,56 @@ async def test_insights_surface_struggling_and_stale_items(client):
     stale_ids = [item["card_id"] for item in body["stale"]]
     assert stale_ids[0] == untouched_card["id"]
     assert body["stale"][0]["last_reviewed_at"] is None
+
+
+async def test_due_can_be_scoped_to_a_node_and_its_subtree(client):
+    headers = await _register_and_login(client, "node-scope@example.com")
+
+    async def make_category(name):
+        return (await client.post("/api/v1/categories", json={"name": name}, headers=headers)).json()["id"]
+
+    async def make_node(category_id, kind, title, parent_id=None):
+        payload = {"category_id": category_id, "node_kind": kind, "title": title}
+        if parent_id:
+            payload["parent_id"] = parent_id
+        return (await client.post("/api/v1/hierarchy", json=payload, headers=headers)).json()["id"]
+
+    async def make_card(category_id, front, node_id=None):
+        payload = {"category_id": category_id, "front_text": front, "back_text": "a"}
+        if node_id:
+            payload["lesson_node_id"] = node_id
+        return (await client.post("/api/v1/cards", json=payload, headers=headers)).json()["id"]
+
+    async def due(category_id, node_id=None, types="card"):
+        url = f"/api/v1/reviews/due?category_id={category_id}&types={types}"
+        if node_id:
+            url += f"&node_id={node_id}"
+        resp = await client.get(url, headers=headers)
+        return resp
+
+    category_id = await make_category("Maths")
+    algebra = await make_node(category_id, "group", "Algebra")
+    matrices = await make_node(category_id, "lesson", "Matrices", algebra)
+    analysis = await make_node(category_id, "group", "Analysis")
+
+    in_group = await make_card(category_id, "in algebra group", algebra)
+    in_lesson = await make_card(category_id, "in matrices lesson", matrices)
+    in_sibling = await make_card(category_id, "in analysis", analysis)
+    unclassified = await make_card(category_id, "unclassified")
+
+    def card_ids(resp):
+        return {item["card_id"] for item in resp.json() if item["card_id"]}
+
+    assert card_ids(await due(category_id)) >= {in_group, in_lesson, in_sibling, unclassified}
+    # A group includes everything beneath it, but not its siblings or unfiled cards.
+    assert card_ids(await due(category_id, algebra)) == {in_group, in_lesson}
+    assert card_ids(await due(category_id, matrices)) == {in_lesson}
+    assert card_ids(await due(category_id, analysis)) == {in_sibling}
+
+    # Lessons (the review items themselves) are scoped the same way.
+    lessons = (await due(category_id, algebra, types="lesson")).json()
+    assert {item["lesson_node_id"] for item in lessons} == {matrices}
+
+    other_category = await make_category("Other")
+    assert (await due(other_category, algebra)).status_code == 404  # node from another deck
+    assert (await due(category_id, "00000000-0000-0000-0000-000000000000")).status_code == 404

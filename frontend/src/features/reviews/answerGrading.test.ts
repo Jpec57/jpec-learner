@@ -3,12 +3,20 @@ import { describe, expect, it } from "vitest";
 import { acceptedAnswersFor, classifyTypedAnswer } from "@/features/reviews/answerGrading";
 
 describe("acceptedAnswersFor", () => {
-  it("combines back_text with any extra accepted answers", () => {
-    expect(acceptedAnswersFor("benkyou", ["benkyō"])).toEqual(["benkyou", "benkyō"]);
+  it("uses only the explicit accepted answers, leaving back_text as display-only context", () => {
+    expect(acceptedAnswersFor("**Fast** (adj.) — see also *lent*", ["rapide", "prompt", "véloce"])).toEqual([
+      "rapide",
+      "prompt",
+      "véloce",
+    ]);
   });
 
-  it("drops an empty back_text instead of including a blank entry", () => {
-    expect(acceptedAnswersFor("", ["benkyō"])).toEqual(["benkyō"]);
+  it("falls back to back_text when no accepted answers are set", () => {
+    expect(acceptedAnswersFor("benkyou", [])).toEqual(["benkyou"]);
+  });
+
+  it("returns nothing for an empty back_text with no accepted answers", () => {
+    expect(acceptedAnswersFor("", [])).toEqual([]);
   });
 });
 

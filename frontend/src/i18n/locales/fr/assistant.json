@@ -29,6 +29,27 @@
     "notConfigured": "Ajoutez une clé API dans les Paramètres pour utiliser l'assistant.",
     "goToSettings": "Aller aux paramètres",
     "toolFailed": "Échec",
-    "toolSucceeded": "Fait"
+    "toolSucceeded": "Fait",
+    "refKinds": {
+      "category": "Ouvrir le paquet",
+      "group": "Ouvrir le groupe",
+      "lesson": "Ouvrir la leçon",
+      "card": "Ouvrir la carte"
+    }
+  },
+  "modes": {
+    "builder": "Créateur",
+    "coach": "Coach"
+  },
+  "coach": {
+    "title": "Coach IA",
+    "subtitle": "Votre professeur pour ce paquet : il suit votre plan et insiste sur vos points faibles.",
+    "placeholder": "ex. Pourquoi est-ce que je rate toujours les déterminants ?",
+    "emptyState": "Je suis votre objectif et votre plan, j'analyse vos révisions réelles et je vous donne les exercices dont vous avez le plus besoin.",
+    "prompts": {
+      "assess": "Fais le point sur mon niveau",
+      "weakest": "Donne-moi des exercices sur mon point le plus faible"
+    },
+    "openButton": "Demander au coach"
   }
 }

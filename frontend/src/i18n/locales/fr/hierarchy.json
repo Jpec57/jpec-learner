@@ -51,5 +51,9 @@
   "search": {
     "placeholder": "Rechercher un titre/une description de leçon…",
     "noResults": "Aucune leçon ne correspond à votre recherche."
+  },
+  "node": {
+    "review_one": "Réviser ({{count}} à réviser)",
+    "review_other": "Réviser ({{count}} à réviser)"
   }
 }

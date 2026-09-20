@@ -4,10 +4,12 @@ import { useTranslation } from "react-i18next";
 import { useParams, useSearchParams } from "react-router-dom";
 
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
+import { MathTextarea } from "@/components/ui/MathTextarea";
 import { CardListSection } from "@/features/cards/CardListSection";
 import { getCategory } from "@/features/categories/api";
 import { getNode, updateNode } from "@/features/hierarchy/api";
 import { NodeBreadcrumb } from "@/features/hierarchy/NodeBreadcrumb";
+import { NodeReviewButton } from "@/features/hierarchy/NodeReviewButton";
 import { ImageUploadInput } from "@/features/images/ImageUploadInput";
 import { linkOcrScan } from "@/features/ocr/api";
 import { OcrCaptureButton } from "@/features/ocr/OcrCaptureButton";
@@ -65,7 +67,10 @@ export function LessonDetailPage() {
         ancestors={node.ancestors}
         currentTitle={node.title}
       />
-      <h1 className="mt-2 text-2xl font-semibold text-slate-900">{node.title}</h1>
+      <div className="mt-2 flex items-start justify-between gap-3">
+        <h1 className="text-2xl font-semibold text-slate-900">{node.title}</h1>
+        <NodeReviewButton categoryId={categoryId} nodeId={nodeId} />
+      </div>
 
       <label className="mt-3 flex items-start gap-2 text-sm text-slate-600">
         <input
@@ -117,15 +122,27 @@ export function LessonDetailPage() {
         </div>
 
         <div className="mt-2 grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <textarea
-            value={currentBody}
-            onChange={(e) => setBody(e.target.value)}
-            rows={12}
-            placeholder={t("lesson.contentPlaceholder")}
-            className={`w-full rounded-lg border border-slate-200 bg-white p-3 font-mono text-sm ${
-              view === "preview" ? "hidden lg:block" : ""
-            }`}
-          />
+          {category.deck_type === "scientific" ? (
+            <div className={view === "preview" ? "hidden lg:block" : ""}>
+              <MathTextarea
+                value={currentBody}
+                onChange={setBody}
+                rows={12}
+                placeholder={t("lesson.contentPlaceholder")}
+                className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm"
+              />
+            </div>
+          ) : (
+            <textarea
+              value={currentBody}
+              onChange={(e) => setBody(e.target.value)}
+              rows={12}
+              placeholder={t("lesson.contentPlaceholder")}
+              className={`w-full rounded-lg border border-slate-200 bg-white p-3 font-mono text-sm ${
+                view === "preview" ? "hidden lg:block" : ""
+              }`}
+            />
+          )}
           <div
             className={`rounded-lg border border-slate-200 bg-white p-3 ${
               view === "edit" ? "hidden lg:block" : ""

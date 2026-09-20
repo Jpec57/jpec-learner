@@ -22,8 +22,6 @@
     "reveal": "Flip & rate",
     "typed": "Type answer"
   },
-  "acceptedAnswersPlaceholder": "Other accepted answers, comma or newline separated (optional)",
-  "alsoAccepts": "Also accepts: {{answers}}",
   "createReverse": "Also create the reverse card (back → front)",
   "answerLanguagePlaceholder": "Expected answer language (optional)",
   "reverseAnswerLanguagePlaceholder": "Reverse card's expected answer language (optional)",
@@ -36,5 +34,31 @@
     "modeCards": "Cards",
     "modeLessons": "Lessons",
     "allLanguages": "All languages"
+  },
+  "typedBackPlaceholder": "Details shown after answering — markdown, never needs to be typed (optional)",
+  "acceptedAnswersList": "Accepted answers: {{answers}}",
+  "detail": {
+    "back": "Back",
+    "notFound": "This card doesn't exist anymore."
+  },
+  "gapLabel": "blank",
+  "answersLabel": "Accepted answers (any one is accepted)",
+  "answerInputPlaceholder": "An accepted answer",
+  "addAnswer": "+ Add another answer",
+  "removeAnswer": "Remove this answer",
+  "insertBlank": "Insert a blank",
+  "insertBlankTitle": "Inserts __ where the answer goes (fill-in-the-blank sentence)",
+  "language": {
+    "source": "From…",
+    "target": "To…",
+    "swap": "Swap languages"
+  },
+  "translate": {
+    "button": "Translate",
+    "busy": "Translating…",
+    "failed": "No translation found — write the answer yourself.",
+    "pickLanguages": "Choose two different languages first",
+    "alternatives": "Other options",
+    "via": "via {{provider}}"
   }
 }

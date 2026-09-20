@@ -10,6 +10,7 @@ import commonEn from "@/i18n/locales/en/common.json";
 import createEn from "@/i18n/locales/en/create.json";
 import hierarchyEn from "@/i18n/locales/en/hierarchy.json";
 import ocrEn from "@/i18n/locales/en/ocr.json";
+import planEn from "@/i18n/locales/en/plan.json";
 import progressionEn from "@/i18n/locales/en/progression.json";
 import reviewEn from "@/i18n/locales/en/review.json";
 import srsGuideEn from "@/i18n/locales/en/srsGuide.json";
@@ -21,6 +22,7 @@ import commonFr from "@/i18n/locales/fr/common.json";
 import createFr from "@/i18n/locales/fr/create.json";
 import hierarchyFr from "@/i18n/locales/fr/hierarchy.json";
 import ocrFr from "@/i18n/locales/fr/ocr.json";
+import planFr from "@/i18n/locales/fr/plan.json";
 import progressionFr from "@/i18n/locales/fr/progression.json";
 import reviewFr from "@/i18n/locales/fr/review.json";
 import srsGuideFr from "@/i18n/locales/fr/srsGuide.json";
@@ -40,6 +42,7 @@ export const resources = {
     assistant: assistantEn,
     ocr: ocrEn,
     create: createEn,
+    plan: planEn,
   },
   fr: {
     common: commonFr,
@@ -53,6 +56,7 @@ export const resources = {
     assistant: assistantFr,
     ocr: ocrFr,
     create: createFr,
+    plan: planFr,
   },
 } as const;
 
@@ -63,7 +67,7 @@ i18n
     resources,
     fallbackLng: "en",
     defaultNS,
-    ns: ["common", "auth", "categories", "hierarchy", "cards", "review", "progression", "srsGuide", "assistant", "ocr", "create"],
+    ns: ["common", "auth", "categories", "hierarchy", "cards", "review", "progression", "srsGuide", "assistant", "ocr", "create", "plan"],
     interpolation: { escapeValue: false },
     detection: {
       // Once the user's profile loads, App.tsx calls i18n.changeLanguage(user.locale)

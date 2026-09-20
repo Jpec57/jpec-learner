@@ -4,9 +4,11 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { useConfirm } from "@/components/ui/useConfirm";
-import { deleteCategory, getCategory, updateCategory, type Category } from "@/features/categories/api";
+import { deleteCategory, getCategory, updateCategory, type Category, type DeckType } from "@/features/categories/api";
+import { DeckTypeSelect } from "@/features/categories/DeckTypeSelect";
 import { IconPicker } from "@/features/categories/IconPicker";
 import { ThemeColorPicker } from "@/features/categories/ThemeColorPicker";
+import { PlanSection } from "@/features/plan/PlanSection";
 import { getProgression } from "@/features/progression/api";
 import { StreakIndicator } from "@/features/progression/StreakIndicator";
 import { ReviewInsights } from "@/features/reviews/ReviewInsights";
@@ -19,10 +21,11 @@ function EditCategoryForm({ category, onDone }: { category: Category; onDone: ()
   const [name, setName] = useState(category.name);
   const [icon, setIcon] = useState(category.icon ?? "📚");
   const [themeColor, setThemeColor] = useState(category.theme_color);
+  const [deckType, setDeckType] = useState<DeckType>(category.deck_type);
   const [error, setError] = useState<string | null>(null);
 
   const save = useMutation({
-    mutationFn: () => updateCategory(category.id, { name, icon, theme_color: themeColor }),
+    mutationFn: () => updateCategory(category.id, { name, icon, theme_color: themeColor, deck_type: deckType }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["category", category.id] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
@@ -47,6 +50,7 @@ function EditCategoryForm({ category, onDone }: { category: Category; onDone: ()
         className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
       />
       <IconPicker value={icon} onChange={setIcon} />
+      <DeckTypeSelect value={deckType} onChange={setDeckType} />
       <ThemeColorPicker value={themeColor} onChange={setThemeColor} />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2">
@@ -197,6 +201,10 @@ export function CategoryDashboardPage() {
           <StreakIndicator days={progression.streak_days} />
         </div>
       )}
+
+      <div className="mt-6">
+        <PlanSection categoryId={category.id} deckType={category.deck_type} />
+      </div>
 
       <div className="mt-6">
         <ReviewInsights categoryId={category.id} />

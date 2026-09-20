@@ -71,6 +71,7 @@ async def create_category(
         owner_id=current_user.id,
         is_public=payload.is_public,
         theme_color=payload.theme_color,
+        deck_type=payload.deck_type,
     )
     db.add(category)
     await db.commit()
@@ -109,6 +110,13 @@ async def update_category(
         category.is_public = payload.is_public
     if "theme_color" in payload.model_fields_set:
         category.theme_color = payload.theme_color
+    if payload.deck_type is not None:
+        category.deck_type = payload.deck_type
+    # Nullable, so an explicit null clears the saved direction.
+    if "source_language" in payload.model_fields_set:
+        category.source_language = payload.source_language
+    if "target_language" in payload.model_fields_set:
+        category.target_language = payload.target_language
 
     await db.commit()
     await db.refresh(category)

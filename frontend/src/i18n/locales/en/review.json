@@ -61,5 +61,23 @@
   "upcoming": {
     "title": "Upcoming reviews",
     "tooltip": "{{count}} due at {{hour}}:00"
-  }
+  },
+  "editLesson": {
+    "trigger": "Edit this lesson",
+    "openPage": "Open lesson page",
+    "title": "Title",
+    "content": "Content (Markdown)",
+    "preview": "Preview",
+    "edit": "Edit",
+    "previewEmpty": "Nothing to preview yet."
+  },
+  "excludeLesson": {
+    "trigger": "Stop reviewing this lesson",
+    "confirm": "Stop showing this lesson in reviews? Its cards still come up. You can turn this back on from the lesson page."
+  },
+  "nodeFilter": {
+    "label": "From",
+    "wholeDeck": "Whole deck"
+  },
+  "nothingDueInNode": "Nothing due right now in “{{name}}”."
 }

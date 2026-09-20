@@ -189,6 +189,37 @@ async def test_categories_list_includes_per_category_due_count(client):
     assert detail_resp.json()["due_count"] == 2
 
 
+async def test_deleted_cards_are_not_counted_as_due(client):
+    """Regression: deleting a card is a soft delete that leaves its review state
+    behind; the due badges kept counting it while the review queue (correctly)
+    showed nothing."""
+    headers = await _register_and_login(client, "deleted-due@example.com")
+    category_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    ).json()["id"]
+    card_ids = []
+    for i in range(2):
+        card = await client.post(
+            "/api/v1/cards",
+            json={"category_id": category_id, "front_text": f"q{i}", "back_text": f"a{i}"},
+            headers=headers,
+        )
+        card_ids.append(card.json()["id"])
+
+    assert (await client.delete(f"/api/v1/cards/{card_ids[0]}", headers=headers)).status_code == 204
+
+    due = await client.get("/api/v1/reviews/due", params={"category_id": category_id}, headers=headers)
+    assert len(due.json()) == 1
+
+    detail = await client.get(f"/api/v1/categories/{category_id}", headers=headers)
+    assert detail.json()["due_count"] == 1
+    total = await client.get("/api/v1/reviews/due-count", headers=headers)
+    assert total.json()["total_due"] == 1
+    progression = await client.get(f"/api/v1/progression/categories/{category_id}", headers=headers)
+    assert progression.json()["total_due"] == 1
+    assert progression.json()["total_items"] == 1
+
+
 async def test_category_theme_color_can_be_set_updated_and_cleared(client):
     headers = await _register_and_login(client, "theme-color@example.com")
 
@@ -267,3 +298,39 @@ async def test_excluded_lesson_is_not_reviewable_and_node_cards_progression_list
     await client.patch(f"/api/v1/hierarchy/{lesson['id']}", json={"exclude_from_review": True}, headers=headers)
     progression = (await client.get(f"/api/v1/progression/categories/{category_id}", headers=headers)).json()
     assert progression["total_items"] == 1
+
+
+async def test_deck_type_and_language_direction(client):
+    headers = await _register_and_login(client, "deck-type@example.com")
+
+    created = await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    assert created.json()["deck_type"] == "general"
+    assert created.json()["source_language"] is None
+
+    spanish = await client.post(
+        "/api/v1/categories", json={"name": "Español", "deck_type": "language"}, headers=headers
+    )
+    assert spanish.json()["deck_type"] == "language"
+    deck_id = spanish.json()["id"]
+
+    saved = await client.patch(
+        f"/api/v1/categories/{deck_id}", json={"source_language": "es", "target_language": "fr"}, headers=headers
+    )
+    assert (saved.json()["source_language"], saved.json()["target_language"]) == ("es", "fr")
+
+    # Unrelated updates leave the direction alone; an explicit null clears it.
+    renamed = await client.patch(f"/api/v1/categories/{deck_id}", json={"name": "Espagnol"}, headers=headers)
+    assert renamed.json()["source_language"] == "es"
+    cleared = await client.patch(f"/api/v1/categories/{deck_id}", json={"source_language": None}, headers=headers)
+    assert cleared.json()["source_language"] is None
+    assert cleared.json()["target_language"] == "fr"
+
+    switched = await client.patch(f"/api/v1/categories/{deck_id}", json={"deck_type": "scientific"}, headers=headers)
+    assert switched.json()["deck_type"] == "scientific"
+
+    invalid = await client.patch(f"/api/v1/categories/{deck_id}", json={"deck_type": "nope"}, headers=headers)
+    assert invalid.status_code == 422
+    bad_language = await client.patch(
+        f"/api/v1/categories/{deck_id}", json={"target_language": "Français"}, headers=headers
+    )
+    assert bad_language.status_code == 422

@@ -5,10 +5,20 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { CardText } from "@/components/ui/CardText";
+import { GapText } from "@/components/ui/GapText";
 import { useConfirm } from "@/components/ui/useConfirm";
 import { answerLanguageDisplay } from "@/features/cards/answerLanguages";
 import { createCard, deleteCard, listCards, updateCard, type AnswerMode, type Card } from "@/features/cards/api";
-import { LanguageSelect } from "@/features/cards/LanguageSelect";
+import { AnswerModeToggle, ReverseCardFields, TypedAnswerFields } from "@/features/cards/AnswerModeFields";
+import { cleanAnswers } from "@/features/cards/AnswersInput";
+import { FrontTextarea } from "@/features/cards/FrontTextarea";
+import {
+  answerLanguageForTarget,
+  LanguageDirectionFields,
+  useLanguageDirection,
+} from "@/features/cards/LanguageDirection";
+import { TranslateAssist } from "@/features/cards/TranslateAssist";
+import { getCategory } from "@/features/categories/api";
 import { listFlat } from "@/features/hierarchy/api";
 import { ImageUploadInput } from "@/features/images/ImageUploadInput";
 import { linkOcrScan } from "@/features/ocr/api";
@@ -16,16 +26,10 @@ import { OcrCaptureButton } from "@/features/ocr/OcrCaptureButton";
 import { ScannedFromThumbnails } from "@/features/ocr/ScannedFromThumbnails";
 import { getReviewState } from "@/features/reviews/api";
 import { formatDateTime } from "@/lib/formatDate";
+import { hasGap } from "@/lib/gaps";
 
 const PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 300;
-
-function parseAcceptedAnswers(raw: string): string[] {
-  return raw
-    .split(/[,\n]/)
-    .map((answer) => answer.trim())
-    .filter(Boolean);
-}
 
 export interface CardNodeInfo {
   title: string;
@@ -36,10 +40,15 @@ export function CardRow({
   card,
   categoryId,
   nodeInfo,
+  standalone,
+  onDeleted,
 }: {
   card: Card;
   categoryId: string;
   nodeInfo?: CardNodeInfo;
+  // On the dedicated card page: always expanded, no collapse toggle.
+  standalone?: boolean;
+  onDeleted?: () => void;
 }) {
   const { t, i18n } = useTranslation(["cards", "common"]);
   const { confirm, dialog } = useConfirm();
@@ -48,12 +57,12 @@ export function CardRow({
   // from a per-node list OR the category-wide search page, whose query key
   // doesn't share the node id, so invalidation must cover both.
   const queryKey = ["cards", categoryId];
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(!!standalone);
   const [editing, setEditing] = useState(false);
   const [front, setFront] = useState(card.front_text);
   const [back, setBack] = useState(card.back_text);
   const [answerMode, setAnswerMode] = useState<AnswerMode>(card.answer_mode);
-  const [acceptedAnswersInput, setAcceptedAnswersInput] = useState(card.accepted_answers.join(", "));
+  const [acceptedAnswers, setAcceptedAnswers] = useState<string[]>(card.accepted_answers);
   const [answerLanguage, setAnswerLanguage] = useState(card.answer_language ?? "");
   const [hint, setHint] = useState(card.hint ?? "");
   const [moveToNodeId, setMoveToNodeId] = useState(card.lesson_node_id ?? "");
@@ -70,13 +79,19 @@ export function CardRow({
     enabled: editing,
   });
 
+  const { data: category } = useQuery({
+    queryKey: ["category", categoryId],
+    queryFn: () => getCategory(categoryId),
+    enabled: editing,
+  });
+
   const save = useMutation({
     mutationFn: () =>
       updateCard(card.id, {
         front_text: front,
         back_text: back,
         answer_mode: answerMode,
-        accepted_answers: answerMode === "typed" ? parseAcceptedAnswers(acceptedAnswersInput) : [],
+        accepted_answers: answerMode === "typed" ? cleanAnswers(acceptedAnswers) : [],
         answer_language: answerMode === "typed" ? answerLanguage || null : null,
         hint: hint || null,
         lesson_node_id: moveToNodeId,
@@ -94,7 +109,10 @@ export function CardRow({
 
   const remove = useMutation({
     mutationFn: () => deleteCard(card.id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      onDeleted?.();
+    },
   });
 
   if (!expanded) {
@@ -104,11 +122,7 @@ export function CardRow({
         className="flex w-full items-center justify-between rounded-lg border border-slate-200 p-3 text-left hover:border-primary/50"
       >
         <span className="flex min-w-0 flex-col">
-          <CardText
-            text={card.front_text.split("\n")[0]}
-            inline
-            className="truncate text-sm text-slate-800"
-          />
+          <GapText text={card.front_text.split("\n")[0]} inline className="truncate text-sm text-slate-800" />
           {nodeInfo && <span className="mt-0.5 truncate text-xs text-slate-400">{nodeInfo.title}</span>}
         </span>
         <span className="ml-3 flex shrink-0 items-center gap-2">
@@ -130,12 +144,14 @@ export function CardRow({
 
   return (
     <div className="rounded-lg border border-slate-200 p-3">
-      <button
-        onClick={() => setExpanded(false)}
-        className="mb-2 flex items-center gap-1 text-xs text-slate-400 hover:text-primary"
-      >
-        <ChevronUp size={14} /> {t("collapse")}
-      </button>
+      {!standalone && (
+        <button
+          onClick={() => setExpanded(false)}
+          className="mb-2 flex items-center gap-1 text-xs text-slate-400 hover:text-primary"
+        >
+          <ChevronUp size={14} /> {t("collapse")}
+        </button>
+      )}
       {nodeInfo && (
         <p className="mb-2 text-xs text-slate-400">
           <Link to={nodeInfo.href} className="hover:text-primary hover:underline">
@@ -151,58 +167,30 @@ export function CardRow({
       )}
       {editing ? (
         <div className="space-y-2">
-          <textarea
+          <AnswerModeToggle mode={answerMode} onModeChange={setAnswerMode} />
+          <FrontTextarea
+            allowBlank={answerMode === "typed"}
             value={front}
-            onChange={(e) => setFront(e.target.value)}
-            rows={2}
-            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            onChange={setFront}
             placeholder={t("front")}
+            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           />
           <textarea
             value={back}
             onChange={(e) => setBack(e.target.value)}
             rows={2}
             className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-            placeholder={t("back")}
+            placeholder={answerMode === "typed" ? t("typedBackPlaceholder") : t("back")}
           />
-          <div>
-            <label className="text-[10px] uppercase tracking-wide text-slate-400">{t("answerModeLabel")}</label>
-            <div className="mt-1 flex gap-1">
-              <button
-                type="button"
-                onClick={() => setAnswerMode("reveal")}
-                className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-                  answerMode === "reveal" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
-                }`}
-              >
-                {t("answerMode.reveal")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setAnswerMode("typed")}
-                className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-                  answerMode === "typed" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
-                }`}
-              >
-                {t("answerMode.typed")}
-              </button>
-            </div>
-          </div>
           {answerMode === "typed" && (
-            <>
-              <textarea
-                value={acceptedAnswersInput}
-                onChange={(e) => setAcceptedAnswersInput(e.target.value)}
-                rows={2}
-                className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                placeholder={t("acceptedAnswersPlaceholder")}
-              />
-              <LanguageSelect
-                value={answerLanguage}
-                onChange={setAnswerLanguage}
-                placeholder={t("answerLanguagePlaceholder")}
-              />
-            </>
+            <TypedAnswerFields
+              answers={acceptedAnswers}
+              onAnswersChange={setAcceptedAnswers}
+              language={answerLanguage}
+              onLanguageChange={setAnswerLanguage}
+              // A language deck's answer language is its target; keep what's stored.
+              showLanguage={category?.deck_type !== "language"}
+            />
           )}
           <input
             value={hint}
@@ -240,14 +228,14 @@ export function CardRow({
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <div>
             <p className="text-[10px] uppercase tracking-wide text-slate-400">{t("front")}</p>
-            <CardText text={card.front_text} className="text-sm text-slate-800" />
+            <GapText text={card.front_text} className="text-sm text-slate-800" />
           </div>
           <div>
             <p className="text-[10px] uppercase tracking-wide text-slate-400">{t("back")}</p>
             <CardText text={card.back_text} className="text-sm text-slate-800" />
             {card.answer_mode === "typed" && card.accepted_answers.length > 0 && (
               <p className="mt-1 text-xs text-slate-400">
-                {t("alsoAccepts", { answers: card.accepted_answers.join(", ") })}
+                {t("acceptedAnswersList", { answers: card.accepted_answers.join(", ") })}
               </p>
             )}
             {card.answer_mode === "typed" && card.answer_language && (
@@ -314,19 +302,36 @@ interface AddCardInput {
   scanId?: string;
 }
 
-function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<unknown> }) {
+function AddCardForm({
+  categoryId,
+  onSubmit,
+}: {
+  categoryId: string;
+  onSubmit: (input: AddCardInput) => Promise<unknown>;
+}) {
   const { t } = useTranslation(["cards", "common"]);
+  const { data: category } = useQuery({
+    queryKey: ["category", categoryId],
+    queryFn: () => getCategory(categoryId),
+  });
+  const direction = useLanguageDirection(category);
   const [open, setOpen] = useState(false);
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [answerMode, setAnswerMode] = useState<AnswerMode>("reveal");
-  const [acceptedAnswersInput, setAcceptedAnswersInput] = useState("");
+  const [acceptedAnswers, setAcceptedAnswers] = useState<string[]>([]);
   const [answerLanguage, setAnswerLanguage] = useState("");
   const [hint, setHint] = useState("");
   const [createReverse, setCreateReverse] = useState(false);
   const [reverseAnswerLanguage, setReverseAnswerLanguage] = useState("");
   const [scanId, setScanId] = useState<string | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
+  const typedAnswers = answerMode === "typed" ? cleanAnswers(acceptedAnswers) : [];
+  const hasTypedAnswers = typedAnswers.length > 0;
+  // On a language deck a typed card's answers *are* its verso (all of them
+  // joined), so there is no separate field for it -- nor for the answer language,
+  // which is the deck's target language.
+  const languageTyped = direction.enabled && answerMode === "typed";
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -334,18 +339,23 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<
     try {
       await onSubmit({
         front,
-        back,
+        // Elsewhere the details field is optional once answers are listed; the
+        // card still needs a back, so fall back to the answers themselves.
+        back: !languageTyped && back.trim() ? back : typedAnswers.join(" / "),
         answerMode,
-        acceptedAnswers: answerMode === "typed" ? parseAcceptedAnswers(acceptedAnswersInput) : [],
-        answerLanguage,
+        acceptedAnswers: typedAnswers,
+        // A language deck's target fills in the answer language when unset.
+        answerLanguage: answerLanguage || (direction.enabled ? answerLanguageForTarget(direction.target) : ""),
         hint,
-        createReverse,
-        reverseAnswerLanguage,
+        createReverse: createReverse && !hasGap(front),
+        // A language deck's reverse card is answered in the source language.
+        reverseAnswerLanguage: direction.enabled ? direction.source : reverseAnswerLanguage,
         scanId,
       });
+      await direction.remember().catch(() => undefined);
       setFront("");
       setBack("");
-      setAcceptedAnswersInput("");
+      setAcceptedAnswers([]);
       setAnswerLanguage("");
       setHint("");
       setCreateReverse(false);
@@ -373,63 +383,44 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<
           setScanId(result.scanId);
         }}
       />
-      <textarea
+      {direction.enabled && <LanguageDirectionFields direction={direction} />}
+      <AnswerModeToggle mode={answerMode} onModeChange={setAnswerMode} />
+      <FrontTextarea
         autoFocus
         required
+        allowBlank={answerMode === "typed"}
         value={front}
-        onChange={(e) => setFront(e.target.value)}
-        rows={2}
+        onChange={setFront}
         placeholder={t("frontPlaceholder")}
         className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
       />
-      <textarea
-        required
-        value={back}
-        onChange={(e) => setBack(e.target.value)}
-        rows={2}
-        placeholder={t("backPlaceholder")}
-        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+      <TranslateAssist
+        front={front}
+        direction={direction}
+        typed={answerMode === "typed"}
+        answers={acceptedAnswers}
+        onAnswersChange={setAcceptedAnswers}
+        onBackChange={setBack}
       />
-
-      <div>
-        <label className="text-[10px] uppercase tracking-wide text-slate-400">{t("answerModeLabel")}</label>
-        <div className="mt-1 flex gap-1">
-          <button
-            type="button"
-            onClick={() => setAnswerMode("reveal")}
-            className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-              answerMode === "reveal" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
-            }`}
-          >
-            {t("answerMode.reveal")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setAnswerMode("typed")}
-            className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-              answerMode === "typed" ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
-            }`}
-          >
-            {t("answerMode.typed")}
-          </button>
-        </div>
-      </div>
-
       {answerMode === "typed" && (
-        <>
-          <textarea
-            value={acceptedAnswersInput}
-            onChange={(e) => setAcceptedAnswersInput(e.target.value)}
-            rows={2}
-            placeholder={t("acceptedAnswersPlaceholder")}
-            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-          />
-          <LanguageSelect
-            value={answerLanguage}
-            onChange={setAnswerLanguage}
-            placeholder={t("answerLanguagePlaceholder")}
-          />
-        </>
+        <TypedAnswerFields
+          answers={acceptedAnswers}
+          onAnswersChange={setAcceptedAnswers}
+          language={answerLanguage}
+          onLanguageChange={setAnswerLanguage}
+          showLanguage={!direction.enabled}
+          requireAnswer={languageTyped}
+        />
+      )}
+      {!languageTyped && (
+        <textarea
+          required={!hasTypedAnswers}
+          value={back}
+          onChange={(e) => setBack(e.target.value)}
+          rows={2}
+          placeholder={answerMode === "typed" ? t("typedBackPlaceholder") : t("backPlaceholder")}
+          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+        />
       )}
 
       <input
@@ -439,18 +430,15 @@ function AddCardForm({ onSubmit }: { onSubmit: (input: AddCardInput) => Promise<
         className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
       />
 
-      <label className="flex items-center gap-2 text-xs text-slate-600">
-        <input type="checkbox" checked={createReverse} onChange={(e) => setCreateReverse(e.target.checked)} />
-        {t("createReverse")}
-      </label>
-
-      {answerMode === "typed" && createReverse && (
-        <LanguageSelect
-          value={reverseAnswerLanguage}
-          onChange={setReverseAnswerLanguage}
-          placeholder={t("reverseAnswerLanguagePlaceholder")}
-        />
-      )}
+      <ReverseCardFields
+        front={front}
+        mode={answerMode}
+        checked={createReverse}
+        onCheckedChange={setCreateReverse}
+        language={reverseAnswerLanguage}
+        onLanguageChange={setReverseAnswerLanguage}
+        showLanguage={!direction.enabled}
+      />
 
       <div className="flex gap-2">
         <button
@@ -562,7 +550,7 @@ export function CardListSection({
         </div>
       )}
 
-      <AddCardForm onSubmit={(input) => addCard.mutateAsync(input)} />
+      <AddCardForm categoryId={categoryId} onSubmit={(input) => addCard.mutateAsync(input)} />
     </div>
   );
 }

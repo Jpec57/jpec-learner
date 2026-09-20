@@ -80,7 +80,9 @@ async def chat(
     resolved = ResolvedCredential(provider=credential.provider, api_key=api_key, model=credential.model)
 
     try:
-        message, tool_events = await run_chat(db, current_user, resolved, payload.messages, payload.category_id)
+        message, tool_events = await run_chat(
+            db, current_user, resolved, payload.messages, payload.category_id, payload.mode
+        )
     except ProviderError as exc:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(exc)) from exc
 

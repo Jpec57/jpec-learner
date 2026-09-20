@@ -1,5 +1,7 @@
 import { api } from "@/lib/api";
 
+export type DeckType = "general" | "language" | "scientific";
+
 export interface Category {
   id: string;
   slug: string;
@@ -8,6 +10,9 @@ export interface Category {
   owner_id: string;
   is_public: boolean;
   theme_color: string | null;
+  deck_type: DeckType;
+  source_language: string | null;
+  target_language: string | null;
   due_count: number;
   created_at: string;
   updated_at: string;
@@ -28,6 +33,7 @@ export async function createCategory(input: {
   icon?: string;
   is_public?: boolean;
   theme_color?: string | null;
+  deck_type?: DeckType;
 }): Promise<Category> {
   const { data } = await api.post<Category>("/categories", input);
   return data;
@@ -35,7 +41,15 @@ export async function createCategory(input: {
 
 export async function updateCategory(
   id: string,
-  input: { name?: string; icon?: string; is_public?: boolean; theme_color?: string | null }
+  input: {
+    name?: string;
+    icon?: string;
+    is_public?: boolean;
+    theme_color?: string | null;
+    deck_type?: DeckType;
+    source_language?: string | null;
+    target_language?: string | null;
+  }
 ): Promise<Category> {
   const { data } = await api.patch<Category>(`/categories/${id}`, input);
   return data;

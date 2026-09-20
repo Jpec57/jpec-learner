@@ -4,6 +4,9 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# Deleting a card is a soft delete and leaves its review_state behind, so every
+# count below must ignore states whose card is deleted -- the /due queue does,
+# and a count that disagrees with it shows "N due" over an empty session.
 _THEME_ROLLUP_SQL = text(
     """
     WITH subtree AS (
@@ -15,7 +18,7 @@ _THEME_ROLLUP_SQL = text(
         WHERE rs.user_id = :user_id
           AND (
             rs.lesson_node_id IN (SELECT id FROM subtree)
-            OR rs.card_id IN (SELECT id FROM cards WHERE lesson_node_id IN (SELECT id FROM subtree))
+            OR rs.card_id IN (SELECT id FROM cards WHERE lesson_node_id IN (SELECT id FROM subtree) AND deleted_at IS NULL)
           )
     )
     SELECT
@@ -32,7 +35,7 @@ _CATEGORY_TOTALS_SQL = text(
         COUNT(*) AS total_items,
         COUNT(*) FILTER (WHERE rs.due_at <= now()) AS total_due
     FROM review_states rs
-    LEFT JOIN cards c ON c.id = rs.card_id
+    LEFT JOIN cards c ON c.id = rs.card_id AND c.deleted_at IS NULL
     LEFT JOIN hierarchy_nodes hn ON hn.id = rs.lesson_node_id
     WHERE rs.user_id = :user_id
       AND (c.category_id = :category_id OR hn.category_id = :category_id)
@@ -43,7 +46,7 @@ _BULK_DUE_COUNTS_SQL = text(
     """
     SELECT COALESCE(c.category_id, hn.category_id) AS category_id, COUNT(*) AS due_count
     FROM review_states rs
-    LEFT JOIN cards c ON c.id = rs.card_id
+    LEFT JOIN cards c ON c.id = rs.card_id AND c.deleted_at IS NULL
     LEFT JOIN hierarchy_nodes hn ON hn.id = rs.lesson_node_id
     WHERE rs.user_id = :user_id
       AND rs.due_at <= now()
@@ -56,7 +59,7 @@ _LEVEL_DISTRIBUTION_SQL = text(
     """
     SELECT rs.current_level AS level, COUNT(*) AS count
     FROM review_states rs
-    LEFT JOIN cards c ON c.id = rs.card_id
+    LEFT JOIN cards c ON c.id = rs.card_id AND c.deleted_at IS NULL
     LEFT JOIN hierarchy_nodes hn ON hn.id = rs.lesson_node_id
     WHERE rs.user_id = :user_id
       AND (c.category_id = :category_id OR hn.category_id = :category_id)

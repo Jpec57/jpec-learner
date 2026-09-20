@@ -8,7 +8,7 @@ class Settings(BaseSettings):
 
     jwt_secret_key: str = "dev-secret-change-me"
     jwt_algorithm: str = "HS256"
-    access_token_expire_minutes: int = 15
+    access_token_expire_minutes: int = 20160  # 14 days
     refresh_token_expire_days: int = 30
 
     image_storage_path: str = "/data/images"

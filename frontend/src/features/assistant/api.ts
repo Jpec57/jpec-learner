@@ -34,11 +34,20 @@ export interface ChatMessage {
   content: string;
 }
 
+// Something a tool created or listed, so the chat can link to its page.
+export interface ToolRef {
+  kind: "category" | "group" | "lesson" | "card";
+  id: string;
+  category_id: string;
+  label: string;
+}
+
 export interface ToolEvent {
   tool: string;
   args: Record<string, unknown>;
   ok: boolean;
   summary: string;
+  refs?: ToolRef[];
 }
 
 export interface ChatResponse {
@@ -46,13 +55,18 @@ export interface ChatResponse {
   tool_events: ToolEvent[];
 }
 
+// "builder" creates content on request; "coach" is the teacher that follows the deck's plan.
+export type ChatMode = "builder" | "coach";
+
 export async function sendChatMessage(input: {
   messages: ChatMessage[];
   categoryId?: string | null;
+  mode?: ChatMode;
 }): Promise<ChatResponse> {
   const { data } = await api.post<ChatResponse>("/assistant/chat", {
     messages: input.messages,
     category_id: input.categoryId ?? undefined,
+    mode: input.mode ?? "builder",
   });
   return data;
 }

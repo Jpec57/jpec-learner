@@ -6,14 +6,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import "@/i18n/i18n";
 import { getCredential, sendChatMessage } from "@/features/assistant/api";
 import { createCard } from "@/features/cards/api";
-import { listCategories } from "@/features/categories/api";
+import { getCategory, listCategories, updateCategory } from "@/features/categories/api";
 import { CreateContentFab } from "@/features/create/CreateContentFab";
 import { createNode, listFlat } from "@/features/hierarchy/api";
 import { linkOcrScan } from "@/features/ocr/api";
+import { translateText } from "@/features/translation/api";
 
 vi.mock("@/features/assistant/api", () => ({ getCredential: vi.fn(), sendChatMessage: vi.fn() }));
 vi.mock("@/features/cards/api", () => ({ createCard: vi.fn() }));
-vi.mock("@/features/categories/api", () => ({ listCategories: vi.fn() }));
+vi.mock("@/features/categories/api", () => ({
+  getCategory: vi.fn(),
+  listCategories: vi.fn(),
+  updateCategory: vi.fn(),
+}));
+vi.mock("@/features/translation/api", () => ({ translateText: vi.fn() }));
 vi.mock("@/features/hierarchy/api", () => ({ createNode: vi.fn(), listFlat: vi.fn() }));
 vi.mock("@/features/ocr/api", () => ({ linkOcrScan: vi.fn() }));
 vi.mock("@/features/ocr/OcrCaptureButton", () => ({
@@ -41,6 +47,10 @@ function renderFab(categoryId: string | null = "cat-1") {
   );
 }
 
+function deckOf(deck_type: string, extra: Record<string, unknown> = {}) {
+  return { id: "cat-1", name: "Deck", deck_type, source_language: null, target_language: null, ...extra } as never;
+}
+
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(listFlat).mockResolvedValue([
@@ -48,6 +58,8 @@ beforeEach(() => {
     { id: "lesson-1", parent_id: "group-1", node_kind: "lesson", title: "Limits" },
   ]);
   vi.mocked(linkOcrScan).mockResolvedValue({} as never);
+  vi.mocked(getCategory).mockResolvedValue(deckOf("general"));
+  vi.mocked(updateCategory).mockResolvedValue({} as never);
   vi.mocked(getCredential).mockResolvedValue({ configured: true, provider: "gemini", model: null, updated_at: null });
 });
 
@@ -82,17 +94,203 @@ describe("CreateContentFab", () => {
         lesson_node_id: "lesson-1",
         front_text: "scanned text",
         back_text: "answer",
+        answer_mode: "reveal",
+        accepted_answers: [],
+        answer_language: null,
         hint: null,
+        create_reverse: false,
+        reverse_answer_language: null,
       })
     );
     await waitFor(() => expect(linkOcrScan).toHaveBeenCalledWith("scan-1", { card_id: "card-1" }));
 
-    // Dialog stays open for the next card, with the fields cleared.
+    // Dialog stays open for the next card, with the fields cleared and a link
+    // (new tab) to the card that was just created.
     await screen.findByText(/Card added/);
+    const link = screen.getByRole("link", { name: /Open in a new tab/ });
+    expect(link.getAttribute("href")).toBe("/categories/cat-1/cards/card-1");
+    expect(link.getAttribute("target")).toBe("_blank");
     expect((screen.getByPlaceholderText("Front (question)") as HTMLTextAreaElement).value).toBe("");
   });
 
-  it("creates a lesson at the top level and navigates to it", async () => {
+  it("creates a typed card with one input per accepted answer and a blank in the front", async () => {
+    vi.mocked(createCard).mockResolvedValue({ id: "card-2" } as never);
+    renderFab();
+    fireEvent.click(screen.getByLabelText("Create a card or lesson"));
+    await screen.findByText(/Limits/);
+
+    // Fill-in-the-blank belongs to typed answers: not offered for flip cards.
+    expect(screen.queryByRole("button", { name: /Insert a blank/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Type answer" }));
+
+    fireEvent.change(screen.getByPlaceholderText("Front (question)"), { target: { value: "あの試合は見たい" } });
+    fireEvent.click(screen.getByRole("button", { name: /Insert a blank/ }));
+    // No reverse card for a fill-in-the-blank sentence.
+    expect(screen.queryByText(/reverse card/)).toBeNull();
+
+    fireEvent.change(screen.getByPlaceholderText("An accepted answer"), { target: { value: "どうしても" } });
+    fireEvent.click(screen.getByRole("button", { name: "+ Add another answer" }));
+    const inputs = screen.getAllByPlaceholderText("An accepted answer");
+    expect(inputs).toHaveLength(2);
+    fireEvent.change(inputs[1], { target: { value: "是非" } });
+    fireEvent.change(screen.getByPlaceholderText(/Hint shown on request/), { target: { value: "no matter what" } });
+    fireEvent.submit(screen.getByRole("dialog"));
+
+    await waitFor(() =>
+      expect(createCard).toHaveBeenCalledWith(
+        expect.objectContaining({
+          front_text: expect.stringContaining("__"),
+          // back is optional once answers are listed
+          back_text: "どうしても / 是非",
+          answer_mode: "typed",
+          accepted_answers: ["どうしても", "是非"],
+          hint: "no matter what",
+        })
+      )
+    );
+  });
+
+  it("on a language deck (flip card): starts from the saved direction, translates the back, remembers the direction", async () => {
+    vi.mocked(getCategory).mockResolvedValue(deckOf("language", { source_language: "fr", target_language: "en" }));
+    vi.mocked(translateText).mockResolvedValue({
+      translation: "closure",
+      answers: ["closure"],
+      alternatives: ["closure", "fast", "search"],
+      provider: "mymemory",
+    });
+    vi.mocked(createCard).mockResolvedValue({ id: "card-3" } as never);
+    renderFab();
+    fireEvent.click(screen.getByLabelText("Create a card or lesson"));
+
+    const source = (await screen.findByLabelText("From…")) as HTMLSelectElement;
+    const target = screen.getByLabelText("To…") as HTMLSelectElement;
+    await waitFor(() => expect([source.value, target.value]).toEqual(["fr", "en"]));
+
+    // Switch the direction, then translate.
+    fireEvent.click(screen.getByRole("button", { name: "Swap languages" }));
+    expect([source.value, target.value]).toEqual(["en", "fr"]);
+    fireEvent.click(screen.getByRole("button", { name: "Swap languages" }));
+
+    fireEvent.change(screen.getByPlaceholderText("Front (question)"), { target: { value: "rapide" } });
+    fireEvent.click(screen.getByRole("button", { name: /Translate/ }));
+    await waitFor(() =>
+      expect(translateText).toHaveBeenCalledWith({ text: "rapide", source: "fr", target: "en" })
+    );
+    await waitFor(() => expect((screen.getByPlaceholderText("Back (answer)") as HTMLTextAreaElement).value).toBe("closure"));
+
+    // Other candidates are one click away.
+    fireEvent.click(await screen.findByRole("button", { name: "fast" }));
+    expect((screen.getByPlaceholderText("Back (answer)") as HTMLTextAreaElement).value).toBe("fast");
+
+    // The card is created with the chosen direction saved on the deck.
+    fireEvent.change(target, { target: { value: "es" } });
+    fireEvent.submit(screen.getByRole("dialog"));
+    await waitFor(() => expect(createCard).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(updateCategory).toHaveBeenCalledWith("cat-1", { source_language: "fr", target_language: "es" })
+    );
+  });
+
+  it("on a language deck (typed): no verso or answer-language field, and each Jisho answer gets its own input", async () => {
+    vi.mocked(getCategory).mockResolvedValue(deckOf("language", { source_language: "ja", target_language: "en" }));
+    vi.mocked(translateText).mockResolvedValue({
+      translation: "study",
+      answers: ["study", "diligence", "working hard"],
+      alternatives: ["study", "diligence", "working hard", "experience"],
+      provider: "jisho",
+    });
+    vi.mocked(createCard).mockResolvedValue({ id: "card-4" } as never);
+    renderFab();
+    fireEvent.click(screen.getByLabelText("Create a card or lesson"));
+    await waitFor(() => expect((screen.getByLabelText("To…") as HTMLSelectElement).value).toBe("en"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Type answer" }));
+    // The answers are the verso, and the language is the deck's target.
+    expect(screen.queryByPlaceholderText("Back (answer)")).toBeNull();
+    expect(screen.queryByPlaceholderText(/Details shown after answering/)).toBeNull();
+    expect(screen.queryByText("Expected answer language (optional)")).toBeNull();
+    expect(screen.getByRole("button", { name: /Insert a blank/ })).toBeDefined();
+
+    fireEvent.change(screen.getByPlaceholderText("Front (question)"), { target: { value: "勉強" } });
+    fireEvent.click(screen.getByRole("button", { name: /Translate/ }));
+
+    await waitFor(() => expect(screen.getAllByPlaceholderText("An accepted answer")).toHaveLength(3));
+    expect(
+      (screen.getAllByPlaceholderText("An accepted answer") as HTMLInputElement[]).map((input) => input.value)
+    ).toEqual(["study", "diligence", "working hard"]);
+
+    // A suggestion that isn't an answer yet is added as one more input.
+    fireEvent.click(await screen.findByRole("button", { name: "+ experience" }));
+    expect(screen.getAllByPlaceholderText("An accepted answer")).toHaveLength(4);
+    expect(screen.queryByRole("button", { name: "+ study" })).toBeNull();
+
+    fireEvent.click(screen.getByLabelText(/reverse card/));
+    fireEvent.submit(screen.getByRole("dialog"));
+
+    await waitFor(() =>
+      expect(createCard).toHaveBeenCalledWith(
+        expect.objectContaining({
+          front_text: "勉強",
+          // the verso is all the answers joined
+          back_text: "study / diligence / working hard / experience",
+          answer_mode: "typed",
+          accepted_answers: ["study", "diligence", "working hard", "experience"],
+          answer_language: "en",
+          create_reverse: true,
+          reverse_answer_language: "ja",
+        })
+      )
+    );
+  });
+
+  it("requires at least one answer for a typed card on a language deck", async () => {
+    vi.mocked(getCategory).mockResolvedValue(deckOf("language", { source_language: "fr", target_language: "en" }));
+    renderFab();
+    fireEvent.click(screen.getByLabelText("Create a card or lesson"));
+    await waitFor(() => expect((screen.getByLabelText("To…") as HTMLSelectElement).value).toBe("en"));
+    fireEvent.click(screen.getByRole("button", { name: "Type answer" }));
+
+    expect((screen.getByPlaceholderText("An accepted answer") as HTMLInputElement).required).toBe(true);
+  });
+
+  it("offers no language or translate controls on a general deck", async () => {
+    renderFab();
+    fireEvent.click(screen.getByLabelText("Create a card or lesson"));
+    await screen.findByPlaceholderText("Front (question)");
+    expect(screen.queryByLabelText("From…")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Translate/ })).toBeNull();
+  });
+
+  it("shows a friendly message when no translation is found", async () => {
+    vi.mocked(getCategory).mockResolvedValue(deckOf("language", { source_language: "fr", target_language: "en" }));
+    vi.mocked(translateText).mockRejectedValue(new Error("boom"));
+    renderFab();
+    fireEvent.click(screen.getByLabelText("Create a card or lesson"));
+    await waitFor(() => expect((screen.getByLabelText("To…") as HTMLSelectElement).value).toBe("en"));
+
+    fireEvent.change(screen.getByPlaceholderText("Front (question)"), { target: { value: "rapide" } });
+    fireEvent.click(screen.getByRole("button", { name: /Translate/ }));
+    expect(await screen.findByText(/No translation found/)).toBeDefined();
+  });
+
+  it("gives a scientific deck's lesson editor a LaTeX toolbar and shortcuts", async () => {
+    vi.mocked(getCategory).mockResolvedValue(deckOf("scientific"));
+    renderFab();
+    fireEvent.click(screen.getByLabelText("Create a card or lesson"));
+    fireEvent.click(screen.getByRole("button", { name: "Lesson" }));
+
+    // The toolbar appears once the deck type has loaded (it replaces the plain textarea).
+    const fraction = await screen.findByTitle("\\frac{▢}{}");
+    const body = screen.getByPlaceholderText("Lesson content (Markdown, optional)") as HTMLTextAreaElement;
+    fireEvent.click(fraction);
+    await waitFor(() => expect(body.value).toBe("$\\frac{}{}$"));
+
+    // Shortcut: "alpha " inside math becomes \alpha.
+    fireEvent.change(body, { target: { value: "Let $alpha ", selectionStart: 11 } });
+    await waitFor(() => expect(body.value).toBe("Let $\\alpha "));
+  });
+
+  it("creates a lesson at the top level and links to it in a new tab", async () => {
     vi.mocked(createNode).mockResolvedValue({ id: "node-9" } as never);
     renderFab();
     fireEvent.click(screen.getByLabelText("Create a card or lesson"));
@@ -112,8 +310,10 @@ describe("CreateContentFab", () => {
       })
     );
     await waitFor(() => expect(linkOcrScan).toHaveBeenCalledWith("scan-1", { lesson_node_id: "node-9" }));
-    await waitFor(() => expect(screen.getByTestId("path").textContent).toBe("/categories/cat-1/lessons/node-9"));
-    expect(screen.queryByRole("dialog")).toBeNull();
+    const link = await screen.findByRole("link", { name: /Open in a new tab/ });
+    expect(link.getAttribute("href")).toBe("/categories/cat-1/lessons/node-9");
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(screen.getByTestId("path").textContent).toBe("/categories/cat-1");
   });
 
   it("generates cards with the AI assistant into the chosen lesson and shows what it did", async () => {
@@ -178,7 +378,7 @@ describe("CreateContentFab", () => {
       );
     });
 
-    it("preselects the only deck, and lessons navigate into that deck", async () => {
+    it("preselects the only deck, and lessons link into that deck", async () => {
       vi.mocked(listCategories).mockResolvedValue([deck("deck-a", "Maths")]);
       vi.mocked(createNode).mockResolvedValue({ id: "node-9" } as never);
       renderFab(null);
@@ -189,7 +389,8 @@ describe("CreateContentFab", () => {
       fireEvent.change(screen.getByPlaceholderText("Lesson title (e.g. Limits)"), { target: { value: "L" } });
       fireEvent.submit(screen.getByRole("dialog"));
 
-      await waitFor(() => expect(screen.getByTestId("path").textContent).toBe("/categories/deck-a/lessons/node-9"));
+      const link = await screen.findByRole("link", { name: /Open in a new tab/ });
+      expect(link.getAttribute("href")).toBe("/categories/deck-a/lessons/node-9");
     });
 
     it("tells the user to create a deck first when they have none", async () => {

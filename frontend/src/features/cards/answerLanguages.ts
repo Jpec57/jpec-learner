@@ -1,3 +1,5 @@
+import { DECK_LANGUAGES } from "@/features/cards/deckLanguages";
+
 export interface AnswerLanguageOption {
   code: string;
   flag: string;
@@ -17,7 +19,12 @@ export const ANSWER_LANGUAGE_OPTIONS: AnswerLanguageOption[] = [
   { code: "ja-romaji", flag: "🇯🇵", label: "Rōmaji" },
 ];
 
-const BY_CODE = new Map(ANSWER_LANGUAGE_OPTIONS.map((option) => [option.code, option]));
+// A language deck stores its plain target language ("ja", "es") as the answer
+// language, so those display too -- script-specific entries win on a clash.
+const BY_CODE = new Map<string, AnswerLanguageOption>([
+  ...DECK_LANGUAGES.map((language): [string, AnswerLanguageOption] => [language.code, language]),
+  ...ANSWER_LANGUAGE_OPTIONS.map((option): [string, AnswerLanguageOption] => [option.code, option]),
+]);
 
 export function answerLanguageDisplay(code: string): AnswerLanguageOption {
   return BY_CODE.get(code) ?? { code, flag: "🏳️", label: code };

@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { me } from "@/features/auth/api";
-import { createCategory, listCategories, type Category } from "@/features/categories/api";
+import { createCategory, listCategories, type Category, type DeckType } from "@/features/categories/api";
+import { DeckTypeSelect } from "@/features/categories/DeckTypeSelect";
 import { DEFAULT_CATEGORY_ICON } from "@/features/categories/iconOptions";
 import { IconPicker } from "@/features/categories/IconPicker";
 import { ThemeColorPicker } from "@/features/categories/ThemeColorPicker";
@@ -39,6 +40,14 @@ function CategoryCard({ category, mine }: { category: Category; mine: boolean })
         </div>
       </div>
       <h3 className="mt-3 text-lg font-semibold text-slate-900">{category.name}</h3>
+      {category.deck_type !== "general" && (
+        <p className="mt-0.5 text-xs text-slate-400">
+          {category.deck_type === "language" ? "🌐" : "🧪"} {t(`categories:deckType.${category.deck_type}`)}
+          {category.deck_type === "language" && category.source_language && category.target_language
+            ? ` · ${category.source_language} → ${category.target_language}`
+            : ""}
+        </p>
+      )}
       {!mine && <p className="mt-1 text-xs text-slate-400">{t("categories:picker.sharedCategory")}</p>}
     </Link>
   );
@@ -51,16 +60,18 @@ function CreateCategoryForm() {
   const [name, setName] = useState("");
   const [icon, setIcon] = useState(DEFAULT_CATEGORY_ICON);
   const [themeColor, setThemeColor] = useState<string | null>(null);
+  const [deckType, setDeckType] = useState<DeckType>("general");
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setSubmitting(true);
     try {
-      await createCategory({ name, icon, theme_color: themeColor });
+      await createCategory({ name, icon, theme_color: themeColor, deck_type: deckType });
       setName("");
       setIcon(DEFAULT_CATEGORY_ICON);
       setThemeColor(null);
+      setDeckType("general");
       setOpen(false);
       await queryClient.invalidateQueries({ queryKey: ["categories", "mine"] });
     } finally {
@@ -94,6 +105,7 @@ function CreateCategoryForm() {
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
         />
         <IconPicker value={icon} onChange={setIcon} />
+        <DeckTypeSelect value={deckType} onChange={setDeckType} />
         <ThemeColorPicker value={themeColor} onChange={setThemeColor} />
       </div>
       <div className="flex gap-2">

@@ -5,6 +5,7 @@ import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { SettingsPage } from "@/features/auth/SettingsPage";
 import { DeckLayout } from "@/components/layout/DeckLayout";
+import { CardDetailPage } from "@/features/cards/CardDetailPage";
 import { CardSearchPage } from "@/features/cards/CardSearchPage";
 import { CategoryDashboardPage } from "@/features/categories/CategoryDashboardPage";
 import { CategoryPickerPage } from "@/features/categories/CategoryPickerPage";
@@ -35,6 +36,7 @@ export function App() {
             <Route path="groups/:nodeId" element={<GroupDetailPage />} />
             <Route path="review" element={<ReviewSessionPage />} />
             <Route path="progression" element={<ProgressionPage />} />
+            <Route path="cards/:cardId" element={<CardDetailPage />} />
             <Route path="search" element={<CardSearchPage />} />
           </Route>
         </Route>

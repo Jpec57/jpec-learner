@@ -33,5 +33,8 @@
   },
   "footer": {
     "tagline": "Spaced repetition, done simply."
+  },
+  "math": {
+    "hint": "Type inside $…$: alpha, pi, inf, sqrt, frac, sum, int, lim, ->, <=, >=, != then Space. Ctrl/⌘+M for inline math."
   }
 }

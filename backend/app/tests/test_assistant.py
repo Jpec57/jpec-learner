@@ -117,6 +117,14 @@ async def test_chat_runs_tool_calls_and_creates_a_category_and_card(client, monk
     assert [e["tool"] for e in body["tool_events"]] == ["create_category", "create_card"]
     assert all(e["ok"] for e in body["tool_events"])
 
+    # Created things come back as structured refs the UI can link to.
+    category_ref = body["tool_events"][0]["refs"][0]
+    card_ref = body["tool_events"][1]["refs"][0]
+    assert category_ref["kind"] == "category" and category_ref["label"] == "Spanish"
+    assert category_ref["id"] == category_ref["category_id"]
+    assert card_ref["kind"] == "card" and card_ref["label"] == "hola"
+    assert card_ref["category_id"] == category_ref["id"]
+
     categories_resp = await client.get("/api/v1/categories", headers=headers)
     names = [c["name"] for c in categories_resp.json()]
     assert "Spanish" in names

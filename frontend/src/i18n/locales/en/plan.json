@@ -1,0 +1,34 @@
+{
+  "title": "Goal & plan",
+  "noGoal": "No goal yet. Write the objective you want this deck to get you to.",
+  "askCoach": "Ask the coach",
+  "edit": "Edit",
+  "write": "Write plan",
+  "goalLabel": "Main goal",
+  "goalPlaceholder": "e.g. Master the first-year CPGE maths programme",
+  "planLabel": "Plan (markdown)",
+  "planHelp": "Each “## Chapter” is a sub-goal, “### Topic” a topic inside it, and “- [ ] item” a milestone. A sub-goal is tracked through the group or lesson with the same title.",
+  "planPlaceholder": "# My plan\n\n## Linear algebra\n- [ ] Vector spaces\n- [ ] Determinants\n\n### Matrices\n\n## Analysis\n- [ ] Limits and continuity",
+  "emptyPlan": "Write a plan with “## ” headings and each chapter becomes a sub-goal tracked from your reviews.",
+  "linkHint": "A sub-goal with no content yet is linked by title: create a group or lesson with exactly the same title (or ask the coach to).",
+  "weakestCards": "Cards giving you the most trouble",
+  "lapses_one": "{{count}} miss",
+  "lapses_other": "{{count}} misses",
+  "status": {
+    "weak": "Weak",
+    "no_content": "No content yet",
+    "not_started": "Not started",
+    "in_progress": "In progress",
+    "solid": "Solid"
+  },
+  "section": {
+    "items_one": "{{count}} item",
+    "items_other": "{{count}} items",
+    "due_one": "{{count}} due",
+    "due_other": "{{count}} due",
+    "lapse": "{{percent}}% missed recently",
+    "milestones": "{{done}}/{{total}} milestones",
+    "noContentHint": "No matching group or lesson yet",
+    "notStartedHint": "Nothing reviewed yet"
+  }
+}

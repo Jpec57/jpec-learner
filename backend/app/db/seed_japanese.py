@@ -70,7 +70,7 @@ async def seed(email: str) -> None:
                     "front_text": front,
                     "back_text": back,
                     "answer_mode": "typed",
-                    "accepted_answers": extra_answers,
+                    "accepted_answers": [back, *extra_answers] if extra_answers else [],
                     "answer_language": "ja-romaji",
                     "hint": hint,
                     "create_reverse": True,

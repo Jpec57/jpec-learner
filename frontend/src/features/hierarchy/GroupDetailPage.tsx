@@ -7,6 +7,7 @@ import { getCategory } from "@/features/categories/api";
 import { getNode } from "@/features/hierarchy/api";
 import { HierarchyTreeView } from "@/features/hierarchy/HierarchyTreeView";
 import { NodeBreadcrumb } from "@/features/hierarchy/NodeBreadcrumb";
+import { NodeReviewButton } from "@/features/hierarchy/NodeReviewButton";
 
 export function GroupDetailPage() {
   const { t } = useTranslation("hierarchy");
@@ -36,7 +37,10 @@ export function GroupDetailPage() {
         ancestors={node.ancestors}
         currentTitle={node.title}
       />
-      <h1 className="mt-2 text-2xl font-semibold text-slate-900">{node.title}</h1>
+      <div className="mt-2 flex items-start justify-between gap-3">
+        <h1 className="text-2xl font-semibold text-slate-900">{node.title}</h1>
+        <NodeReviewButton categoryId={categoryId} nodeId={nodeId} />
+      </div>
 
       <section className="mt-6">
         <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">{t("group.subgroups")}</h2>

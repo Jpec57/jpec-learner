@@ -61,5 +61,23 @@
   "upcoming": {
     "title": "Révisions à venir",
     "tooltip": "{{count}} à réviser à {{hour}}h"
-  }
+  },
+  "editLesson": {
+    "trigger": "Modifier cette leçon",
+    "openPage": "Ouvrir la page de la leçon",
+    "title": "Titre",
+    "content": "Contenu (Markdown)",
+    "preview": "Aperçu",
+    "edit": "Modifier",
+    "previewEmpty": "Rien à prévisualiser pour l'instant."
+  },
+  "excludeLesson": {
+    "trigger": "Ne plus réviser cette leçon",
+    "confirm": "Ne plus afficher cette leçon en révision ? Ses cartes restent proposées. Vous pouvez la réactiver depuis la page de la leçon."
+  },
+  "nodeFilter": {
+    "label": "Depuis",
+    "wholeDeck": "Tout le paquet"
+  },
+  "nothingDueInNode": "Rien à réviser pour l'instant dans « {{name}} »."
 }

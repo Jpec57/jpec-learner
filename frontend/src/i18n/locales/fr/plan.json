@@ -1,0 +1,34 @@
+{
+  "title": "Objectif et plan",
+  "noGoal": "Pas encore d'objectif. Écrivez ce que ce paquet doit vous permettre d'atteindre.",
+  "askCoach": "Demander au coach",
+  "edit": "Modifier",
+  "write": "Écrire un plan",
+  "goalLabel": "Objectif principal",
+  "goalPlaceholder": "ex. Maîtriser le programme de mathématiques de première année de CPGE",
+  "planLabel": "Plan (markdown)",
+  "planHelp": "Chaque « ## Chapitre » est un sous-objectif, « ### Thème » un thème à l'intérieur, et « - [ ] élément » une étape. Un sous-objectif est suivi via le groupe ou la leçon du même titre.",
+  "planPlaceholder": "# Mon plan\n\n## Algèbre linéaire\n- [ ] Espaces vectoriels\n- [ ] Déterminants\n\n### Matrices\n\n## Analyse\n- [ ] Limites et continuité",
+  "emptyPlan": "Écrivez un plan avec des titres « ## » : chaque chapitre devient un sous-objectif suivi d'après vos révisions.",
+  "linkHint": "Un sous-objectif sans contenu est relié par son titre : créez un groupe ou une leçon avec exactement le même titre (ou demandez au coach).",
+  "weakestCards": "Cartes qui vous posent le plus de problèmes",
+  "lapses_one": "{{count}} échec",
+  "lapses_other": "{{count}} échecs",
+  "status": {
+    "weak": "Faible",
+    "no_content": "Aucun contenu",
+    "not_started": "Pas commencé",
+    "in_progress": "En cours",
+    "solid": "Solide"
+  },
+  "section": {
+    "items_one": "{{count}} élément",
+    "items_other": "{{count}} éléments",
+    "due_one": "{{count}} à réviser",
+    "due_other": "{{count}} à réviser",
+    "lapse": "{{percent}} % d'échecs récents",
+    "milestones": "{{done}}/{{total}} étapes",
+    "noContentHint": "Aucun groupe ou leçon correspondant",
+    "notStartedHint": "Rien de révisé pour l'instant"
+  }
+}

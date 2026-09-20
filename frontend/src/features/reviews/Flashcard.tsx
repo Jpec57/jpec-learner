@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { CardText } from "@/components/ui/CardText";
+import { GapText } from "@/components/ui/GapText";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import type { DueItem } from "@/features/reviews/api";
 
@@ -24,7 +25,7 @@ export function Flashcard({ item, revealed }: { item: DueItem; revealed: boolean
       <p className="text-xs uppercase tracking-wide text-slate-400">
         {item.item_kind === "card" ? t("card") : t("lesson")}
       </p>
-      <CardText text={question ?? ""} size="prose-lg" className="mt-3 block" />
+      <GapText text={question ?? ""} size="prose-lg" className="mt-3 block" />
 
       {item.item_kind === "card" && item.hint && !revealed && (
         <div className="mt-4">

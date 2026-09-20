@@ -26,7 +26,8 @@
     "titlePlaceholder": "Lesson title (e.g. Limits)",
     "bodyPlaceholder": "Lesson content (Markdown, optional)",
     "submit": "Create lesson",
-    "excludeFromReview": "Exclude from review (container for cards)"
+    "excludeFromReview": "Exclude from review (container for cards)",
+    "created": "Lesson created. Add another, or close."
   },
   "ai": {
     "promptPlaceholder": "Describe the cards you want, e.g. 10 flashcards about Spanish irregular verbs",
@@ -34,5 +35,6 @@
     "generating": "Generating…",
     "notConfigured": "Add an API key in Settings to use the AI assistant.",
     "goToSettings": "Go to settings"
-  }
+  },
+  "openLink": "Open in a new tab"
 }

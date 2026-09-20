@@ -48,6 +48,11 @@ export async function listCards(input: {
   return data;
 }
 
+export async function getCard(id: string): Promise<Card> {
+  const { data } = await api.get<Card>(`/cards/${id}`);
+  return data;
+}
+
 export async function createCard(input: {
   category_id: string;
   lesson_node_id?: string | null;

@@ -66,10 +66,12 @@ export interface ReviewState {
 export async function getDue(
   categoryId: string,
   types: ReviewItemType[] = ALL_REVIEW_ITEM_TYPES,
-  limit = 100
+  limit = 100,
+  // Restrict to this group/lesson and everything beneath it.
+  nodeId?: string | null
 ): Promise<DueItem[]> {
   const { data } = await api.get<DueItem[]>("/reviews/due", {
-    params: { category_id: categoryId, types, limit },
+    params: { category_id: categoryId, types, limit, node_id: nodeId ?? undefined },
     // FastAPI reads repeated keys (types=card&types=lesson); axios's default
     // would send types[]=card, which it ignores and falls back to "all types".
     paramsSerializer: { indexes: null },

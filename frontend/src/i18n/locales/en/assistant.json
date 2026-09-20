@@ -29,6 +29,27 @@
     "notConfigured": "Add an API key in Settings to use the assistant.",
     "goToSettings": "Go to settings",
     "toolFailed": "Failed",
-    "toolSucceeded": "Done"
+    "toolSucceeded": "Done",
+    "refKinds": {
+      "category": "Open deck",
+      "group": "Open group",
+      "lesson": "Open lesson",
+      "card": "Open card"
+    }
+  },
+  "modes": {
+    "builder": "Builder",
+    "coach": "Coach"
+  },
+  "coach": {
+    "title": "AI coach",
+    "subtitle": "Your teacher for this deck: it follows your plan and pushes on your weak spots.",
+    "placeholder": "e.g. Why do I keep failing determinants?",
+    "emptyState": "I follow your goal and plan, look at how your reviews really go, and give you the exercises you need most.",
+    "prompts": {
+      "assess": "Assess where I stand",
+      "weakest": "Give me exercises on my weakest area"
+    },
+    "openButton": "Ask the coach"
   }
 }
