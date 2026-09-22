@@ -8,6 +8,10 @@ import { ProgressionTree } from "@/features/progression/ProgressionTree";
 import { StreakIndicator } from "@/features/progression/StreakIndicator";
 
 const LEVEL_CHART_HEIGHT_PX = 64;
+// Extra room above/below the bars for the count label and level label, so a
+// max-height bar plus its labels don't overflow the container upward into
+// the chart title.
+const LEVEL_CHART_LABEL_RESERVED_PX = 32;
 
 export function ProgressionPage() {
   const { t } = useTranslation("progression");
@@ -50,11 +54,11 @@ export function ProgressionPage() {
 
       {progression.total_items > 0 && (
         <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-3">
-                      <p className="text-xs uppercase tracking-wide text-slate-400">{t("byLevel")}</p>
-
-            </div>
-          <div className="mt-6 flex items-end gap-1" style={{ height: LEVEL_CHART_HEIGHT_PX }}>
+          <p className="text-xs uppercase tracking-wide text-slate-400">{t("byLevel")}</p>
+          <div
+            className="mt-8 flex items-end gap-1"
+            style={{ height: LEVEL_CHART_HEIGHT_PX + LEVEL_CHART_LABEL_RESERVED_PX }}
+          >
             {progression.level_distribution.map((entry) => {
               const height =
                 entry.count === 0 ? 2 : Math.max(6, (entry.count / maxLevelCount) * LEVEL_CHART_HEIGHT_PX);

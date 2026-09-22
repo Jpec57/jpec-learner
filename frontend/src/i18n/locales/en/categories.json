@@ -7,7 +7,9 @@
     "sharedCategory": "Shared category",
     "publicFromOthers": "Public categories from other users",
     "dueCount_one": "{{count}} due now",
-    "dueCount_other": "{{count}} due now"
+    "dueCount_other": "{{count}} due now",
+    "reviewCta_one": "Review {{count}} card →",
+    "reviewCta_other": "Review {{count}} cards →"
   },
   "dashboard": {
     "makePublic": "Make public",

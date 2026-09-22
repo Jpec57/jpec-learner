@@ -15,41 +15,48 @@ import { DueBanner } from "@/features/notifications/DueBanner";
 function CategoryCard({ category, mine }: { category: Category; mine: boolean }) {
   const { t } = useTranslation(["categories", "common"]);
   return (
-    <Link
-      to={`/categories/${category.id}`}
-      className="block rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
-    >
-      <div className="flex items-center justify-between">
-        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-light text-2xl">
-          {category.icon ?? "📚"}
-        </span>
-        <div className="flex items-center gap-2">
-          {category.due_count > 0 && (
-            <span
-              className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white"
-              title={t("categories:picker.dueCount", { count: category.due_count })}
-            >
-              {category.due_count}
-            </span>
-          )}
-          {category.is_public && (
-            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-              {t("common:status.public")}
-            </span>
-          )}
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md">
+      <Link to={`/categories/${category.id}`} className="block">
+        <div className="flex items-center justify-between">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-light text-2xl">
+            {category.icon ?? "📚"}
+          </span>
+          <div className="flex items-center gap-2">
+            {category.due_count > 0 && (
+              <span
+                className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white"
+                title={t("categories:picker.dueCount", { count: category.due_count })}
+              >
+                {category.due_count}
+              </span>
+            )}
+            {category.is_public && (
+              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                {t("common:status.public")}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-      <h3 className="mt-3 text-lg font-semibold text-slate-900">{category.name}</h3>
-      {category.deck_type !== "general" && (
-        <p className="mt-0.5 text-xs text-slate-400">
-          {category.deck_type === "language" ? "🌐" : "🧪"} {t(`categories:deckType.${category.deck_type}`)}
-          {category.deck_type === "language" && category.source_language && category.target_language
-            ? ` · ${category.source_language} → ${category.target_language}`
-            : ""}
-        </p>
+        <h3 className="mt-3 text-lg font-semibold text-slate-900">{category.name}</h3>
+        {category.deck_type !== "general" && (
+          <p className="mt-0.5 text-xs text-slate-400">
+            {category.deck_type === "language" ? "🌐" : "🧪"} {t(`categories:deckType.${category.deck_type}`)}
+            {category.deck_type === "language" && category.source_language && category.target_language
+              ? ` · ${category.source_language} → ${category.target_language}`
+              : ""}
+          </p>
+        )}
+        {!mine && <p className="mt-1 text-xs text-slate-400">{t("categories:picker.sharedCategory")}</p>}
+      </Link>
+      {category.due_count > 0 && (
+        <Link
+          to={`/categories/${category.id}/review`}
+          className="mt-3 block rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-white hover:bg-primary-dark"
+        >
+          {t("categories:picker.reviewCta", { count: category.due_count })}
+        </Link>
       )}
-      {!mine && <p className="mt-1 text-xs text-slate-400">{t("categories:picker.sharedCategory")}</p>}
-    </Link>
+    </div>
   );
 }
 

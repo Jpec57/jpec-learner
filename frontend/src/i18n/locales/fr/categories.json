@@ -7,7 +7,9 @@
     "sharedCategory": "Catégorie partagée",
     "publicFromOthers": "Catégories publiques d'autres utilisateurs",
     "dueCount_one": "{{count}} à réviser maintenant",
-    "dueCount_other": "{{count}} à réviser maintenant"
+    "dueCount_other": "{{count}} à réviser maintenant",
+    "reviewCta_one": "Réviser {{count}} carte →",
+    "reviewCta_other": "Réviser {{count}} cartes →"
   },
   "dashboard": {
     "makePublic": "Rendre public",

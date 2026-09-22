@@ -4,7 +4,8 @@
     "logOut": "Se déconnecter",
     "allCategories": "Toutes les catégories",
     "settings": "Paramètres",
-    "srsGuide": "Comment ça marche"
+    "srsGuide": "Comment ça marche",
+    "menu": "Menu"
   },
   "actions": {
     "save": "Enregistrer",

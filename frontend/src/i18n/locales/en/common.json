@@ -4,7 +4,8 @@
     "logOut": "Log out",
     "allCategories": "All categories",
     "settings": "Settings",
-    "srsGuide": "How it works"
+    "srsGuide": "How it works",
+    "menu": "Menu"
   },
   "actions": {
     "save": "Save",
