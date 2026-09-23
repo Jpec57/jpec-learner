@@ -1,0 +1,14 @@
+{
+  "settings": {
+    "title": "Notifications",
+    "description": "Get a notification and an app badge when reviews are ready.",
+    "enable": "Enable push notifications",
+    "enabled": "Notifications enabled",
+    "unsupported": "Push notifications aren't supported in this browser.",
+    "iosHint": "Add JpecLearner to your Home Screen (Share → Add to Home Screen), then reopen it from there to enable notifications.",
+    "errors": {
+      "enable-failed": "Couldn't enable notifications. Check your browser's notification permission and try again.",
+      "disable-failed": "Couldn't disable notifications. Try again."
+    }
+  }
+}

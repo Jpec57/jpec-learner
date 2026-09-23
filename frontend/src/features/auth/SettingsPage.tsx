@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 
 import { AssistantSettingsSection } from "@/features/assistant/AssistantSettingsSection";
 import { me, updateMe } from "@/features/auth/api";
+import { NotificationsSettingsSection } from "@/features/notifications/NotificationsSettingsSection";
 
 export function SettingsPage() {
   const { t, i18n } = useTranslation(["auth", "common"]);
@@ -72,6 +73,7 @@ export function SettingsPage() {
         {saved && <p className="text-xs text-emerald-600">{t("auth:settings.saved")}</p>}
       </div>
 
+      <NotificationsSettingsSection />
       <AssistantSettingsSection />
     </div>
   );

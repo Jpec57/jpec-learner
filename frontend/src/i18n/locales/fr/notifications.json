@@ -1,0 +1,14 @@
+{
+  "settings": {
+    "title": "Notifications",
+    "description": "Recevez une notification et un badge sur l'application quand des révisions sont prêtes.",
+    "enable": "Activer les notifications",
+    "enabled": "Notifications activées",
+    "unsupported": "Les notifications push ne sont pas prises en charge par ce navigateur.",
+    "iosHint": "Ajoutez JpecLearner à votre écran d'accueil (Partager → Sur l'écran d'accueil), puis rouvrez-la depuis là pour activer les notifications.",
+    "errors": {
+      "enable-failed": "Impossible d'activer les notifications. Vérifiez l'autorisation de notification de votre navigateur et réessayez.",
+      "disable-failed": "Impossible de désactiver les notifications. Réessayez."
+    }
+  }
+}

@@ -1,3 +1,6 @@
+from app.services import push as push_service
+
+
 async def _register_and_login(client, email: str) -> dict:
     await client.post(
         "/api/v1/auth/register", json={"email": email, "password": "password123", "display_name": email}
@@ -66,3 +69,52 @@ async def test_due_count_aggregates_across_categories(client):
 
     two_resp = await client.get("/api/v1/reviews/due-count", headers=headers)
     assert two_resp.json()["total_due"] == 2
+
+
+async def test_due_digest_sends_once_per_day(client, monkeypatch):
+    headers = await _register_and_login(client, "digest@example.com")
+    cat_id = (
+        await client.post("/api/v1/categories", json={"name": "Maths"}, headers=headers)
+    ).json()["id"]
+    await client.post(
+        "/api/v1/cards",
+        json={"category_id": cat_id, "front_text": "q1", "back_text": "a1"},
+        headers=headers,
+    )
+    await client.post(
+        "/api/v1/notifications/subscribe",
+        json={
+            "endpoint": "https://fcm.googleapis.com/fcm/send/digest-test",
+            "keys": {"p256dh": "fake-p256dh", "auth": "fake-auth"},
+        },
+        headers=headers,
+    )
+
+    sent = []
+    monkeypatch.setattr(push_service, "webpush", lambda **kwargs: sent.append(kwargs))
+
+    await push_service.run_due_digest(session_factory=client.session_factory)
+    assert len(sent) == 1
+
+    # A second run right away must not re-send -- the 24h cooldown suppresses it
+    # even though the card is still due.
+    await push_service.run_due_digest(session_factory=client.session_factory)
+    assert len(sent) == 1
+
+
+async def test_due_digest_skips_users_without_due_reviews(client, monkeypatch):
+    headers = await _register_and_login(client, "nodue@example.com")
+    await client.post(
+        "/api/v1/notifications/subscribe",
+        json={
+            "endpoint": "https://fcm.googleapis.com/fcm/send/nodue-test",
+            "keys": {"p256dh": "fake-p256dh", "auth": "fake-auth"},
+        },
+        headers=headers,
+    )
+
+    sent = []
+    monkeypatch.setattr(push_service, "webpush", lambda **kwargs: sent.append(kwargs))
+
+    await push_service.run_due_digest(session_factory=client.session_factory)
+    assert sent == []

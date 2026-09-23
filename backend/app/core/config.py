@@ -1,3 +1,4 @@
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -39,6 +40,15 @@ class Settings(BaseSettings):
     r2_access_key_id: str = ""
     r2_secret_access_key: str = ""
     r2_bucket_name: str = "jpeclearner-ocr-scans"
+
+    # Web Push VAPID keys (see scripts/generate_vapid_keys.py). Named with the
+    # JPECLEARNER_ prefix -- unlike every other setting here -- because that's
+    # what the keygen script and .env.example already print/expect.
+    vapid_public_key: str = Field("", validation_alias="JPECLEARNER_VAPID_PUBLIC_KEY")
+    vapid_private_key: str = Field("", validation_alias="JPECLEARNER_VAPID_PRIVATE_KEY")
+    vapid_subject: str = Field(
+        "mailto:jpec.bella@gmail.com", validation_alias="JPECLEARNER_VAPID_SUBJECT"
+    )
 
     @property
     def cors_origin_list(self) -> list[str]:

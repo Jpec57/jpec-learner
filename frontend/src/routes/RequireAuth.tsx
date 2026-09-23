@@ -4,6 +4,7 @@ import i18n from "i18next";
 import { Navigate, Outlet } from "react-router-dom";
 
 import { me } from "@/features/auth/api";
+import { useBadge } from "@/features/notifications/useBadge";
 import { useAuthStore } from "@/lib/authStore";
 
 function useSyncUserLocale() {
@@ -18,6 +19,7 @@ function useSyncUserLocale() {
 export function RequireAuth() {
   const accessToken = useAuthStore((state) => state.accessToken);
   useSyncUserLocale();
+  useBadge();
   if (!accessToken) {
     return <Navigate to="/login" replace />;
   }

@@ -9,3 +9,7 @@ class PushSubscriptionKeys(BaseModel):
 class SubscribeRequest(BaseModel):
     endpoint: str
     keys: PushSubscriptionKeys
+
+
+class VapidPublicKeyOut(BaseModel):
+    public_key: str

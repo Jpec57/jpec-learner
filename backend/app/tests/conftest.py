@@ -56,6 +56,9 @@ async def client():
     # create (see test_cards.py) rather than relying on directory isolation.
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        # Exposed so tests that need to call a service function directly
+        # (rather than through an HTTP route) can use the same test database.
+        ac.session_factory = session_factory
         yield ac
 
     app.dependency_overrides.clear()

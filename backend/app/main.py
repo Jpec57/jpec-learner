@@ -1,13 +1,29 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.router import api_router
 from app.core.config import settings
+from app.services.push import run_due_digest_job
 
-app = FastAPI(title="JpecLearner API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler = AsyncIOScheduler()
+    # Due timestamps are always rounded up to the hour (see srs.py), so a
+    # batch of reviews can only ever become due on the hour -- checking a few
+    # minutes after covers every user without needing finer granularity.
+    scheduler.add_job(run_due_digest_job, "cron", minute=5)
+    scheduler.start()
+    yield
+    scheduler.shutdown()
+
+
+app = FastAPI(title="JpecLearner API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

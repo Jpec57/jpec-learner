@@ -1,7 +1,7 @@
-// Push-notification handler scaffolding (Phase 7), folded into the generated
-// PWA service worker via workbox.importScripts (see vite.config.ts). Nothing
-// currently sends a push -- no scheduler/digest job exists on the backend --
-// so this only documents the intended shape and is safe to leave imported.
+// Push-notification handlers, folded into the generated PWA service worker
+// via workbox.importScripts (see vite.config.ts). The backend's hourly digest
+// job (app/services/push.py) sends a push once a day per user when they have
+// reviews due.
 
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
@@ -11,7 +11,17 @@ self.addEventListener("push", (event) => {
     icon: "/icon-192.png",
     data: { url: data.url || "/" },
   };
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    Promise.all([
+      self.registration.showNotification(title, options),
+      // navigator.setAppBadge isn't reliably callable from service-worker
+      // scope across browsers (notably Safari), so tell any open tab to
+      // refetch the due count and update the badge itself instead.
+      self.clients.matchAll({ type: "window" }).then((clients) => {
+        for (const client of clients) client.postMessage({ type: "PUSH_RECEIVED" });
+      }),
+    ])
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {

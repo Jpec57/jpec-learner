@@ -55,6 +55,18 @@ _BULK_DUE_COUNTS_SQL = text(
     """
 )
 
+_DUE_COUNTS_FOR_SUBSCRIBED_USERS_SQL = text(
+    """
+    SELECT rs.user_id AS user_id, COUNT(*) AS due_count
+    FROM review_states rs
+    LEFT JOIN cards c ON c.id = rs.card_id
+    WHERE rs.due_at <= now()
+      AND c.deleted_at IS NULL
+      AND rs.user_id IN (SELECT DISTINCT user_id FROM push_subscriptions)
+    GROUP BY rs.user_id
+    """
+)
+
 _LEVEL_DISTRIBUTION_SQL = text(
     """
     SELECT rs.current_level AS level, COUNT(*) AS count
@@ -139,3 +151,11 @@ async def bulk_due_counts(
         return {}
     rows = await db.execute(_BULK_DUE_COUNTS_SQL, {"user_id": user_id, "category_ids": category_ids})
     return {row.category_id: row.due_count for row in rows.all()}
+
+
+async def due_counts_for_subscribed_users(db: AsyncSession) -> dict[uuid.UUID, int]:
+    """Due-now count per user, restricted to users with at least one push
+    subscription -- for the notification digest job, so it never scans users
+    who couldn't receive a push anyway."""
+    rows = await db.execute(_DUE_COUNTS_FOR_SUBSCRIBED_USERS_SQL)
+    return {row.user_id: row.due_count for row in rows.all()}
