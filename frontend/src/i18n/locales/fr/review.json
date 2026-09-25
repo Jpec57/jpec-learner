@@ -37,7 +37,8 @@
   "editCard": {
     "trigger": "Modifier cette carte",
     "front": "Recto",
-    "back": "Verso"
+    "back": "Verso",
+    "hint": "Indice"
   },
   "deleteCard": {
     "trigger": "Supprimer cette carte",

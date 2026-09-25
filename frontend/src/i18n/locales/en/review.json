@@ -37,7 +37,8 @@
   "editCard": {
     "trigger": "Edit this card",
     "front": "Front",
-    "back": "Back"
+    "back": "Back",
+    "hint": "Hint"
   },
   "deleteCard": {
     "trigger": "Delete this card",

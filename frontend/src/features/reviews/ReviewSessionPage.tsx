@@ -149,6 +149,27 @@ export function ReviewSessionPage() {
     setEditing(false);
   }
 
+  const editCardControls =
+    currentItem?.card_id &&
+    (editing ? (
+      <EditCardForm
+        item={currentItem}
+        showAnswerLanguage={category.deck_type !== "language"}
+        onSaved={(patch) => {
+          updateCurrentItem(patch);
+          // Switching type swaps the card component: start it from its question.
+          if (patch.answer_mode !== currentItem.answer_mode) setRevealed(false);
+          setEditing(false);
+          queryClient.invalidateQueries({ queryKey: ["cards", categoryId] });
+        }}
+        onCancel={() => setEditing(false)}
+      />
+    ) : (
+      <button onClick={() => setEditing(true)} className="mt-2 text-xs text-slate-400 hover:text-primary">
+        {t("editCard.trigger")}
+      </button>
+    ));
+
   return (
     <div className="mx-auto max-w-xl">
       <Link to={`/categories/${categoryId}`} className="text-sm text-slate-500 hover:text-slate-800">
@@ -200,6 +221,7 @@ export function ReviewSessionPage() {
                 disabled={submitting}
                 onAddAcceptedAnswer={(answer) => addAcceptedAnswer.mutate(answer)}
               />
+              {editCardControls}
             </div>
           ) : (
             <>
@@ -207,24 +229,7 @@ export function ReviewSessionPage() {
                 <Flashcard item={currentItem} revealed={revealed} />
               </div>
 
-              {revealed && currentItem.card_id && !editing && (
-                <button onClick={() => setEditing(true)} className="mt-2 text-xs text-slate-400 hover:text-primary">
-                  {t("editCard.trigger")}
-                </button>
-              )}
-
-              {revealed && editing && currentItem.card_id && (
-                <EditCardForm
-                  cardId={currentItem.card_id}
-                  frontText={currentItem.front_text ?? ""}
-                  backText={currentItem.back_text ?? ""}
-                  onSaved={(patch) => {
-                    updateCurrentItem(patch);
-                    setEditing(false);
-                  }}
-                  onCancel={() => setEditing(false)}
-                />
-              )}
+              {revealed && editCardControls}
 
               {currentItem.item_kind === "lesson" && currentItem.lesson_node_id && (
                 <>
