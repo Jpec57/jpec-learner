@@ -7,7 +7,7 @@ import { me } from "@/features/auth/api";
 import { useAuthStore } from "@/lib/authStore";
 
 export function Header() {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation(["common", "chess"]);
   const clearTokens = useAuthStore((state) => state.clearTokens);
   const { data: user } = useQuery({ queryKey: ["me"], queryFn: me });
   const [menuOpen, setMenuOpen] = useState(false);
@@ -24,6 +24,9 @@ export function Header() {
           {user && (
             <span className="hidden text-slate-500 sm:inline">{user.display_name ?? user.email}</span>
           )}
+          <Link to="/chess" className="text-slate-500 hover:text-primary">
+            {t("chess:nav")}
+          </Link>
           <Link to="/srs-guide" className="text-slate-500 hover:text-primary">
             {t("nav.srsGuide")}
           </Link>
@@ -59,6 +62,13 @@ export function Header() {
           {user && (
             <span className="px-1 py-1 text-slate-500">{user.display_name ?? user.email}</span>
           )}
+          <Link
+            to="/chess"
+            onClick={() => setMenuOpen(false)}
+            className="rounded-md px-1 py-2 text-slate-600 hover:bg-slate-100 hover:text-primary"
+          >
+            {t("chess:nav")}
+          </Link>
           <Link
             to="/srs-guide"
             onClick={() => setMenuOpen(false)}

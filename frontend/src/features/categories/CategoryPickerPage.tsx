@@ -166,6 +166,19 @@ export function CategoryPickerPage() {
         <CreateCategoryForm />
       </div>
 
+      <Link
+        to="/chess"
+        className="mt-6 flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
+      >
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-light text-2xl" aria-hidden>
+          ♞
+        </span>
+        <span>
+          <span className="block font-semibold text-slate-900">{t("chess:home.title")}</span>
+          <span className="block text-sm text-slate-500">{t("chess:home.subtitle")}</span>
+        </span>
+      </Link>
+
       {publicCategories && publicCategories.length > 0 && (
         <>
           <h2 className="mt-10 text-sm font-medium uppercase tracking-wide text-slate-400">

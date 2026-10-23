@@ -32,7 +32,19 @@ export default defineConfig({
         // service worker (see public/push-handlers.js).
         importScripts: ["push-handlers.js"],
         navigateFallbackDenylist: [/^\/api\//, /^\/media\//],
+        // The chess engine (~7MB) is too big to precache for every user; it is
+        // cached the first time a chess board is opened instead (see below).
+        globIgnores: ["**/stockfish-*.wasm"],
         runtimeCaching: [
+          {
+            urlPattern: ({ url }) => /\/assets\/stockfish-.*\.wasm$/.test(url.pathname),
+            handler: "CacheFirst",
+            options: {
+              cacheName: "chess-engine",
+              expiration: { maxEntries: 2 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           // /api/ is intentionally NOT cached: every response is per-user and
           // authenticated via the Authorization header, but Workbox's cache key
           // is the request URL alone. Caching it risks serving one account's

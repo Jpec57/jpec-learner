@@ -1,0 +1,591 @@
+// Opening courses. Each line is a fixed sequence of SAN moves: the trainee
+// plays their side, the trainer plays the other, and every move carries a short
+// explanation (why the trainee's move is right, or what the opponent's move wants).
+// Legality of every line is checked in openings.test.ts.
+
+export type Lang = "en" | "fr";
+export type L10n = Record<Lang, string>;
+
+// [san, english note, french note]
+type RawMove = [string, string, string];
+
+export interface CourseMove {
+  san: string;
+  note: L10n;
+}
+
+export interface CourseLine {
+  id: string;
+  name: L10n;
+  moves: CourseMove[];
+}
+
+export interface OpeningCourse {
+  id: string;
+  side: "w" | "b";
+  eco: string;
+  name: L10n;
+  summary: L10n;
+  ideas: L10n[];
+  lines: CourseLine[];
+}
+
+function line(id: string, en: string, fr: string, moves: RawMove[]): CourseLine {
+  return { id, name: { en, fr }, moves: moves.map(([san, noteEn, noteFr]) => ({ san, note: { en: noteEn, fr: noteFr } })) };
+}
+
+const t = (en: string, fr: string): L10n => ({ en, fr });
+
+export const OPENING_COURSES: OpeningCourse[] = [
+  // ───────────────────────────── WHITE ─────────────────────────────
+  {
+    id: "italian",
+    side: "w",
+    eco: "C50–C54",
+    name: t("Italian Game", "Partie italienne"),
+    summary: t(
+      "Develop fast, aim the bishop at f7 and build a slow, solid centre with c3 and d3.",
+      "Développement rapide, fou pointé sur f7 et centre solide construit lentement avec c3 et d3."
+    ),
+    ideas: [
+      t("The c4 bishop eyes f7, Black's weakest square.", "Le fou c4 vise f7, la case la plus faible des Noirs."),
+      t("c3 + d3 keeps the centre solid and prepares d4 later.", "c3 + d3 garde un centre solide et prépare d4 plus tard."),
+      t("Bishop retreats to b3/c2 to stay on the a2–g8 diagonal.", "Le fou se replie en b3/c2 pour rester sur la diagonale a2–g8."),
+    ],
+    lines: [
+      line("piano", "Giuoco Pianissimo (3…Bc5)", "Giuoco Pianissimo (3…Fc5)", [
+        ["e4", "Grab the centre and open lines for the queen and the f1 bishop.", "On prend le centre et on ouvre les lignes de la dame et du fou f1."],
+        ["e5", "Black mirrors and claims the centre too.", "Les Noirs répondent symétriquement et prennent aussi le centre."],
+        ["Nf3", "Develop with tempo: the knight attacks e5.", "Développement avec gain de temps : le cavalier attaque e5."],
+        ["Nc6", "Black defends e5 while developing.", "Les Noirs défendent e5 tout en se développant."],
+        ["Bc4", "The Italian bishop: it targets f7, defended only by the king.", "Le fou italien : il vise f7, défendu uniquement par le roi."],
+        ["Bc5", "Black copies the idea and eyes f2.", "Les Noirs copient l'idée et visent f2."],
+        ["c3", "Prepares d4 and gives the bishop a retreat on c2/b3.", "Prépare d4 et offre une retraite au fou en c2/b3."],
+        ["Nf6", "Black develops and attacks e4.", "Les Noirs se développent et attaquent e4."],
+        ["d3", "Calm and solid: defends e4 and opens the c1 bishop.", "Calme et solide : défend e4 et libère le fou c1."],
+        ["d6", "Black supports e5 and frees the c8 bishop.", "Les Noirs soutiennent e5 et libèrent le fou c8."],
+        ["O-O", "King to safety before the middlegame starts.", "Le roi à l'abri avant le milieu de partie."],
+        ["O-O", "Black castles too.", "Les Noirs roquent aussi."],
+        ["Re1", "The rook supports e4 and a future d4 break.", "La tour soutient e4 et une future poussée d4."],
+        ["a6", "Prepares …Ba7 so the bishop can't be hit by d4/b4.", "Prépare …Fa7 pour que le fou ne soit pas chassé par d4/b4."],
+        ["Bb3", "Pre-empts …Na5 or …d5 hitting the bishop; it stays on the diagonal.", "Anticipe …Ca5 ou …d5 ; le fou reste sur sa diagonale."],
+        ["Ba7", "Black keeps the bishop safe from d4.", "Les Noirs mettent le fou à l'abri de d4."],
+        ["h3", "Stops …Bg4 pinning the knight. Next: Nbd2–f1–g3 manoeuvre.", "Empêche …Fg4 qui clouerait le cavalier. Ensuite : manœuvre Cbd2–f1–g3."],
+      ]),
+      line("twoknights", "Two Knights with 4.d3", "Deux cavaliers avec 4.d3", [
+        ["e4", "Grab the centre.", "On prend le centre."],
+        ["e5", "Symmetrical reply.", "Réponse symétrique."],
+        ["Nf3", "Attack e5 while developing.", "On attaque e5 en se développant."],
+        ["Nc6", "Defends e5.", "Défend e5."],
+        ["Bc4", "Aim at f7.", "On vise f7."],
+        ["Nf6", "The Two Knights: Black counter-attacks e4 instead of copying.", "Les deux cavaliers : les Noirs contre-attaquent e4 au lieu de copier."],
+        ["d3", "Simplest: protect e4 and keep a healthy structure (Ng5 lines are sharper).", "Le plus simple : protéger e4 et garder une structure saine (Cg5 est plus tranchant)."],
+        ["Be7", "A quiet setup for Black.", "Une configuration calme pour les Noirs."],
+        ["O-O", "Castle early.", "On roque tôt."],
+        ["O-O", "Black castles.", "Les Noirs roquent."],
+        ["Re1", "Rook behind the e-pawn.", "La tour derrière le pion e."],
+        ["d6", "Black supports e5.", "Les Noirs soutiennent e5."],
+        ["c3", "Prepares d4 and a retreat square for the bishop.", "Prépare d4 et une case de retraite pour le fou."],
+        ["Na5", "Black wants to trade off our strong bishop.", "Les Noirs veulent échanger notre fou fort."],
+        ["Bb5", "Avoid the trade: the bishop sidesteps and stays active.", "On évite l'échange : le fou s'écarte tout en restant actif."],
+        ["a6", "Black asks the bishop where it is going.", "Les Noirs questionnent le fou."],
+        ["Ba4", "Keep the bishop on the a4–e8 diagonal for now.", "On garde le fou sur la diagonale a4–e8 pour l'instant."],
+        ["b5", "Black gains queenside space.", "Les Noirs gagnent de l'espace à l'aile dame."],
+        ["Bc2", "The bishop lands on c2, protected by c3's support, aiming at the kingside.", "Le fou arrive en c2 et vise l'aile roi."],
+      ]),
+    ],
+  },
+  {
+    id: "ruy-lopez",
+    side: "w",
+    eco: "C60–C99",
+    name: t("Ruy Lopez (Spanish)", "Partie espagnole"),
+    summary: t(
+      "Pressure the knight that defends e5 and build a strong centre with c3 and d4.",
+      "Mettre la pression sur le cavalier qui défend e5 et bâtir un centre fort avec c3 et d4."
+    ),
+    ideas: [
+      t("Bb5 attacks the defender of e5, creating long-term pressure.", "Fb5 attaque le défenseur de e5 et crée une pression durable."),
+      t("The bishop retreats to a4/b3 and keeps its diagonal.", "Le fou se replie en a4/b3 et garde sa diagonale."),
+      t("c3 and d4 build the ideal centre; h3 stops …Bg4.", "c3 et d4 forment le centre idéal ; h3 empêche …Fg4."),
+    ],
+    lines: [
+      line("closed", "Closed Ruy Lopez", "Espagnole fermée", [
+        ["e4", "Take the centre.", "On prend le centre."],
+        ["e5", "Symmetrical reply.", "Réponse symétrique."],
+        ["Nf3", "Attack e5.", "On attaque e5."],
+        ["Nc6", "Defend e5.", "Défense de e5."],
+        ["Bb5", "The Spanish: attack the knight that defends e5.", "L'espagnole : on attaque le cavalier qui défend e5."],
+        ["a6", "The Morphy Defence: Black asks the bishop to decide.", "La défense Morphy : les Noirs demandent au fou de se décider."],
+        ["Ba4", "Keep the pin-like pressure; Bxc6 would release it too early.", "On garde la pression ; Fxc6 la relâcherait trop tôt."],
+        ["Nf6", "Black develops and hits e4.", "Les Noirs se développent et attaquent e4."],
+        ["O-O", "Castle: e4 is indirectly protected (…Nxe4 runs into Re1).", "On roque : e4 est protégé indirectement (…Cxe4 se heurte à Te1)."],
+        ["Be7", "Solid development, preparing to castle.", "Développement solide, en préparant le roque."],
+        ["Re1", "Now e4 is protected directly and Bxc6 + Nxe5 is a threat.", "e4 est maintenant protégé et Fxc6 + Cxe5 devient une menace."],
+        ["b5", "Black chases the bishop and gains space.", "Les Noirs chassent le fou et gagnent de l'espace."],
+        ["Bb3", "The bishop finds its best diagonal, aiming at f7.", "Le fou trouve sa meilleure diagonale, vers f7."],
+        ["d6", "Black supports e5 for good.", "Les Noirs soutiennent e5 durablement."],
+        ["c3", "Prepares d4 and keeps the bishop a retreat on c2.", "Prépare d4 et garde la retraite c2 pour le fou."],
+        ["O-O", "Black castles.", "Les Noirs roquent."],
+        ["h3", "Key prophylaxis: no …Bg4 pin before we play d4.", "Prophylaxie clé : pas de clouage …Fg4 avant notre d4."],
+      ]),
+      line("berlin", "Berlin Defence (4.O-O Nxe4)", "Défense berlinoise (4.O-O Cxe4)", [
+        ["e4", "Take the centre.", "On prend le centre."],
+        ["e5", "Symmetrical reply.", "Réponse symétrique."],
+        ["Nf3", "Attack e5.", "On attaque e5."],
+        ["Nc6", "Defend e5.", "Défense de e5."],
+        ["Bb5", "Pressure the defender of e5.", "Pression sur le défenseur de e5."],
+        ["Nf6", "The Berlin: Black counter-attacks e4 right away.", "La berlinoise : les Noirs contre-attaquent tout de suite e4."],
+        ["O-O", "Castle and let Black take e4: we win it back.", "On roque et on laisse prendre e4 : on le récupère."],
+        ["Nxe4", "Black grabs the pawn.", "Les Noirs prennent le pion."],
+        ["Re1", "Pin the knight against the e-file and threaten to win it back.", "On met la tour sur la colonne e pour récupérer le pion."],
+        ["Nd6", "The knight retreats and attacks our bishop.", "Le cavalier recule et attaque notre fou."],
+        ["Nxe5", "Recover the pawn; e5 is no longer defended by the knight.", "On récupère le pion ; e5 n'est plus défendu."],
+        ["Be7", "Black blocks the e-file and prepares to castle.", "Les Noirs bloquent la colonne e et préparent le roque."],
+        ["Bf1", "Retreat the bishop to safety; it guards our king too.", "Le fou se met à l'abri et protège aussi notre roi."],
+        ["Nxe5", "Black trades knights.", "Les Noirs échangent les cavaliers."],
+        ["Rxe5", "Recapture with the rook, which is active on the e-file.", "On reprend avec la tour, active sur la colonne e."],
+        ["O-O", "Black castles.", "Les Noirs roquent."],
+        ["d4", "Grab the centre and open the c1 bishop. White has a small, safe edge.", "On prend le centre et on libère le fou c1. Petit avantage sûr pour les Blancs."],
+      ]),
+    ],
+  },
+  {
+    id: "queens-gambit",
+    side: "w",
+    eco: "D06–D69",
+    name: t("Queen's Gambit", "Gambit dame"),
+    summary: t(
+      "Offer the c-pawn to deflect Black's d5 pawn and dominate the centre.",
+      "Offrir le pion c pour détourner le pion d5 noir et dominer le centre."
+    ),
+    ideas: [
+      t("c4 attacks d5: it's not a real gambit, the pawn is easily won back.", "c4 attaque d5 : ce n'est pas un vrai gambit, le pion se récupère facilement."),
+      t("Bg5 pins the f6 knight, which defends d5.", "Fg5 cloue le cavalier f6, qui défend d5."),
+      t("Rc1 and pressure on the c-file are typical plans.", "Tc1 et la pression sur la colonne c sont des plans typiques."),
+    ],
+    lines: [
+      line("qgd", "Queen's Gambit Declined", "Gambit dame refusé", [
+        ["d4", "Take the centre; d4 is protected by the queen.", "On prend le centre ; d4 est protégé par la dame."],
+        ["d5", "Black stakes a claim in the centre.", "Les Noirs revendiquent le centre."],
+        ["c4", "The gambit: challenge d5 from the side.", "Le gambit : on attaque d5 par le côté."],
+        ["e6", "Declined: Black solidly supports d5.", "Refusé : les Noirs soutiennent solidement d5."],
+        ["Nc3", "Add more pressure on d5.", "On ajoute de la pression sur d5."],
+        ["Nf6", "Black defends d5 again.", "Les Noirs défendent d5 à nouveau."],
+        ["Bg5", "Pin the knight that defends d5.", "On cloue le cavalier qui défend d5."],
+        ["Be7", "Black breaks the pin.", "Les Noirs défont le clouage."],
+        ["e3", "Solid: opens the f1 bishop.", "Solide : libère le fou f1."],
+        ["O-O", "Black castles.", "Les Noirs roquent."],
+        ["Nf3", "Develop the last minor piece toward the centre.", "On développe la dernière pièce mineure vers le centre."],
+        ["Nbd7", "Black supports the f6 knight and prepares …c5 or …e5.", "Les Noirs soutiennent le cavalier f6 et préparent …c5 ou …e5."],
+        ["Rc1", "The rook goes to the soon-to-open c-file.", "La tour va sur la colonne c qui va s'ouvrir."],
+        ["c6", "Black reinforces d5.", "Les Noirs renforcent d5."],
+        ["Bd3", "Develop; we accept losing a tempo after …dxc4.", "On se développe ; on accepte de perdre un temps après …dxc4."],
+        ["dxc4", "Black gives up the centre to free their position.", "Les Noirs cèdent le centre pour se libérer."],
+        ["Bxc4", "Recapture. White has more space and easy development.", "On reprend. Les Blancs ont plus d'espace et un développement facile."],
+      ]),
+      line("qga", "Queen's Gambit Accepted", "Gambit dame accepté", [
+        ["d4", "Take the centre.", "On prend le centre."],
+        ["d5", "Black claims the centre.", "Les Noirs revendiquent le centre."],
+        ["c4", "Challenge d5.", "On attaque d5."],
+        ["dxc4", "Accepted: Black takes but can't keep the pawn.", "Accepté : les Noirs prennent mais ne peuvent pas garder le pion."],
+        ["Nf3", "Stop …e5 and develop. We'll win c4 back with the bishop.", "On empêche …e5 et on se développe. On reprendra c4 avec le fou."],
+        ["Nf6", "Black develops.", "Les Noirs se développent."],
+        ["e3", "Open the f1 bishop to recapture on c4.", "On libère le fou f1 pour reprendre en c4."],
+        ["e6", "Black opens their own bishop.", "Les Noirs libèrent leur fou."],
+        ["Bxc4", "Pawn regained, with a beautiful centre.", "Pion récupéré, avec un beau centre."],
+        ["c5", "Black hits our centre immediately.", "Les Noirs attaquent notre centre tout de suite."],
+        ["O-O", "King to safety first.", "Le roi à l'abri d'abord."],
+        ["a6", "Black prepares …b5 to gain space with tempo.", "Les Noirs préparent …b5 pour gagner de l'espace avec tempo."],
+        ["dxc5", "Simplify: after the queen trade White is slightly more active.", "On simplifie : après l'échange des dames les Blancs sont un peu plus actifs."],
+        ["Qxd1", "Black trades queens.", "Les Noirs échangent les dames."],
+        ["Rxd1", "Recapture; the rook takes the open d-file.", "On reprend ; la tour prend la colonne d ouverte."],
+        ["Bxc5", "Black regains the pawn.", "Les Noirs récupèrent le pion."],
+        ["Be2", "Tuck the bishop away from …b5 and prepare Nbd2–b3. A comfortable endgame.", "On met le fou à l'abri de …b5 et on prépare Cbd2–b3. Une finale confortable."],
+      ]),
+    ],
+  },
+  {
+    id: "london",
+    side: "w",
+    eco: "D02 / A46",
+    name: t("London System", "Système de Londres"),
+    summary: t(
+      "A reliable setup: d4, Bf4, e3, Nf3, c3, Bd3, Nbd2 — the same plan against almost anything.",
+      "Un système fiable : d4, Ff4, e3, Cf3, c3, Fd3, Cbd2 — le même plan contre presque tout."
+    ),
+    ideas: [
+      t("Bf4 goes out BEFORE e3 so it isn't locked in.", "Ff4 sort AVANT e3 pour ne pas être enfermé."),
+      t("c3 + e3 build a pyramid around d4.", "c3 + e3 construisent une pyramide autour de d4."),
+      t("Keep the bishop: retreat to g3 when …Bd6 challenges it.", "On garde le fou : retraite en g3 quand …Fd6 le défie."),
+    ],
+    lines: [
+      line("vs-d5", "Against …d5 and …c5", "Contre …d5 et …c5", [
+        ["d4", "Take the centre.", "On prend le centre."],
+        ["d5", "Black claims the centre.", "Les Noirs revendiquent le centre."],
+        ["Bf4", "The London bishop, out before e3 shuts it in.", "Le fou de Londres, sorti avant que e3 ne l'enferme."],
+        ["Nf6", "Black develops.", "Les Noirs se développent."],
+        ["e3", "Support d4 and open the f1 bishop.", "On soutient d4 et on libère le fou f1."],
+        ["e6", "Black opens their bishop.", "Les Noirs libèrent leur fou."],
+        ["Nf3", "Develop and control e5.", "On se développe et on contrôle e5."],
+        ["c5", "Black attacks d4 straight away.", "Les Noirs attaquent d4 tout de suite."],
+        ["c3", "The pyramid: d4 stays solid.", "La pyramide : d4 reste solide."],
+        ["Nc6", "More pressure on d4.", "Plus de pression sur d4."],
+        ["Nbd2", "The knight supports e4 and doesn't block the c-pawn.", "Le cavalier soutient e4 et ne bloque pas le pion c."],
+        ["Bd6", "Black offers to trade our good bishop.", "Les Noirs proposent d'échanger notre bon fou."],
+        ["Bg3", "Keep the bishop: if …Bxg3 hxg3, the h-file opens for our rook.", "On garde le fou : si …Fxg3 hxg3, la colonne h s'ouvre pour notre tour."],
+        ["O-O", "Black castles.", "Les Noirs roquent."],
+        ["Bd3", "Aim at h7. Next we castle and may push e4 or play Ne5.", "On vise h7. Ensuite roque, puis e4 ou Ce5."],
+      ]),
+      line("vs-kid", "Against a King's Indian setup", "Contre un dispositif est-indien", [
+        ["d4", "Take the centre.", "On prend le centre."],
+        ["Nf6", "Flexible: Black doesn't commit the d-pawn.", "Flexible : les Noirs n'engagent pas leur pion d."],
+        ["Bf4", "Same plan: bishop out first.", "Même plan : le fou sort en premier."],
+        ["g6", "Black goes for a fianchetto.", "Les Noirs préparent un fianchetto."],
+        ["e3", "Support d4.", "On soutient d4."],
+        ["Bg7", "The bishop eyes d4 along the long diagonal.", "Le fou vise d4 sur la grande diagonale."],
+        ["Nf3", "Develop and blunt the g7 bishop's view of e5.", "On se développe et on limite le fou g7."],
+        ["O-O", "Black castles.", "Les Noirs roquent."],
+        ["Be2", "A modest square: the bishop won't be hit by …e5–e4.", "Une case modeste : le fou ne sera pas attaqué par …e5–e4."],
+        ["d6", "Black prepares …e5.", "Les Noirs préparent …e5."],
+        ["h3", "Give the f4 bishop a retreat on h2 and stop …Bg4/…Nh5 tricks.", "On offre la retraite h2 au fou f4 et on empêche …Fg4/…Ch5."],
+        ["c5", "Black hits d4 from the side.", "Les Noirs attaquent d4 par le côté."],
+        ["c3", "Hold d4 with the pyramid.", "On tient d4 avec la pyramide."],
+        ["Nc6", "More pressure on d4.", "Plus de pression sur d4."],
+        ["O-O", "King to safety. Solid position, plan Nbd2, a4 or Bh2.", "Roi à l'abri. Position solide, plans Cbd2, a4 ou Fh2."],
+      ]),
+    ],
+  },
+  {
+    id: "scotch",
+    side: "w",
+    eco: "C44–C45",
+    name: t("Scotch Game", "Partie écossaise"),
+    summary: t(
+      "Open the centre immediately with 3.d4 and play for active pieces.",
+      "Ouvrir le centre immédiatement avec 3.d4 et jouer pour l'activité des pièces."
+    ),
+    ideas: [
+      t("3.d4 trades the e5 pawn and frees our game.", "3.d4 échange le pion e5 et libère notre jeu."),
+      t("The d4 knight is centralised; trade it on c6 to damage Black's pawns.", "Le cavalier d4 est centralisé ; l'échanger en c6 abîme les pions noirs."),
+      t("e5 pushes kick the f6 knight.", "La poussée e5 chasse le cavalier f6."),
+    ],
+    lines: [
+      line("mieses", "Mieses Variation (4…Nf6)", "Variante Mieses (4…Cf6)", [
+        ["e4", "Take the centre.", "On prend le centre."],
+        ["e5", "Symmetrical reply.", "Réponse symétrique."],
+        ["Nf3", "Attack e5.", "On attaque e5."],
+        ["Nc6", "Defend e5.", "Défense de e5."],
+        ["d4", "The Scotch: open the centre right now.", "L'écossaise : on ouvre le centre tout de suite."],
+        ["exd4", "Black must take, else d5 or dxe5 wins space or a pawn.", "Les Noirs doivent prendre, sinon d5 ou dxe5 gagne de l'espace ou un pion."],
+        ["Nxd4", "Recapture with a centralised knight.", "On reprend avec un cavalier centralisé."],
+        ["Nf6", "Black develops and attacks e4.", "Les Noirs se développent et attaquent e4."],
+        ["Nxc6", "Trade to give Black doubled, isolated c-pawns.", "On échange pour donner aux Noirs des pions c doublés."],
+        ["bxc6", "Black recaptures toward the centre.", "Les Noirs reprennent vers le centre."],
+        ["e5", "Kick the f6 knight with tempo.", "On chasse le cavalier f6 avec gain de temps."],
+        ["Qe7", "Black pins the e5 pawn against our king.", "Les Noirs clouent le pion e5 contre notre roi."],
+        ["Qe2", "Break the pin and defend e5.", "On défait le clouage et on défend e5."],
+        ["Nd5", "The knight finds a central post.", "Le cavalier trouve une case centrale."],
+        ["c4", "Kick the knight away; we gain space on the queenside.", "On chasse le cavalier ; on gagne de l'espace à l'aile dame."],
+        ["Ba6", "Black pins the c4 pawn against our queen.", "Les Noirs clouent le pion c4 contre notre dame."],
+        ["b3", "Defend c4 calmly. White keeps a spatial edge.", "On défend c4 calmement. Les Blancs gardent un avantage d'espace."],
+      ]),
+      line("classical", "Classical (4…Bc5)", "Classique (4…Fc5)", [
+        ["e4", "Take the centre.", "On prend le centre."],
+        ["e5", "Symmetrical reply.", "Réponse symétrique."],
+        ["Nf3", "Attack e5.", "On attaque e5."],
+        ["Nc6", "Defend e5.", "Défense de e5."],
+        ["d4", "Open the centre.", "On ouvre le centre."],
+        ["exd4", "Black takes.", "Les Noirs prennent."],
+        ["Nxd4", "Centralise the knight.", "On centralise le cavalier."],
+        ["Bc5", "Black attacks our knight on d4.", "Les Noirs attaquent notre cavalier d4."],
+        ["Nb3", "Retreat with tempo on the c5 bishop.", "On recule avec gain de temps sur le fou c5."],
+        ["Bb6", "The bishop keeps eyeing f2.", "Le fou continue de viser f2."],
+        ["a4", "Threaten a5 to trap or chase the bishop.", "On menace a5 pour chasser ou piéger le fou."],
+        ["a6", "Black gives the bishop a retreat on a7.", "Les Noirs offrent la retraite a7 au fou."],
+        ["Nc3", "Develop toward d5.", "On se développe vers d5."],
+        ["d6", "Black supports the centre.", "Les Noirs soutiennent le centre."],
+        ["Nd5", "Jump into d5, eyeing the b6 bishop.", "On saute en d5 en visant le fou b6."],
+        ["Ba7", "Black keeps the bishop.", "Les Noirs gardent leur fou."],
+        ["Be2", "Develop and prepare to castle. White has a pleasant game.", "On se développe et on prépare le roque. Jeu agréable pour les Blancs."],
+      ]),
+    ],
+  },
+
+  // ───────────────────────────── BLACK ─────────────────────────────
+  {
+    id: "sicilian",
+    side: "b",
+    eco: "B20–B99",
+    name: t("Sicilian Defence", "Défense sicilienne"),
+    summary: t(
+      "Fight for d4 from the side with …c5 and play for an unbalanced, winning game.",
+      "Lutter pour d4 par le côté avec …c5 et jouer une partie déséquilibrée, pour gagner."
+    ),
+    ideas: [
+      t("…c5 trades a wing pawn for White's centre pawn.", "…c5 échange un pion de l'aile contre un pion central blanc."),
+      t("The half-open c-file is Black's main highway.", "La colonne c semi-ouverte est l'autoroute des Noirs."),
+      t("…a6 (Najdorf) controls b5 and prepares …e5 or …b5.", "…a6 (Najdorf) contrôle b5 et prépare …e5 ou …b5."),
+    ],
+    lines: [
+      line("najdorf", "Najdorf, 6.Be2", "Najdorf, 6.Fe2", [
+        ["e4", "White takes the centre.", "Les Blancs prennent le centre."],
+        ["c5", "The Sicilian: control d4 from the side.", "La sicilienne : on contrôle d4 par le côté."],
+        ["Nf3", "White prepares d4.", "Les Blancs préparent d4."],
+        ["d6", "Keeps Nf3–e5 out and opens the c8 bishop.", "Empêche Ce5 et libère le fou c8."],
+        ["d4", "White opens the centre.", "Les Blancs ouvrent le centre."],
+        ["cxd4", "Trade a wing pawn for a centre pawn.", "On échange un pion d'aile contre un pion central."],
+        ["Nxd4", "White recaptures.", "Les Blancs reprennent."],
+        ["Nf6", "Attack e4 so White must defend it.", "On attaque e4 pour forcer les Blancs à le défendre."],
+        ["Nc3", "White defends e4.", "Les Blancs défendent e4."],
+        ["a6", "The Najdorf: take b5 away from White's pieces.", "La Najdorf : on retire b5 aux pièces blanches."],
+        ["Be2", "A calm, classical move.", "Un coup calme et classique."],
+        ["e5", "Kick the d4 knight and grab central space.", "On chasse le cavalier d4 et on prend de l'espace."],
+        ["Nb3", "The knight retreats.", "Le cavalier recule."],
+        ["Be7", "Develop and prepare to castle.", "On se développe et on prépare le roque."],
+        ["O-O", "White castles.", "Les Blancs roquent."],
+        ["O-O", "Castle too.", "On roque aussi."],
+        ["Be3", "White develops and eyes b6.", "Les Blancs se développent et visent b6."],
+        ["Be6", "Control d5, the key square in this structure.", "On contrôle d5, la case clé de cette structure."],
+      ]),
+      line("alapin", "Against the Alapin (2.c3)", "Contre l'Alapin (2.c3)", [
+        ["e4", "White takes the centre.", "Les Blancs prennent le centre."],
+        ["c5", "The Sicilian.", "La sicilienne."],
+        ["c3", "The Alapin: White wants to rebuild the centre with d4.", "L'Alapin : les Blancs veulent reconstruire le centre avec d4."],
+        ["Nf6", "Attack e4 immediately; c3 took the knight's best square.", "On attaque e4 tout de suite ; c3 a pris la meilleure case du cavalier."],
+        ["e5", "White chases the knight.", "Les Blancs chassent le cavalier."],
+        ["Nd5", "Centralise the knight; c3 can't kick it.", "On centralise le cavalier ; c3 ne peut pas le chasser."],
+        ["d4", "White builds the centre.", "Les Blancs construisent le centre."],
+        ["cxd4", "Trade to open the c-file.", "On échange pour ouvrir la colonne c."],
+        ["Nf3", "White develops before recapturing.", "Les Blancs se développent avant de reprendre."],
+        ["Nc6", "Develop and pressure e5 and d4.", "On se développe et on presse e5 et d4."],
+        ["cxd4", "White recaptures.", "Les Blancs reprennent."],
+        ["d6", "Undermine e5 right away.", "On sape e5 tout de suite."],
+        ["Bc4", "White hits our d5 knight.", "Les Blancs attaquent notre cavalier d5."],
+        ["Nb6", "Retreat with tempo on the c4 bishop.", "On recule avec gain de temps sur le fou c4."],
+        ["Bb5", "White pins our c6 knight.", "Les Blancs clouent notre cavalier c6."],
+        ["dxe5", "Remove the e5 pawn. Black is fine.", "On élimine le pion e5. Les Noirs vont bien."],
+      ]),
+    ],
+  },
+  {
+    id: "french",
+    side: "b",
+    eco: "C00–C19",
+    name: t("French Defence", "Défense française"),
+    summary: t(
+      "Solid …e6 and …d5, then attack White's pawn chain with …c5 and …f6.",
+      "…e6 et …d5 solides, puis attaque de la chaîne de pions blanche avec …c5 et …f6."
+    ),
+    ideas: [
+      t("Hit the base of White's pawn chain (d4) with …c5.", "Attaquer la base de la chaîne blanche (d4) avec …c5."),
+      t("…Qb6 and …Nc6 pile up on d4.", "…Db6 et …Cc6 s'accumulent sur d4."),
+      t("The c8 bishop is the problem piece; play around it.", "Le fou c8 est la pièce difficile ; on joue autour."),
+    ],
+    lines: [
+      line("advance", "Advance Variation", "Variante d'avance", [
+        ["e4", "White takes the centre.", "Les Blancs prennent le centre."],
+        ["e6", "Prepare …d5 with solid support.", "On prépare …d5 avec un soutien solide."],
+        ["d4", "White builds a big centre.", "Les Blancs construisent un grand centre."],
+        ["d5", "Challenge e4 at once.", "On défie e4 tout de suite."],
+        ["e5", "The Advance: White gains space.", "L'avance : les Blancs gagnent de l'espace."],
+        ["c5", "Strike the base of the chain right away.", "On frappe la base de la chaîne tout de suite."],
+        ["c3", "White supports d4.", "Les Blancs soutiennent d4."],
+        ["Nc6", "More pressure on d4.", "Plus de pression sur d4."],
+        ["Nf3", "White defends d4 again.", "Les Blancs défendent d4 à nouveau."],
+        ["Qb6", "Third attacker on d4, and pressure on b2.", "Troisième attaquant sur d4, et pression sur b2."],
+        ["a3", "White prepares b4 to grab queenside space.", "Les Blancs préparent b4 pour gagner de l'espace à l'aile dame."],
+        ["c4", "Close the queenside and stop b4 ideas being strong.", "On ferme l'aile dame et on rend b4 inefficace."],
+        ["Nbd2", "White heads for e3/f1.", "Les Blancs visent e3/f1."],
+        ["Na5", "Grab b3 and fix White's queenside.", "On prend la case b3 et on fixe l'aile dame blanche."],
+      ]),
+      line("tarrasch", "Tarrasch (3.Nd2)", "Tarrasch (3.Cd2)", [
+        ["e4", "White takes the centre.", "Les Blancs prennent le centre."],
+        ["e6", "Prepare …d5.", "On prépare …d5."],
+        ["d4", "Big centre.", "Grand centre."],
+        ["d5", "Challenge e4.", "On défie e4."],
+        ["Nd2", "The Tarrasch: defend e4 without allowing …Bb4 pins.", "La Tarrasch : défendre e4 sans permettre le clouage …Fb4."],
+        ["Nf6", "Attack e4.", "On attaque e4."],
+        ["e5", "White gains space and kicks the knight.", "Les Blancs gagnent de l'espace et chassent le cavalier."],
+        ["Nfd7", "The knight goes to d7, ready to hit e5 with …c5 and …f6.", "Le cavalier va en d7, prêt à attaquer e5 avec …c5 et …f6."],
+        ["Bd3", "White aims at h7.", "Les Blancs visent h7."],
+        ["c5", "Attack d4, the base of the chain.", "On attaque d4, la base de la chaîne."],
+        ["c3", "White supports d4.", "Les Blancs soutiennent d4."],
+        ["Nc6", "More pressure on d4.", "Plus de pression sur d4."],
+        ["Ne2", "White keeps f3 free for the other knight.", "Les Blancs gardent f3 libre pour l'autre cavalier."],
+        ["cxd4", "Open the c-file.", "On ouvre la colonne c."],
+        ["cxd4", "White recaptures.", "Les Blancs reprennent."],
+        ["f6", "Hit the head of the chain: e5 starts to wobble.", "On attaque la tête de la chaîne : e5 vacille."],
+      ]),
+    ],
+  },
+  {
+    id: "caro-kann",
+    side: "b",
+    eco: "B10–B19",
+    name: t("Caro-Kann Defence", "Défense Caro-Kann"),
+    summary: t(
+      "Like the French but the c8 bishop gets out first. Solid and hard to crack.",
+      "Comme la française mais le fou c8 sort d'abord. Solide et difficile à percer."
+    ),
+    ideas: [
+      t("…c6 prepares …d5 without blocking the c8 bishop.", "…c6 prépare …d5 sans enfermer le fou c8."),
+      t("Develop the bishop to f5 BEFORE playing …e6.", "Développer le fou en f5 AVANT de jouer …e6."),
+      t("Hit the centre later with …c5.", "Attaquer le centre plus tard avec …c5."),
+    ],
+    lines: [
+      line("classical", "Classical (4…Bf5)", "Classique (4…Ff5)", [
+        ["e4", "White takes the centre.", "Les Blancs prennent le centre."],
+        ["c6", "Prepare …d5 with the c-pawn.", "On prépare …d5 avec le pion c."],
+        ["d4", "Big centre.", "Grand centre."],
+        ["d5", "Challenge e4.", "On défie e4."],
+        ["Nc3", "White defends e4.", "Les Blancs défendent e4."],
+        ["dxe4", "Trade off the e4 pawn.", "On échange le pion e4."],
+        ["Nxe4", "White recaptures.", "Les Blancs reprennent."],
+        ["Bf5", "The classical move: the bishop develops with tempo.", "Le coup classique : le fou sort avec gain de temps."],
+        ["Ng3", "White chases the bishop.", "Les Blancs chassent le fou."],
+        ["Bg6", "Stay on the b1–h7 diagonal.", "On reste sur la diagonale b1–h7."],
+        ["h4", "White threatens h5 to trap the bishop.", "Les Blancs menacent h5 pour piéger le fou."],
+        ["h6", "Give the bishop h7 as an escape.", "On offre la case h7 au fou."],
+        ["Nf3", "White develops.", "Les Blancs se développent."],
+        ["Nd7", "Control e5 so White's knight can't jump there.", "On contrôle e5 pour empêcher le cavalier blanc d'y sauter."],
+        ["h5", "White grabs space.", "Les Blancs prennent de l'espace."],
+        ["Bh7", "Retreat to safety.", "Retraite à l'abri."],
+        ["Bd3", "White offers a bishop trade.", "Les Blancs proposent l'échange des fous."],
+        ["Bxd3", "Trade: our problem bishop goes for White's good one.", "On échange : notre fou difficile contre le bon fou blanc."],
+        ["Qxd3", "White recaptures.", "Les Blancs reprennent."],
+        ["e6", "Now …e6 is fine: the bishop is already out. Solid position.", "Maintenant …e6 est bon : le fou est déjà sorti. Position solide."],
+      ]),
+      line("advance", "Advance Variation", "Variante d'avance", [
+        ["e4", "White takes the centre.", "Les Blancs prennent le centre."],
+        ["c6", "Prepare …d5.", "On prépare …d5."],
+        ["d4", "Big centre.", "Grand centre."],
+        ["d5", "Challenge e4.", "On défie e4."],
+        ["e5", "The Advance: White gains space.", "L'avance : les Blancs gagnent de l'espace."],
+        ["Bf5", "Develop the bishop outside the pawn chain first.", "On sort d'abord le fou hors de la chaîne de pions."],
+        ["Nf3", "White develops.", "Les Blancs se développent."],
+        ["e6", "Now close the chain behind the bishop.", "On ferme maintenant la chaîne derrière le fou."],
+        ["Be2", "White prepares to castle.", "Les Blancs préparent le roque."],
+        ["c5", "Strike d4, as in the French.", "On frappe d4, comme dans la française."],
+        ["O-O", "White castles.", "Les Blancs roquent."],
+        ["Nc6", "More pressure on d4.", "Plus de pression sur d4."],
+        ["c3", "White supports d4.", "Les Blancs soutiennent d4."],
+        ["cxd4", "Open the c-file.", "On ouvre la colonne c."],
+        ["cxd4", "White recaptures.", "Les Blancs reprennent."],
+        ["Nge7", "The knight heads to f5 or g6 to attack d4 and e5.", "Le cavalier vise f5 ou g6 pour attaquer d4 et e5."],
+      ]),
+    ],
+  },
+  {
+    id: "kings-indian",
+    side: "b",
+    eco: "E60–E99",
+    name: t("King's Indian Defence", "Défense est-indienne"),
+    summary: t(
+      "Let White build a big centre, then hit it with …e5 and a kingside pawn storm.",
+      "Laisser les Blancs construire un grand centre, puis le frapper avec …e5 et une attaque de pions à l'aile roi."
+    ),
+    ideas: [
+      t("Fianchetto the bishop on g7 and castle quickly.", "Fianchetto du fou en g7 et roque rapide."),
+      t("…e5 is the main break against d4.", "…e5 est la principale rupture contre d4."),
+      t("If White closes with d5, attack with …Nd7/…f5.", "Si les Blancs ferment avec d5, on attaque avec …Cd7/…f5."),
+    ],
+    lines: [
+      line("classical", "Classical", "Classique", [
+        ["d4", "White takes the centre.", "Les Blancs prennent le centre."],
+        ["Nf6", "Control e4 without committing pawns.", "On contrôle e4 sans engager de pions."],
+        ["c4", "White grabs more space.", "Les Blancs prennent plus d'espace."],
+        ["g6", "Prepare the fianchetto.", "On prépare le fianchetto."],
+        ["Nc3", "White prepares e4.", "Les Blancs préparent e4."],
+        ["Bg7", "The bishop on the long diagonal: our best piece.", "Le fou sur la grande diagonale : notre meilleure pièce."],
+        ["e4", "White builds a big centre.", "Les Blancs construisent un grand centre."],
+        ["d6", "Stop e5 and prepare …e5.", "On empêche e5 et on prépare …e5."],
+        ["Nf3", "White develops.", "Les Blancs se développent."],
+        ["O-O", "Castle before opening the game.", "On roque avant d'ouvrir le jeu."],
+        ["Be2", "White's classical setup.", "Le dispositif classique blanc."],
+        ["e5", "The thematic break against d4.", "La rupture thématique contre d4."],
+        ["O-O", "White castles.", "Les Blancs roquent."],
+        ["Nc6", "Pile up on d4.", "On accumule la pression sur d4."],
+        ["d5", "White closes the centre.", "Les Blancs ferment le centre."],
+        ["Ne7", "The knight heads to the kingside for the attack.", "Le cavalier part vers l'aile roi pour l'attaque."],
+        ["Ne1", "White prepares the queenside plan with Nd3 and c5.", "Les Blancs préparent leur plan à l'aile dame avec Cd3 et c5."],
+        ["Nd7", "Clear the f-pawn: …f5 is coming.", "On libère le pion f : …f5 arrive."],
+      ]),
+      line("fianchetto", "Fianchetto Variation", "Variante du fianchetto", [
+        ["d4", "White takes the centre.", "Les Blancs prennent le centre."],
+        ["Nf6", "Control e4.", "On contrôle e4."],
+        ["c4", "More space.", "Plus d'espace."],
+        ["g6", "Prepare the fianchetto.", "On prépare le fianchetto."],
+        ["Nf3", "White develops.", "Les Blancs se développent."],
+        ["Bg7", "Long diagonal.", "Grande diagonale."],
+        ["g3", "White fianchettoes too: a positional setup.", "Les Blancs font aussi un fianchetto : dispositif positionnel."],
+        ["O-O", "Castle.", "On roque."],
+        ["Bg2", "White's bishop also eyes the long diagonal.", "Le fou blanc vise aussi la grande diagonale."],
+        ["d6", "Prepare …e5.", "On prépare …e5."],
+        ["O-O", "White castles.", "Les Blancs roquent."],
+        ["Nbd7", "Support …e5 with the knight.", "On soutient …e5 avec le cavalier."],
+        ["Nc3", "White develops.", "Les Blancs se développent."],
+        ["e5", "The thematic break.", "La rupture thématique."],
+        ["e4", "White grabs the centre.", "Les Blancs prennent le centre."],
+        ["c6", "Control d5 and prepare …Qb6 or …a5.", "On contrôle d5 et on prépare …Db6 ou …a5."],
+      ]),
+    ],
+  },
+  {
+    id: "slav",
+    side: "b",
+    eco: "D10–D19",
+    name: t("Slav Defence", "Défense slave"),
+    summary: t(
+      "Hold d5 with …c6, keep the c8 bishop free and develop it to f5.",
+      "Tenir d5 avec …c6, garder le fou c8 libre et le développer en f5."
+    ),
+    ideas: [
+      t("…c6 defends d5 without blocking the c8 bishop.", "…c6 défend d5 sans bloquer le fou c8."),
+      t("…Bf5 before …e6.", "…Ff5 avant …e6."),
+      t("Against the Exchange, copy White's development and stay solid.", "Contre l'échange, copier le développement blanc et rester solide."),
+    ],
+    lines: [
+      line("main", "Main line (4…dxc4)", "Ligne principale (4…dxc4)", [
+        ["d4", "White takes the centre.", "Les Blancs prennent le centre."],
+        ["d5", "Claim the centre.", "On revendique le centre."],
+        ["c4", "The Queen's Gambit.", "Le gambit dame."],
+        ["c6", "The Slav: defend d5 and keep the c8 bishop free.", "La slave : on défend d5 et on garde le fou c8 libre."],
+        ["Nf3", "White develops.", "Les Blancs se développent."],
+        ["Nf6", "Develop and defend d5.", "On se développe et on défend d5."],
+        ["Nc3", "More pressure on d5.", "Plus de pression sur d5."],
+        ["dxc4", "Take the pawn: now …b5 could keep it.", "On prend le pion : …b5 pourrait le garder."],
+        ["a4", "White stops …b5.", "Les Blancs empêchent …b5."],
+        ["Bf5", "Develop the bishop outside the chain.", "On sort le fou hors de la chaîne."],
+        ["e3", "White prepares Bxc4.", "Les Blancs préparent Fxc4."],
+        ["e6", "Now close behind the bishop.", "On ferme derrière le fou."],
+        ["Bxc4", "White regains the pawn.", "Les Blancs récupèrent le pion."],
+        ["Bb4", "Pin the c3 knight and stop e4.", "On cloue le cavalier c3 et on empêche e4."],
+        ["O-O", "White castles.", "Les Blancs roquent."],
+        ["O-O", "Castle. A rock-solid position.", "On roque. Une position très solide."],
+      ]),
+      line("exchange", "Exchange Slav", "Slave d'échange", [
+        ["d4", "White takes the centre.", "Les Blancs prennent le centre."],
+        ["d5", "Claim the centre.", "On revendique le centre."],
+        ["c4", "The Queen's Gambit.", "Le gambit dame."],
+        ["c6", "The Slav.", "La slave."],
+        ["cxd5", "The Exchange: White makes the position symmetrical.", "L'échange : les Blancs rendent la position symétrique."],
+        ["cxd5", "Recapture with the c-pawn to keep a central pawn.", "On reprend avec le pion c pour garder un pion central."],
+        ["Nc3", "White develops.", "Les Blancs se développent."],
+        ["Nf6", "Develop and defend d5.", "On se développe et on défend d5."],
+        ["Bf4", "White develops the bishop actively.", "Les Blancs développent leur fou activement."],
+        ["Nc6", "Develop and watch e5 and d4.", "On se développe et on surveille e5 et d4."],
+        ["e3", "White solidifies.", "Les Blancs consolident."],
+        ["Bf5", "Mirror: bishop out before …e6.", "Miroir : le fou sort avant …e6."],
+        ["Nf3", "White develops.", "Les Blancs se développent."],
+        ["e6", "Close behind the bishop.", "On ferme derrière le fou."],
+        ["Qb3", "White hits b7.", "Les Blancs attaquent b7."],
+        ["Bb4", "Counter-pin: if Qxb7, …Bxc3+ and …Rb8 or …Qa5 traps the queen.", "Contre-clouage : si Dxb7, …Fxc3+ puis …Tb8 ou …Da5 menace la dame."],
+      ]),
+    ],
+  },
+];
+
+export function getCourse(id: string): OpeningCourse | undefined {
+  return OPENING_COURSES.find((course) => course.id === id);
+}
