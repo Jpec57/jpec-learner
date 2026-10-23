@@ -64,6 +64,7 @@
   "furigana": {
     "label": "Lectures (furigana)",
     "placeholder": "lecture",
-    "inputLabel": "Lecture de {{kanji}}"
+    "inputLabel": "Lecture de {{kanji}}",
+    "empty": "Tapez des kanji au recto : un champ de lecture apparaît pour chacun."
   }
 }

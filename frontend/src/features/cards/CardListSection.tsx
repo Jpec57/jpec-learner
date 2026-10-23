@@ -389,6 +389,7 @@ function AddCardForm({
         autoFocus
         required
         allowBlank={answerMode === "typed"}
+        furigana={direction.enabled && direction.source === "ja"}
         value={front}
         onChange={setFront}
         placeholder={t("frontPlaceholder")}

@@ -64,6 +64,7 @@
   "furigana": {
     "label": "Readings (furigana)",
     "placeholder": "reading",
-    "inputLabel": "Reading of {{kanji}}"
+    "inputLabel": "Reading of {{kanji}}",
+    "empty": "Type kanji in the front: a reading input appears for each one."
   }
 }

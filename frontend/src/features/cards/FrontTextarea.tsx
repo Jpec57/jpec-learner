@@ -14,6 +14,7 @@ export function FrontTextarea({
   required,
   autoFocus,
   allowBlank = false,
+  furigana = false,
   rows = 2,
 }: {
   value: string;
@@ -23,6 +24,8 @@ export function FrontTextarea({
   required?: boolean;
   autoFocus?: boolean;
   allowBlank?: boolean;
+  /** Japanese deck: always show the readings box, even before any kanji is typed. */
+  furigana?: boolean;
   rows?: number;
 }) {
   const { t } = useTranslation("cards");
@@ -51,7 +54,7 @@ export function FrontTextarea({
         placeholder={placeholder}
         className={className}
       />
-      <ReadingFields value={value} onChange={onChange} />
+      <ReadingFields value={value} onChange={onChange} alwaysShow={furigana} />
       {allowBlank && (
         <button
           type="button"
@@ -66,13 +69,22 @@ export function FrontTextarea({
   );
 }
 
-// Shown as soon as the front contains kanji: one input per kanji run, so a
-// reading can be typed without knowing the 漢字[かんじ] notation. Each input
-// writes that notation back into the front.
-export function ReadingFields({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+// One input per kanji run in the front, so a reading can be typed without
+// knowing the 漢字[かんじ] notation; each input writes that notation back into
+// the front. Shown once the front has kanji, or always with `alwaysShow`.
+export function ReadingFields({
+  value,
+  onChange,
+  alwaysShow = false,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  alwaysShow?: boolean;
+}) {
   const { t } = useTranslation("cards");
   const tokens = tokenizeReadings(value);
-  if (!tokens.some((token) => token.kanji)) return null;
+  const hasKanji = tokens.some((token) => token.kanji);
+  if (!hasKanji && !alwaysShow) return null;
 
   function setReading(index: number, reading: string) {
     const cleaned = reading.replace(/[[\]]/g, "");
@@ -82,6 +94,7 @@ export function ReadingFields({ value, onChange }: { value: string; onChange: (v
   return (
     <div className="space-y-1 rounded-md bg-slate-50 p-2">
       <p className="text-[10px] uppercase tracking-wide text-slate-400">{t("furigana.label")}</p>
+      {!hasKanji && <p className="text-xs text-slate-400">{t("furigana.empty")}</p>}
       <div className="flex flex-wrap gap-2">
         {tokens.map((token, index) =>
           token.kanji ? (

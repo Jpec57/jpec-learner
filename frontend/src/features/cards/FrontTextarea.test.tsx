@@ -25,3 +25,10 @@ describe("FrontTextarea readings", () => {
     );
   });
 });
+
+describe("FrontTextarea readings on a Japanese deck", () => {
+  it("shows the readings box before any kanji is typed", () => {
+    render(<FrontTextarea value="" onChange={() => {}} placeholder="front" className="" furigana />);
+    expect(screen.getByText(/furigana/i)).toBeTruthy();
+  });
+});
