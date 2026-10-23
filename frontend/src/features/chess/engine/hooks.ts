@@ -40,3 +40,15 @@ export function useLiveAnalysis(service: AnalysisService | null, fen: string | n
   }, [service, fen]);
   return result && result.fen === fen ? result : null;
 }
+
+/** True once any of the given engines failed to start or crashed. */
+export function useEngineFailed(...engines: (StockfishEngine | null | undefined)[]): boolean {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+    const unsubscribes = engines.map((engine) => engine?.onFailure(() => setFailed(true)));
+    return () => unsubscribes.forEach((unsubscribe) => unsubscribe?.());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, engines);
+  return failed;
+}

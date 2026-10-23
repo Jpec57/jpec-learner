@@ -9,7 +9,7 @@ import { useLang } from "@/features/chess/ChessHomePage";
 import { ARROW_COLORS, BOARD_MAX_WIDTH, BoardWithEval, type BoardArrow } from "@/features/chess/components/BoardWithEval";
 import { QualityBadge } from "@/features/chess/components/CoachPanel";
 import { MoveList } from "@/features/chess/components/MoveList";
-import { useAnalysisService, useLiveAnalysis } from "@/features/chess/engine/hooks";
+import { useAnalysisService, useEngineFailed, useLiveAnalysis } from "@/features/chess/engine/hooks";
 import { formatScore, scoreFor, type Color, type MoveQuality } from "@/features/chess/evaluation";
 import { getCourse, type OpeningCourse } from "@/features/chess/openings";
 import { isMastered, loadProgress, recordLineResult } from "@/features/chess/progress";
@@ -47,6 +47,7 @@ function CourseTrainer({ course }: { course: OpeningCourse }) {
   const lang = useLang();
   const navigate = useNavigate();
   const service = useAnalysisService(14);
+  const engineFailed = useEngineFailed(service?.engine);
 
   const [lineIndex, setLineIndex] = useState(0);
   const [ply, setPly] = useState(0);
@@ -208,6 +209,11 @@ function CourseTrainer({ course }: { course: OpeningCourse }) {
         </div>
 
         <div className="space-y-4">
+          {engineFailed && (
+            <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+              {t("board.engineFailed")}
+            </p>
+          )}
           <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">{t("course.lines")}</h2>
             <div className="mt-2 flex flex-wrap gap-2">

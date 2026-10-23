@@ -20,7 +20,7 @@ export class AnalysisService {
   private running: string | null = null;
 
   constructor(
-    private engine: StockfishEngine,
+    readonly engine: StockfishEngine,
     private depth = 14
   ) {}
 
@@ -93,6 +93,11 @@ export class AnalysisService {
             entry.waiters.forEach((resolve) => resolve(result));
           }
           this.entries.delete(fen);
+        } else if (this.engine.failed) {
+          // Dead engine: retrying would spin forever. The page shows an error instead.
+          this.queue = [];
+          this.entries.clear();
+          return;
         } else if (entry && entry.refs > 0) {
           this.queue.unshift(fen); // still wanted: try again
         } else {

@@ -8,7 +8,7 @@ import { reviewMove, uciLineToSan, uciToMove, type MoveReview } from "@/features
 import { ARROW_COLORS, BOARD_MAX_WIDTH, BoardWithEval, type BoardArrow } from "@/features/chess/components/BoardWithEval";
 import { CoachPanel } from "@/features/chess/components/CoachPanel";
 import { MoveList } from "@/features/chess/components/MoveList";
-import { useAnalysisService, useLiveAnalysis, useOpponentEngine } from "@/features/chess/engine/hooks";
+import { useAnalysisService, useEngineFailed, useLiveAnalysis, useOpponentEngine } from "@/features/chess/engine/hooks";
 import type { StrengthOptions } from "@/features/chess/engine/stockfish";
 import { scoreFor, type Color, type MoveQuality } from "@/features/chess/evaluation";
 
@@ -46,6 +46,15 @@ interface GameSetup {
 }
 
 const LEVEL_KEY = "jpeclearner.chess.level";
+const AI_KEY = "jpeclearner.chess.allowAi";
+
+function savedAllowAi(): boolean {
+  try {
+    return window.localStorage.getItem(AI_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 function savedLevel(): number {
   try {
@@ -65,6 +74,8 @@ export function ChessPlayPage() {
 
   const service = useAnalysisService(14);
   const opponent = useOpponentEngine();
+  const engineFailed = useEngineFailed(service?.engine, opponent);
+  const [allowAi, setAllowAi] = useState(savedAllowAi);
 
   const [pickColor, setPickColor] = useState<Color | "random">(fromCourse?.color ?? "w");
   const [pickLevel, setPickLevel] = useState(savedLevel);
@@ -220,6 +231,7 @@ export function ChessPlayPage() {
   else if (chess.isStalemate()) status = t("play.over.stalemate");
   else if (chess.isDraw()) status = t("play.over.draw");
   else if (viewingBest) status = t("coach.viewingBefore");
+  else if (engineFailed) status = t("board.engineFailed");
   else if (thinking) status = t("play.thinking");
   else status = t("play.yourTurn");
 
@@ -272,6 +284,11 @@ export function ChessPlayPage() {
         </div>
 
         <div className="space-y-4">
+          {engineFailed && (
+            <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+              {t("board.engineFailed")}
+            </p>
+          )}
           {!setup || gameOver ? (
             <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <h2 className="text-sm font-medium uppercase tracking-wide text-slate-400">{t("play.setup")}</h2>
@@ -303,6 +320,25 @@ export function ChessPlayPage() {
                 onChange={(event) => setPickLevel(Number(event.target.value))}
                 className="mt-2 w-full accent-[rgb(var(--color-primary))]"
               />
+              <label className="mt-4 flex items-start gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={allowAi}
+                  onChange={(event) => {
+                    setAllowAi(event.target.checked);
+                    try {
+                      window.localStorage.setItem(AI_KEY, event.target.checked ? "1" : "0");
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                  className="mt-0.5 accent-[rgb(var(--color-primary))]"
+                />
+                <span>
+                  {t("play.aiToggle")}
+                  <span className="block text-xs text-slate-400">{t("play.aiToggleHelp")}</span>
+                </span>
+              </label>
               <button
                 type="button"
                 onClick={startGame}
@@ -361,6 +397,7 @@ export function ChessPlayPage() {
               viewingBest={viewingBest}
               onToggleBest={() => setViewingBest((v) => !v)}
               onRetry={takeBack}
+              allowAi={allowAi}
             />
           )}
 

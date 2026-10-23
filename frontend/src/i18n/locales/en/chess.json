@@ -14,7 +14,8 @@
   },
   "board": {
     "flip": "Flip board",
-    "depth": "depth {{depth}}"
+    "depth": "depth {{depth}}",
+    "engineFailed": "The chess engine failed to load. Check your connection and reload the page."
   },
   "play": {
     "title": "Play vs Stockfish",
@@ -52,7 +53,9 @@
     },
     "moves": "Moves",
     "summary": "Your moves so far",
-    "hintText": "The engine suggests {{move}}."
+    "hintText": "The engine suggests {{move}}.",
+    "aiToggle": "Let the AI assistant explain my mistakes",
+    "aiToggleHelp": "Off by default: the coach relies only on Stockfish. When on, an “Ask the AI coach” button appears after mistakes."
   },
   "coach": {
     "title": "Coach",

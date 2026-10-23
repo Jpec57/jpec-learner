@@ -14,7 +14,8 @@
   },
   "board": {
     "flip": "Retourner l'échiquier",
-    "depth": "profondeur {{depth}}"
+    "depth": "profondeur {{depth}}",
+    "engineFailed": "Le moteur d'échecs n'a pas pu se charger. Vérifie ta connexion et recharge la page."
   },
   "play": {
     "title": "Jouer contre Stockfish",
@@ -52,7 +53,9 @@
     },
     "moves": "Coups",
     "summary": "Tes coups jusqu'ici",
-    "hintText": "Le moteur suggère {{move}}."
+    "hintText": "Le moteur suggère {{move}}.",
+    "aiToggle": "Laisser l'assistant IA expliquer mes erreurs",
+    "aiToggleHelp": "Désactivé par défaut : le coach s'appuie uniquement sur Stockfish. Activé, un bouton « Demander au coach IA » apparaît après les erreurs."
   },
   "coach": {
     "title": "Coach",

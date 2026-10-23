@@ -1,12 +1,45 @@
+import fs from "node:fs";
 import path from "node:path";
 
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+
+// Serves the Stockfish engine at a fixed URL (/engine/stockfish-18/stockfish.js
+// + stockfish.wasm next to it). The engine finds its .wasm by swapping the
+// script's extension, so both files must share a basename. Content-hashed
+// asset names (or passing the wasm path in the URL #hash, which is lost when
+// the service worker serves the script) break that.
+const ENGINE_DIR = "engine/stockfish-18";
+const ENGINE_FILES: Record<string, string> = {
+  "stockfish.js": "stockfish-18-lite-single.js",
+  "stockfish.wasm": "stockfish-18-lite-single.wasm",
+};
+
+function stockfishEngine(): Plugin {
+  const source = (name: string) => path.resolve(__dirname, "node_modules/stockfish/bin", ENGINE_FILES[name]);
+  return {
+    name: "stockfish-engine",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const match = req.url?.match(new RegExp(`^/${ENGINE_DIR}/(stockfish\\.(js|wasm))(\\?|$)`));
+        if (!match) return next();
+        res.setHeader("Content-Type", match[2] === "js" ? "text/javascript" : "application/wasm");
+        fs.createReadStream(source(match[1])).pipe(res);
+      });
+    },
+    generateBundle() {
+      for (const name of Object.keys(ENGINE_FILES)) {
+        this.emitFile({ type: "asset", fileName: `${ENGINE_DIR}/${name}`, source: fs.readFileSync(source(name)) });
+      }
+    },
+  };
+}
 
 export default defineConfig({
   plugins: [
     react(),
+    stockfishEngine(),
     VitePWA({
       registerType: "autoUpdate",
       // Enabled in dev too (not just `vite build`) since this app runs via
@@ -34,10 +67,11 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/api\//, /^\/media\//],
         // The chess engine (~7MB) is too big to precache for every user; it is
         // cached the first time a chess board is opened instead (see below).
-        globIgnores: ["**/stockfish-*.wasm"],
+        globIgnores: ["engine/**"],
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => /\/assets\/stockfish-.*\.wasm$/.test(url.pathname),
+            // Literal path: this function is copied into the service worker, where ENGINE_DIR doesn't exist.
+            urlPattern: ({ url }) => url.pathname.startsWith("/engine/"),
             handler: "CacheFirst",
             options: {
               cacheName: "chess-engine",

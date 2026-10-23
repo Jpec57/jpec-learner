@@ -30,9 +30,11 @@ interface CoachPanelProps {
   viewingBest: boolean;
   onToggleBest: () => void;
   onRetry?: () => void;
+  /** The AI assistant is only offered when the user switched it on. */
+  allowAi?: boolean;
 }
 
-export function CoachPanel({ review, pending, viewingBest, onToggleBest, onRetry }: CoachPanelProps) {
+export function CoachPanel({ review, pending, viewingBest, onToggleBest, onRetry, allowAi = false }: CoachPanelProps) {
   const { t } = useTranslation("chess");
   const noteText = useNoteText();
 
@@ -98,7 +100,7 @@ export function CoachPanel({ review, pending, viewingBest, onToggleBest, onRetry
                   {t("coach.retry")}
                 </button>
               )}
-              {isBad && (
+              {isBad && allowAi && (
                 <button
                   type="button"
                   onClick={askAi}
