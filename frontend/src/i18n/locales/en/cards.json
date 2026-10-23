@@ -60,5 +60,10 @@
     "pickLanguages": "Choose two different languages first",
     "alternatives": "Other options",
     "via": "via {{provider}}"
+  },
+  "furigana": {
+    "label": "Readings (furigana)",
+    "placeholder": "reading",
+    "inputLabel": "Reading of {{kanji}}"
   }
 }

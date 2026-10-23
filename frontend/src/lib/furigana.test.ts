@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseFurigana, stripFurigana } from "@/lib/furigana";
+import { joinReadings, parseFurigana, stripFurigana, tokenizeReadings } from "@/lib/furigana";
 
 describe("parseFurigana", () => {
   it("returns a single plain segment when there is no annotation", () => {
@@ -40,5 +40,28 @@ describe("stripFurigana", () => {
 
   it("leaves plain text untouched", () => {
     expect(stripFurigana("benkyou")).toBe("benkyou");
+  });
+});
+
+describe("tokenizeReadings / joinReadings", () => {
+  it("splits kanji runs from kana and keeps existing readings", () => {
+    expect(tokenizeReadings("私は勉強[べんきょう]します")).toEqual([
+      { text: "私", kanji: true },
+      { text: "は", kanji: false },
+      { text: "勉強", kanji: true, reading: "べんきょう" },
+      { text: "します", kanji: false },
+    ]);
+  });
+
+  it("round-trips any text unchanged", () => {
+    for (const text of ["", "hello", "私は勉強[べんきょう]します", "a[b] 漢字 [x]"]) {
+      expect(joinReadings(tokenizeReadings(text))).toBe(text);
+    }
+  });
+
+  it("writes a new reading as inline notation", () => {
+    const tokens = tokenizeReadings("私は");
+    tokens[0].reading = "わたし";
+    expect(joinReadings(tokens)).toBe("私[わたし]は");
   });
 });

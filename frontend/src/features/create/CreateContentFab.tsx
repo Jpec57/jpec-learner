@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Plus, Sparkles, X, XCircle } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { Link, useMatch } from "react-router-dom";
 
@@ -105,6 +106,17 @@ function CreateContentDialog({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
+
+  // Freeze the page behind the sheet. Otherwise, on Android, the page scrolls
+  // under it whenever the keyboard shows or hides (opening the system keyboard
+  // switcher hides it), which closed the switcher before one could be picked.
+  useEffect(() => {
+    const { overflow } = document.body.style;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = overflow;
+    };
+  }, []);
 
   const { data: decks } = useQuery({
     queryKey: ["categories", "mine"],
@@ -277,14 +289,15 @@ function CreateContentDialog({
 
   const inputClass = "w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm";
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 sm:items-center sm:p-4">
+  // Portalled to <body> so no page container (overflow, transforms) affects it.
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end justify-center overscroll-contain bg-slate-900/40 sm:items-center sm:p-4">
       <form
         onSubmit={handleSubmit}
         role="dialog"
         aria-modal="true"
         aria-label={t("create:title")}
-        className="max-h-[92vh] w-full max-w-lg space-y-3 overflow-y-auto rounded-t-xl bg-white p-4 shadow-xl sm:rounded-xl"
+        className="max-h-[92dvh] w-full max-w-lg space-y-3 overflow-y-auto rounded-t-xl bg-white p-4 shadow-xl sm:rounded-xl"
       >
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-slate-900">{t("create:title")}</h2>
@@ -551,6 +564,7 @@ function CreateContentDialog({
           </button>
         </div>
       </form>
-    </div>
+    </div>,
+    document.body
   );
 }

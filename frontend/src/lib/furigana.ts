@@ -34,3 +34,35 @@ export function parseFurigana(source: string): FuriganaSegment[] {
   }
   return segments;
 }
+
+export interface ReadingToken {
+  text: string;
+  /** True for a run of kanji, which can carry a reading. */
+  kanji: boolean;
+  reading?: string;
+}
+
+const HAN_RUN = /(\p{Script=Han}+)/u;
+
+// Splits text into kanji runs (with their reading, if annotated) and the plain
+// text between them. joinReadings(tokenizeReadings(s)) === s, so a reading
+// field can edit one run's reading without touching the rest of the text.
+export function tokenizeReadings(source: string): ReadingToken[] {
+  const tokens: ReadingToken[] = [];
+  for (const segment of parseFurigana(source)) {
+    if (segment.reading !== undefined) {
+      tokens.push({ text: segment.text, kanji: true, reading: segment.reading });
+      continue;
+    }
+    for (const part of segment.text.split(HAN_RUN)) {
+      if (part) tokens.push({ text: part, kanji: HAN_RUN.test(part) });
+    }
+  }
+  return tokens;
+}
+
+export function joinReadings(tokens: ReadingToken[]): string {
+  return tokens
+    .map((token) => (token.kanji && token.reading ? `${token.text}[${token.reading}]` : token.text))
+    .join("");
+}
