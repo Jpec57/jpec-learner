@@ -126,6 +126,17 @@
     "showMove": "Show move",
     "playFromHere": "Play on vs Stockfish",
     "opponentNote": "Opponent: {{move}}",
-    "start": "Opponent opens. Watch the first move…"
+    "start": "Opponent opens. Watch the first move…",
+    "mixed": "🔀 Mixed practice",
+    "mixedHelp": "The opponent picks a random line each time — like a real game.",
+    "currentLine": "Line: {{name}}",
+    "linesCount": "{{count}} lines"
+  },
+  "focus": {
+    "enter": "Fullscreen",
+    "exit": "Exit",
+    "title": "Focus mode",
+    "playShortcuts": "Shortcuts: F fullscreen · H hint · U take back · B best move · X flip · Esc exit",
+    "courseShortcuts": "Shortcuts: F fullscreen · H hint · S show move · R restart · N next line · X flip · Esc exit"
   }
 }

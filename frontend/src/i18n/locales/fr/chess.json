@@ -126,6 +126,17 @@
     "showMove": "Montrer le coup",
     "playFromHere": "Continuer contre Stockfish",
     "opponentNote": "Adversaire : {{move}}",
-    "start": "L'adversaire commence. Regarde le premier coup…"
+    "start": "L'adversaire commence. Regarde le premier coup…",
+    "mixed": "🔀 Entraînement mixte",
+    "mixedHelp": "L'adversaire choisit une ligne au hasard à chaque fois — comme en partie.",
+    "currentLine": "Ligne : {{name}}",
+    "linesCount": "{{count}} lignes"
+  },
+  "focus": {
+    "enter": "Plein écran",
+    "exit": "Quitter",
+    "title": "Mode focus",
+    "playShortcuts": "Raccourcis : F plein écran · H indice · U reprendre · B meilleur coup · X retourner · Échap quitter",
+    "courseShortcuts": "Raccourcis : F plein écran · H indice · S montrer le coup · R recommencer · N ligne suivante · X retourner · Échap quitter"
   }
 }

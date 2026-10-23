@@ -38,6 +38,14 @@ export function Header() {
           </button>
         </nav>
 
+        {/* Chess stays one tap away on phones instead of hiding in the menu. */}
+        <Link
+          to="/chess"
+          className="ml-auto mr-1 flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 hover:text-primary sm:hidden"
+        >
+          <span aria-hidden>♞</span>
+          {t("chess:nav")}
+        </Link>
         <button
           type="button"
           onClick={() => setMenuOpen((open) => !open)}

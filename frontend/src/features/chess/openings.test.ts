@@ -9,6 +9,14 @@ describe("opening courses", () => {
     expect(OPENING_COURSES.filter((c) => c.side === "b").length).toBeGreaterThanOrEqual(5);
   });
 
+  it("has unique line ids within each course (progress is keyed by them)", () => {
+    for (const course of OPENING_COURSES) {
+      const ids = course.lines.map((l) => l.id);
+      expect(new Set(ids).size, course.id).toBe(ids.length);
+      expect(course.lines.length, course.id).toBeGreaterThanOrEqual(4);
+    }
+  });
+
   for (const course of OPENING_COURSES) {
     for (const line of course.lines) {
       it(`${course.id}/${line.id} is a legal line ending on the trainee's move`, () => {

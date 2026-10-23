@@ -1,12 +1,20 @@
 import { Chess } from "chess.js";
-import { ArrowLeft, FlipVertical2, Lightbulb, RotateCcw, Flag } from "lucide-react";
+import { ArrowLeft, Eye, FlipVertical2, Lightbulb, RotateCcw, Flag } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
 
 import { reviewMove, uciLineToSan, uciToMove, type MoveReview } from "@/features/chess/coach";
-import { ARROW_COLORS, BOARD_MAX_WIDTH, BoardWithEval, type BoardArrow } from "@/features/chess/components/BoardWithEval";
-import { CoachPanel } from "@/features/chess/components/CoachPanel";
+import {
+  BoardStage,
+  FullscreenButton,
+  useChessShortcuts,
+  useFullscreen,
+  type OverlayMessage,
+  type ToolbarButton,
+} from "@/features/chess/components/BoardStage";
+import { ARROW_COLORS, BoardWithEval, type BoardArrow } from "@/features/chess/components/BoardWithEval";
+import { CoachPanel, useNoteText } from "@/features/chess/components/CoachPanel";
 import { MoveList } from "@/features/chess/components/MoveList";
 import { useAnalysisService, useEngineFailed, useLiveAnalysis, useOpponentEngine } from "@/features/chess/engine/hooks";
 import type { StrengthOptions } from "@/features/chess/engine/stockfish";
@@ -246,6 +254,88 @@ export function ChessPlayPage() {
 
   const startTurn = startFen.split(" ")[1];
 
+  // ── Fullscreen focus mode, shortcuts and overlay messages ──
+  const focus = useFullscreen();
+  const noteText = useNoteText();
+  const [showShortcutHelp, setShowShortcutHelp] = useState(false);
+  useEffect(() => {
+    if (!focus.active) return;
+    setShowShortcutHelp(true);
+    const timer = setTimeout(() => setShowShortcutHelp(false), 4000);
+    return () => clearTimeout(timer);
+  }, [focus.active]);
+
+  const flip = () => setOrientation((o) => (o === "white" ? "black" : "white"));
+  const canHint = !!setup && !gameOver && !thinking && turn === setup.color && !viewingBest;
+  const toggleHint = () => canHint && setShowHint((v) => !v);
+  const canShowBest = !!latestReview && latestReview.quality !== "best" && !!latestReview.bestSan;
+  const toggleBest = () => canShowBest && setViewingBest((v) => !v);
+  const isBadReview = !!latestReview && ["inaccuracy", "mistake", "blunder"].includes(latestReview.quality);
+
+  useChessShortcuts({
+    f: focus.toggle,
+    Escape: focus.active ? focus.exit : undefined,
+    h: toggleHint,
+    x: flip,
+    u: lastPlayerMove ? takeBack : undefined,
+    b: toggleBest,
+  });
+
+  const toolbar: ToolbarButton[] = [
+    { label: showHint ? t("play.hideHint") : t("play.hint"), shortcut: "H", icon: <Lightbulb className="h-4 w-4" />, onClick: toggleHint, disabled: !canHint },
+    { label: t("play.takeBack"), shortcut: "U", icon: <RotateCcw className="h-4 w-4" />, onClick: takeBack, disabled: !lastPlayerMove },
+    { label: viewingBest ? t("coach.backToGame") : t("coach.showBest"), shortcut: "B", icon: <Eye className="h-4 w-4" />, onClick: toggleBest, disabled: !canShowBest },
+    { label: t("board.flip"), shortcut: "X", icon: <FlipVertical2 className="h-4 w-4" />, onClick: flip },
+  ];
+
+  const hintSan = showHint && live?.lines[0] ? uciLineToSan(currentFen, live.lines[0].pv, 1)[0] : undefined;
+
+  let overlay: OverlayMessage | null = null;
+  if (engineFailed) overlay = { id: "engine-failed", tone: "error", title: t("board.engineFailed"), duration: null };
+  else if (!setup || gameOver)
+    overlay = {
+      id: `setup-${status}`,
+      tone: "info",
+      title: status,
+      body: !setup ? `${t("play.level")} ${pickLevel} — ${t(`play.levels.${pickLevel}`)}` : undefined,
+      actions: [{ label: setup ? t("play.newGame") : t("play.start"), onClick: startGame, primary: true }],
+      duration: null,
+    };
+  else if (showShortcutHelp) overlay = { id: "help", tone: "info", title: t("focus.title"), body: t("focus.playShortcuts"), duration: 4000 };
+  else if (viewingBest && latestReview)
+    overlay = {
+      id: `best-${latestReview.fenBefore}`,
+      tone: "info",
+      title: t("coach.best", { move: latestReview.bestSan }),
+      body: t("coach.viewingBefore"),
+      actions: [{ label: t("coach.backToGame"), onClick: () => setViewingBest(false), primary: true }],
+      duration: null,
+    };
+  else if (hintSan) overlay = { id: `hint-${currentFen}`, tone: "info", title: t("play.hintText", { move: hintSan }), duration: null };
+  else if (latestReview && lastPlayerMove)
+    overlay = {
+      id: `review-${reviewKey(lastPlayerMove)}`,
+      tone: isBadReview ? (latestReview.quality === "inaccuracy" ? "warning" : "error") : "success",
+      title: `${latestReview.playedSan} — ${t(`coach.quality.${latestReview.quality}`)}`,
+      body: (
+        <ul className="space-y-0.5">
+          {latestReview.notes.slice(0, isBadReview ? 3 : 1).map((note, index) => (
+            <li key={index}>{noteText(note)}</li>
+          ))}
+        </ul>
+      ),
+      actions: isBadReview
+        ? [
+            { label: t("coach.showBest"), onClick: () => setViewingBest(true) },
+            { label: t("coach.retry"), onClick: takeBack, primary: true },
+          ]
+        : undefined,
+      // Mistakes stay up long enough to read; good moves just flash by.
+      duration: isBadReview ? 12000 : 2500,
+    };
+
+  const pill = engineFailed ? null : thinking ? t("play.thinking") : pendingReviews > 0 ? t("coach.reviewing") : null;
+
   return (
     <div className="mx-auto max-w-5xl">
       <Link to="/chess" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-primary">
@@ -255,32 +345,47 @@ export function ChessPlayPage() {
       <h1 className="mt-2 text-2xl font-semibold text-slate-900">{t("play.title")}</h1>
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="lg:sticky lg:top-20 lg:self-start">
-          <div className="mx-auto" style={{ maxWidth: BOARD_MAX_WIDTH }}>
-            <BoardWithEval
-              id="play-board"
-              fen={displayedFen}
-              orientation={orientation}
-              score={liveScore}
-              depth={live?.depth}
-              movableColor={setup && !gameOver && !thinking && !viewingBest ? setup.color : null}
-              onMove={handleMove}
-              arrows={arrows}
-              lastMove={lastMove}
-            />
-            <div className="mt-2 flex items-center justify-between pl-8 text-sm sm:pl-9">
-              <span className={`font-medium ${gameOver ? "text-primary" : "text-slate-600"}`}>{status}</span>
-              <button
-                type="button"
-                onClick={() => setOrientation((o) => (o === "white" ? "black" : "white"))}
-                className="flex items-center gap-1 rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100 hover:text-primary"
-                title={t("board.flip")}
-              >
-                <FlipVertical2 className="h-4 w-4" />
-                <span className="sr-only sm:not-sr-only">{t("board.flip")}</span>
-              </button>
-            </div>
-          </div>
+        <div className={focus.active ? "" : "lg:sticky lg:top-20 lg:self-start"}>
+          <BoardStage
+            fullscreen={focus.active}
+            onExit={focus.exit}
+            toolbar={toolbar}
+            overlay={overlay}
+            pill={focus.active ? pill : null}
+            board={
+              <BoardWithEval
+                id="play-board"
+                fen={displayedFen}
+                orientation={orientation}
+                score={liveScore}
+                depth={live?.depth}
+                movableColor={setup && !gameOver && !thinking && !viewingBest ? setup.color : null}
+                onMove={handleMove}
+                arrows={arrows}
+                lastMove={lastMove}
+              />
+            }
+            footer={
+              <>
+                <div className="mt-2 flex items-center justify-between gap-2 pl-8 text-sm sm:pl-9">
+                  <span className={`font-medium ${gameOver ? "text-primary" : "text-slate-600"}`}>{status}</span>
+                  <div className="flex items-center">
+                    <button
+                      type="button"
+                      onClick={flip}
+                      className="flex items-center gap-1 rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100 hover:text-primary"
+                      title={`${t("board.flip")} (X)`}
+                    >
+                      <FlipVertical2 className="h-4 w-4" />
+                      <span className="sr-only sm:not-sr-only">{t("board.flip")}</span>
+                    </button>
+                    <FullscreenButton onClick={focus.toggle} />
+                  </div>
+                </div>
+                <p className="mt-1 hidden pl-9 text-xs text-slate-400 md:block">{t("focus.playShortcuts")}</p>
+              </>
+            }
+          />
         </div>
 
         <div className="space-y-4">

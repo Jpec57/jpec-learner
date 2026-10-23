@@ -3,40 +3,12 @@
 // explanation (why the trainee's move is right, or what the opponent's move wants).
 // Legality of every line is checked in openings.test.ts.
 
-export type Lang = "en" | "fr";
-export type L10n = Record<Lang, string>;
+import { EXTRA_LINES } from "@/features/chess/openingLines";
+import { line, t, type OpeningCourse } from "@/features/chess/openingTypes";
 
-// [san, english note, french note]
-type RawMove = [string, string, string];
+export type { CourseLine, CourseMove, L10n, Lang, OpeningCourse } from "@/features/chess/openingTypes";
 
-export interface CourseMove {
-  san: string;
-  note: L10n;
-}
-
-export interface CourseLine {
-  id: string;
-  name: L10n;
-  moves: CourseMove[];
-}
-
-export interface OpeningCourse {
-  id: string;
-  side: "w" | "b";
-  eco: string;
-  name: L10n;
-  summary: L10n;
-  ideas: L10n[];
-  lines: CourseLine[];
-}
-
-function line(id: string, en: string, fr: string, moves: RawMove[]): CourseLine {
-  return { id, name: { en, fr }, moves: moves.map(([san, noteEn, noteFr]) => ({ san, note: { en: noteEn, fr: noteFr } })) };
-}
-
-const t = (en: string, fr: string): L10n => ({ en, fr });
-
-export const OPENING_COURSES: OpeningCourse[] = [
+const BASE_COURSES: OpeningCourse[] = [
   // ───────────────────────────── WHITE ─────────────────────────────
   {
     id: "italian",
@@ -585,6 +557,11 @@ export const OPENING_COURSES: OpeningCourse[] = [
     ],
   },
 ];
+
+export const OPENING_COURSES: OpeningCourse[] = BASE_COURSES.map((course) => ({
+  ...course,
+  lines: [...course.lines, ...(EXTRA_LINES[course.id] ?? [])],
+}));
 
 export function getCourse(id: string): OpeningCourse | undefined {
   return OPENING_COURSES.find((course) => course.id === id);
