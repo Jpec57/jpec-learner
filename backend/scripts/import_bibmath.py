@@ -42,8 +42,9 @@ from html import unescape
 from html.parser import HTMLParser
 from typing import Iterator
 
+from jpec_api import DEFAULT_API, Api, ApiError
+
 DEFAULT_URL = "https://www.bibmath.net/ressources/index.php?action=affiche&quoi=bde/algebre/anneaux&type=fexo"
-DEFAULT_API = "http://localhost:8000/api/v1"
 
 VOID_TAGS = {"br", "img", "hr", "meta", "link", "input"}
 SKIPPED_TAGS = {"script", "style"}
@@ -359,82 +360,6 @@ def fetch(url: str) -> str:
         return result.stdout.decode("utf-8", errors="replace")
 
 
-# ------------------------------------------------------------------------ API
-
-
-class ApiError(RuntimeError):
-    pass
-
-
-class Api:
-    def __init__(self, base: str) -> None:
-        self.base = base.rstrip("/")
-        self.token: str | None = None
-
-    def request(self, method: str, path: str, body: dict | None = None, params: dict | None = None):
-        url = self.base + path
-        if params:
-            url += "?" + "&".join(f"{k}={urllib.parse.quote(str(v))}" for k, v in params.items() if v is not None)
-        headers = {"Content-Type": "application/json"}
-        if self.token:
-            headers["Authorization"] = f"Bearer {self.token}"
-        data = json.dumps(body).encode() if body is not None else None
-        request = urllib.request.Request(url, data=data, method=method, headers=headers)
-        try:
-            with urllib.request.urlopen(request, timeout=30) as response:
-                payload = response.read()
-        except urllib.error.HTTPError as error:
-            raise ApiError(f"{method} {path} -> {error.code}: {error.read().decode(errors='replace')}") from error
-        except urllib.error.URLError as error:
-            raise ApiError(f"Cannot reach the API at {self.base} ({error.reason}). Is `docker compose up` running?") from error
-        return json.loads(payload) if payload else None
-
-    def login(self, email: str, password: str) -> None:
-        self.token = self.request("POST", "/auth/login", {"email": email, "password": password})["access_token"]
-
-    def find_or_create_category(self, name: str) -> str:
-        for category in self.request("GET", "/categories"):
-            if category["name"].casefold() == name.casefold():
-                return category["id"]
-        return self.request("POST", "/categories", {"name": name})["id"]
-
-    def find_or_create_group(self, category_id: str, parent_id: str | None, title: str) -> str:
-        siblings = self.request("GET", "/hierarchy", params={"category_id": category_id, "parent_id": parent_id})
-        for node in siblings:
-            if node["node_kind"] == "group" and node["title"].casefold() == title.casefold():
-                return node["id"]
-        body = {"category_id": category_id, "parent_id": parent_id, "node_kind": "group", "title": title[:200]}
-        return self.request("POST", "/hierarchy", body)["id"]
-
-    def existing_fronts(self, category_id: str, node_id: str) -> set[str]:
-        fronts: set[str] = set()
-        offset = 0
-        while True:
-            page = self.request(
-                "GET",
-                "/cards",
-                params={"category_id": category_id, "lesson_node_id": node_id, "limit": 100, "offset": offset},
-            )
-            fronts.update(card["front_text"] for card in page["items"])
-            offset += 100
-            if offset >= page["total"]:
-                return fronts
-
-    def create_card(self, category_id: str, node_id: str, exercise: Exercise) -> None:
-        self.request(
-            "POST",
-            "/cards",
-            {
-                "category_id": category_id,
-                "lesson_node_id": node_id,
-                "front_text": exercise.front,
-                "back_text": exercise.solution,
-                "hint": exercise.hint,
-                "answer_mode": "reveal",
-            },
-        )
-
-
 # ------------------------------------------------------------------------ CLI
 
 
@@ -453,7 +378,7 @@ def import_page(api: Api, category_name: str, page: Page) -> tuple[int, int]:
         if exercise.front in known_fronts[group_id]:
             skipped += 1
             continue
-        api.create_card(category_id, group_id, exercise)
+        api.create_card(category_id, group_id, exercise.front, exercise.solution, exercise.hint)
         known_fronts[group_id].add(exercise.front)
         created += 1
     return created, skipped

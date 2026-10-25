@@ -12,6 +12,14 @@ describe("CardText", () => {
     expect(container.querySelector(".katex-display")).not.toBeNull();
   });
 
+  it("resolves uploaded /media images against the API origin", () => {
+    const { container } = render(<CardText text={"![Rolle](/media/card/u/fig.jpg) ![ext](https://example.org/a.png)"} />);
+    const [uploaded, external] = Array.from(container.querySelectorAll("img"));
+    expect(uploaded.getAttribute("src")).toMatch(/^https?:\/\/[^/]+\/media\/card\/u\/fig\.jpg$/);
+    expect(uploaded.getAttribute("alt")).toBe("Rolle");
+    expect(external.getAttribute("src")).toBe("https://example.org/a.png");
+  });
+
   it("renders markdown and keeps single newlines as line breaks", () => {
     const { container } = render(<CardText text={"**bold**\nnext line"} />);
     expect(container.querySelector("strong")?.textContent).toBe("bold");
