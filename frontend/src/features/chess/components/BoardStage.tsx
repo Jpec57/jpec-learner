@@ -2,9 +2,9 @@
 //
 // The same wrapper renders in both modes (only its classes change), so the
 // board inside never remounts when toggling. In fullscreen the side panels are
-// hidden and their content is shown as short-lived overlay messages instead:
-// beside the board when the screen is wide enough, over the opponent's half of
-// the board otherwise (the trainee's own pieces stay visible).
+// hidden and the latest coach message is shown in a panel instead: beside the
+// board on wide screens, below it on tall ones (phones), so it never covers
+// the pieces.
 import { motion } from "framer-motion";
 import { Maximize2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
@@ -26,8 +26,6 @@ export interface OverlayMessage {
   title: string;
   body?: ReactNode;
   actions?: OverlayAction[];
-  /** Auto-hide after this many ms; null keeps it until replaced or dismissed. */
-  duration: number | null;
 }
 
 const TONE_STYLE: Record<OverlayTone, string> = {
@@ -98,23 +96,12 @@ export function useChessShortcuts(shortcuts: Record<string, (() => void) | undef
 }
 
 function OverlayCard({ message }: { message: OverlayMessage }) {
-  const [visible, setVisible] = useState(true);
-  useEffect(() => {
-    setVisible(true);
-    if (message.duration === null) return;
-    const timer = setTimeout(() => setVisible(false), message.duration);
-    return () => clearTimeout(timer);
-  }, [message.id, message.duration]);
-  if (!visible) return null;
   return (
     <motion.div
-      key={message.id}
-      initial={{ opacity: 0, y: -6 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18 }}
-      role="status"
-      onClick={() => !message.actions?.length && setVisible(false)}
-      className={`pointer-events-auto rounded-lg border p-3 text-sm shadow-lg backdrop-blur ${TONE_STYLE[message.tone]}`}
+      className={`rounded-lg border p-3 text-sm shadow-lg ${TONE_STYLE[message.tone]}`}
     >
       <p className="font-semibold">{message.title}</p>
       {message.body && <div className="mt-1 opacity-90">{message.body}</div>}
@@ -124,15 +111,11 @@ function OverlayCard({ message }: { message: OverlayMessage }) {
             <button
               key={action.label}
               type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                setVisible(false);
-                action.onClick();
-              }}
+              onClick={action.onClick}
               className={
                 action.primary
-                  ? "rounded-md bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary-dark"
-                  : "rounded-md border border-current/20 bg-white/60 px-3 py-1 text-xs font-medium hover:bg-white"
+                  ? "rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-dark"
+                  : "rounded-md border border-current/20 bg-white/60 px-3 py-1.5 text-sm font-medium hover:bg-white"
               }
             >
               {action.label}
@@ -164,8 +147,6 @@ interface BoardStageProps {
   footer?: ReactNode;
 }
 
-// Board size in fullscreen: as large as the viewport allows (toolbar on top).
-const FULLSCREEN_MAX_WIDTH = "min(calc(100vw - 1.5rem), calc(100vh - 5.5rem))";
 
 export function BoardStage({ fullscreen, onExit, toolbar, overlay, pill, board, footer }: BoardStageProps) {
   const { t } = useTranslation("chess");
@@ -210,24 +191,41 @@ export function BoardStage({ fullscreen, onExit, toolbar, overlay, pill, board, 
         </div>
       )}
 
-      <div className={fullscreen ? `flex min-h-0 w-full flex-1 items-start justify-center gap-4` : ""}>
-        <div className="relative w-full" style={fullscreen ? { maxWidth: FULLSCREEN_MAX_WIDTH } : undefined}>
+      {/* Fullscreen layout (class names must stay literal for Tailwind):
+          - tall screens: board on top, as wide as possible while leaving at least ~9rem for the message panel below;
+          - wide screens (aspect ≥ 4/3): board as tall as possible, message panel in a column beside it. */}
+      <div
+        className={
+          fullscreen
+            ? "flex min-h-0 w-full flex-1 flex-col items-center gap-3 [@media(min-aspect-ratio:4/3)]:flex-row [@media(min-aspect-ratio:4/3)]:items-start [@media(min-aspect-ratio:4/3)]:justify-center [@media(min-aspect-ratio:4/3)]:gap-4"
+            : ""
+        }
+      >
+        <div
+          className={
+            fullscreen
+              ? "relative w-full shrink-0 max-w-[min(calc(100vw_-_1.5rem),calc(100dvh_-_14.5rem))] [@media(min-aspect-ratio:4/3)]:max-w-[min(calc(100vw_-_23rem),calc(100dvh_-_5.5rem))]"
+              : "relative w-full"
+          }
+        >
           {board}
           {fullscreen && pill && (
             <div className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 rounded-full bg-slate-900/80 px-3 py-1 text-xs text-white shadow">
               {pill}
             </div>
           )}
-          {/* Narrow screens: over the far (opponent's) half of the board. */}
-          {fullscreen && overlay && (
-            <div className="pointer-events-none absolute inset-x-10 top-10 z-10 sm:inset-x-14 [@media(min-aspect-ratio:4/3)]:hidden">
-              <OverlayCard message={overlay} />
-            </div>
-          )}
         </div>
-        {/* Wide screens: in a column beside the board. (Class names must stay literal for Tailwind.) */}
         {fullscreen && (
-          <div className="hidden w-80 shrink-0 [@media(min-aspect-ratio:4/3)]:block">{overlay && <OverlayCard message={overlay} />}</div>
+          <div
+            aria-live="polite"
+            className="min-h-0 w-full flex-1 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)] max-w-[min(calc(100vw_-_1.5rem),calc(100dvh_-_14.5rem))] [@media(min-aspect-ratio:4/3)]:w-80 [@media(min-aspect-ratio:4/3)]:max-h-full [@media(min-aspect-ratio:4/3)]:max-w-none [@media(min-aspect-ratio:4/3)]:flex-none"
+          >
+            {overlay ? (
+              <OverlayCard key={overlay.id} message={overlay} />
+            ) : (
+              <p className="rounded-lg border border-dashed border-white/15 p-3 text-center text-sm text-slate-400">{t("focus.noComment")}</p>
+            )}
+          </div>
         )}
       </div>
 

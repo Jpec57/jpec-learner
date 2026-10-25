@@ -1,5 +1,5 @@
 import { Chess } from "chess.js";
-import { ArrowLeft, CheckCircle2, Eye, FlipVertical2, Lightbulb, RotateCcw, SkipForward, Swords, XCircle } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2, Eye, FlipVertical2, Lightbulb, RotateCcw, SkipForward, Swords, XCircle } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
@@ -20,7 +20,8 @@ import { MoveList } from "@/features/chess/components/MoveList";
 import { useAnalysisService, useEngineFailed, useLiveAnalysis } from "@/features/chess/engine/hooks";
 import { formatScore, scoreFor, type Color, type MoveQuality } from "@/features/chess/evaluation";
 import { getCourse, type CourseLine, type OpeningCourse } from "@/features/chess/openings";
-import { isMastered, loadProgress, recordLineResult } from "@/features/chess/progress";
+import { ResetProgressButton } from "@/features/chess/components/ResetProgressButton";
+import { hasCourseProgress, isCompleted, isMastered, lineProgress, useChessProgress } from "@/features/chess/progress";
 
 const stripSuffix = (san: string) => san.replace(/[+#!?]+$/, "");
 
@@ -74,7 +75,7 @@ function CourseTrainer({ course }: { course: OpeningCourse }) {
   const [history, setHistory] = useState<string[]>([]);
   const [mistakes, setMistakes] = useState(0);
   const [feedback, setFeedback] = useState<Feedback>(null);
-  const [progress, setProgress] = useState(loadProgress);
+  const { progress, record, reset: resetProgress, saveFailed } = useChessProgress();
   const [orientation, setOrientation] = useState<"white" | "black">(course.side === "w" ? "white" : "black");
   const recordedRef = useRef(false);
 
@@ -109,8 +110,8 @@ function CourseTrainer({ course }: { course: OpeningCourse }) {
   useEffect(() => {
     if (!finishedLine || recordedRef.current) return;
     recordedRef.current = true;
-    setProgress(recordLineResult(course.id, finishedLine.id, mistakes === 0));
-  }, [finishedLine, course.id, mistakes]);
+    record(course.id, finishedLine.id, mistakes === 0);
+  }, [finishedLine, course.id, mistakes, record]);
 
   function restart(next: Mode = mode) {
     recordedRef.current = false;
@@ -208,30 +209,42 @@ function CourseTrainer({ course }: { course: OpeningCourse }) {
   const traineeMoveCount = lineMoves.filter((_, index) => moverOf(index) === course.side).length;
   const traineeMovesPlayed = history.filter((_, index) => moverOf(index) === course.side).length;
 
+  const completedCount = course.lines.filter((line) => isCompleted(progress, course.id, line.id)).length;
+  const masteredCount = course.lines.filter((line) => isMastered(progress, course.id, line.id)).length;
+  const timesCompleted = lineProgress(progress, course.id, currentLine.id).completed;
+  const savedText = saveFailed ? t("course.saveFailed") : timesCompleted > 0 ? t("course.saved", { count: timesCompleted }) : t("course.saving");
+
   // ── Overlay messages for fullscreen focus mode ──
   const [showShortcutHelp, setShowShortcutHelp] = useState(false);
   useEffect(() => {
-    if (!focus.active) return;
+    // Keyboard shortcuts only matter with a keyboard and mouse, not on touch screens.
+    if (!focus.active || !window.matchMedia?.("(pointer: fine)").matches) return;
     setShowShortcutHelp(true);
     const timer = setTimeout(() => setShowShortcutHelp(false), 4000);
     return () => clearTimeout(timer);
   }, [focus.active]);
 
   let overlay: OverlayMessage | null = null;
-  if (engineFailed) overlay = { id: "engine-failed", tone: "error", title: t("board.engineFailed"), duration: null };
+  if (engineFailed) overlay = { id: "engine-failed", tone: "error", title: t("board.engineFailed") };
   else if (done)
     overlay = {
       id: `done-${ply}-${currentLine.id}`,
       tone: "success",
       title: mistakes === 0 ? t("course.completedFlawless") : t("course.completed"),
-      body: currentLine.name[lang],
+      body: finishedLine ? (
+        <>
+          <p>{currentLine.name[lang]}</p>
+          <p className="mt-0.5 text-xs opacity-75">{savedText}</p>
+        </>
+      ) : (
+        currentLine.name[lang]
+      ),
       actions: [
         { label: t("course.restart"), onClick: () => restart() },
         ...(course.lines.length > 1 ? [{ label: t("course.nextLine"), onClick: () => restart(nextMode()), primary: true }] : []),
       ],
-      duration: null,
     };
-  else if (showShortcutHelp) overlay = { id: "help", tone: "info", title: t("focus.title"), body: t("focus.courseShortcuts"), duration: 4000 };
+  else if (showShortcutHelp) overlay = { id: "help", tone: "info", title: t("focus.title"), body: t("focus.courseShortcuts") };
   else if (traineeTurn && feedback?.kind === "wrong")
     overlay = {
       id: `wrong-${ply}-${feedback.san}-${feedback.quality ?? ""}`,
@@ -249,12 +262,11 @@ function CourseTrainer({ course }: { course: OpeningCourse }) {
         { label: t("course.hint"), onClick: showHint },
         { label: t("course.showMove"), onClick: showMove },
       ],
-      duration: 8000,
     };
   else if (traineeTurn && feedback?.kind === "hint")
-    overlay = { id: `hint-${ply}`, tone: "info", title: t("course.hintText", { piece: t(`pieces.${feedback.piece}`) }), duration: null };
+    overlay = { id: `hint-${ply}`, tone: "info", title: t("course.hintText", { piece: t(`pieces.${feedback.piece}`) }) };
   else if (traineeTurn && feedback?.kind === "shown")
-    overlay = { id: `shown-${ply}`, tone: "success", title: t("course.shownText", { move: feedback.san }), duration: null };
+    overlay = { id: `shown-${ply}`, tone: "success", title: t("course.shownText", { move: feedback.san }) };
   else if (recent.length > 0)
     // After each exchange: why our move was right and what the opponent's reply wants.
     overlay = {
@@ -273,7 +285,6 @@ function CourseTrainer({ course }: { course: OpeningCourse }) {
           ))}
         </ul>
       ),
-      duration: 6000,
     };
 
   const toolbar: ToolbarButton[] = [
@@ -372,8 +383,12 @@ function CourseTrainer({ course }: { course: OpeningCourse }) {
               </button>
               {course.lines.map((option, index) => (
                 <button key={option.id} type="button" onClick={() => restart(index)} className={chipClass(index === mode)}>
-                  {isMastered(progress, course.id, option.id) && (
+                  {isMastered(progress, course.id, option.id) ? (
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" aria-label={t("course.mastered")} />
+                  ) : (
+                    isCompleted(progress, course.id, option.id) && (
+                      <Check className="h-3.5 w-3.5 text-slate-400" aria-label={t("course.completedBadge")} />
+                    )
                   )}
                   {option.name[lang]}
                 </button>
@@ -384,6 +399,18 @@ function CourseTrainer({ course }: { course: OpeningCourse }) {
                 {lineKnown && ply > 0 ? t("course.currentLine", { name: currentLine.name[lang] }) : t("course.mixedHelp")}
               </p>
             )}
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
+              <p className="text-xs text-slate-500">
+                {t("course.summary", { completed: completedCount, mastered: masteredCount, total: course.lines.length })}
+              </p>
+              {hasCourseProgress(progress, course.id) && (
+                <ResetProgressButton
+                  label={t("progressReset.course")}
+                  question={t("progressReset.courseQuestion", { opening: course.name[lang] })}
+                  onConfirm={() => resetProgress(course.id)}
+                />
+              )}
+            </div>
           </section>
 
           {/* Turn-by-turn feedback */}
@@ -394,6 +421,7 @@ function CourseTrainer({ course }: { course: OpeningCourse }) {
                   {mistakes === 0 ? t("course.completedFlawless") : t("course.completed")}
                 </p>
                 <p className="text-sm text-slate-500">{currentLine.name[lang]}</p>
+                {finishedLine && <p className="mt-1 text-xs text-slate-400">{savedText}</p>}
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"

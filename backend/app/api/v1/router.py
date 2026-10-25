@@ -5,6 +5,7 @@ from app.api.v1.routes import (
     auth,
     cards,
     categories,
+    chess,
     hierarchy,
     images,
     notifications,
@@ -28,3 +29,4 @@ api_router.include_router(assistant.router)
 api_router.include_router(ocr.router)
 api_router.include_router(translation.router)
 api_router.include_router(plan.router)
+api_router.include_router(chess.router)

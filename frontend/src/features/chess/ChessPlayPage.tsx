@@ -259,7 +259,8 @@ export function ChessPlayPage() {
   const noteText = useNoteText();
   const [showShortcutHelp, setShowShortcutHelp] = useState(false);
   useEffect(() => {
-    if (!focus.active) return;
+    // Keyboard shortcuts only matter with a keyboard and mouse, not on touch screens.
+    if (!focus.active || !window.matchMedia?.("(pointer: fine)").matches) return;
     setShowShortcutHelp(true);
     const timer = setTimeout(() => setShowShortcutHelp(false), 4000);
     return () => clearTimeout(timer);
@@ -291,7 +292,7 @@ export function ChessPlayPage() {
   const hintSan = showHint && live?.lines[0] ? uciLineToSan(currentFen, live.lines[0].pv, 1)[0] : undefined;
 
   let overlay: OverlayMessage | null = null;
-  if (engineFailed) overlay = { id: "engine-failed", tone: "error", title: t("board.engineFailed"), duration: null };
+  if (engineFailed) overlay = { id: "engine-failed", tone: "error", title: t("board.engineFailed") };
   else if (!setup || gameOver)
     overlay = {
       id: `setup-${status}`,
@@ -299,9 +300,8 @@ export function ChessPlayPage() {
       title: status,
       body: !setup ? `${t("play.level")} ${pickLevel} — ${t(`play.levels.${pickLevel}`)}` : undefined,
       actions: [{ label: setup ? t("play.newGame") : t("play.start"), onClick: startGame, primary: true }],
-      duration: null,
     };
-  else if (showShortcutHelp) overlay = { id: "help", tone: "info", title: t("focus.title"), body: t("focus.playShortcuts"), duration: 4000 };
+  else if (showShortcutHelp) overlay = { id: "help", tone: "info", title: t("focus.title"), body: t("focus.playShortcuts") };
   else if (viewingBest && latestReview)
     overlay = {
       id: `best-${latestReview.fenBefore}`,
@@ -309,9 +309,8 @@ export function ChessPlayPage() {
       title: t("coach.best", { move: latestReview.bestSan }),
       body: t("coach.viewingBefore"),
       actions: [{ label: t("coach.backToGame"), onClick: () => setViewingBest(false), primary: true }],
-      duration: null,
     };
-  else if (hintSan) overlay = { id: `hint-${currentFen}`, tone: "info", title: t("play.hintText", { move: hintSan }), duration: null };
+  else if (hintSan) overlay = { id: `hint-${currentFen}`, tone: "info", title: t("play.hintText", { move: hintSan }) };
   else if (latestReview && lastPlayerMove)
     overlay = {
       id: `review-${reviewKey(lastPlayerMove)}`,
@@ -319,7 +318,7 @@ export function ChessPlayPage() {
       title: `${latestReview.playedSan} — ${t(`coach.quality.${latestReview.quality}`)}`,
       body: (
         <ul className="space-y-0.5">
-          {latestReview.notes.slice(0, isBadReview ? 3 : 1).map((note, index) => (
+          {latestReview.notes.slice(0, 3).map((note, index) => (
             <li key={index}>{noteText(note)}</li>
           ))}
         </ul>
@@ -330,8 +329,6 @@ export function ChessPlayPage() {
             { label: t("coach.retry"), onClick: takeBack, primary: true },
           ]
         : undefined,
-      // Mistakes stay up long enough to read; good moves just flash by.
-      duration: isBadReview ? 12000 : 2500,
     };
 
   const pill = engineFailed ? null : thinking ? t("play.thinking") : pendingReviews > 0 ? t("coach.reviewing") : null;

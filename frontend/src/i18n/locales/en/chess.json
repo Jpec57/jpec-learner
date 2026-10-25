@@ -8,9 +8,11 @@
     "playCta": "Play a game",
     "asWhite": "Openings with White",
     "asBlack": "Openings with Black",
-    "linesDone": "{{done}}/{{total}} lines mastered",
+    "linesDone": "{{done}}/{{total}} lines completed",
     "start": "Start",
-    "engineLoading": "The engine (≈7 MB) downloads the first time you open a board."
+    "engineLoading": "The engine (≈7 MB) downloads the first time you open a board.",
+    "linesMastered_one": "{{count}} without a mistake",
+    "linesMastered_other": "{{count}} without a mistake"
   },
   "board": {
     "flip": "Flip board",
@@ -130,13 +132,28 @@
     "mixed": "🔀 Mixed practice",
     "mixedHelp": "The opponent picks a random line each time — like a real game.",
     "currentLine": "Line: {{name}}",
-    "linesCount": "{{count}} lines"
+    "linesCount": "{{count}} lines",
+    "completedBadge": "Completed",
+    "summary": "{{completed}}/{{total}} completed · {{mastered}} without a mistake",
+    "saved_one": "Saved to your progress · completed once",
+    "saved_other": "Saved to your progress · completed {{count}} times",
+    "saving": "Saving your progress…",
+    "saveFailed": "Couldn't save your progress. Check your connection."
   },
   "focus": {
     "enter": "Fullscreen",
     "exit": "Exit",
     "title": "Focus mode",
     "playShortcuts": "Shortcuts: F fullscreen · H hint · U take back · B best move · X flip · Esc exit",
-    "courseShortcuts": "Shortcuts: F fullscreen · H hint · S show move · R restart · N next line · X flip · Esc exit"
+    "courseShortcuts": "Shortcuts: F fullscreen · H hint · S show move · R restart · N next line · X flip · Esc exit",
+    "noComment": "Coach comments appear here."
+  },
+  "progressReset": {
+    "course": "Reset progress",
+    "courseQuestion": "Reset your progress on the {{opening}}?",
+    "all": "Reset all opening progress",
+    "allQuestion": "Reset your progress on every opening?",
+    "confirm": "Reset",
+    "cancel": "Cancel"
   }
 }

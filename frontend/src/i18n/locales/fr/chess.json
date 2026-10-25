@@ -8,9 +8,11 @@
     "playCta": "Jouer une partie",
     "asWhite": "Ouvertures avec les Blancs",
     "asBlack": "Ouvertures avec les Noirs",
-    "linesDone": "{{done}}/{{total}} lignes maîtrisées",
+    "linesDone": "{{done}}/{{total}} lignes terminées",
     "start": "Commencer",
-    "engineLoading": "Le moteur (≈7 Mo) se télécharge la première fois qu'un échiquier s'ouvre."
+    "engineLoading": "Le moteur (≈7 Mo) se télécharge la première fois qu'un échiquier s'ouvre.",
+    "linesMastered_one": "{{count}} sans faute",
+    "linesMastered_other": "{{count}} sans faute"
   },
   "board": {
     "flip": "Retourner l'échiquier",
@@ -130,13 +132,28 @@
     "mixed": "🔀 Entraînement mixte",
     "mixedHelp": "L'adversaire choisit une ligne au hasard à chaque fois — comme en partie.",
     "currentLine": "Ligne : {{name}}",
-    "linesCount": "{{count}} lignes"
+    "linesCount": "{{count}} lignes",
+    "completedBadge": "Terminée",
+    "summary": "{{completed}}/{{total}} terminées · {{mastered}} sans faute",
+    "saved_one": "Progression enregistrée · terminée une fois",
+    "saved_other": "Progression enregistrée · terminée {{count}} fois",
+    "saving": "Enregistrement de ta progression…",
+    "saveFailed": "Impossible d'enregistrer ta progression. Vérifie ta connexion."
   },
   "focus": {
     "enter": "Plein écran",
     "exit": "Quitter",
     "title": "Mode focus",
     "playShortcuts": "Raccourcis : F plein écran · H indice · U reprendre · B meilleur coup · X retourner · Échap quitter",
-    "courseShortcuts": "Raccourcis : F plein écran · H indice · S montrer le coup · R recommencer · N ligne suivante · X retourner · Échap quitter"
+    "courseShortcuts": "Raccourcis : F plein écran · H indice · S montrer le coup · R recommencer · N ligne suivante · X retourner · Échap quitter",
+    "noComment": "Les commentaires du coach s'affichent ici."
+  },
+  "progressReset": {
+    "course": "Réinitialiser la progression",
+    "courseQuestion": "Réinitialiser ta progression sur la {{opening}} ?",
+    "all": "Réinitialiser toutes les ouvertures",
+    "allQuestion": "Réinitialiser ta progression sur toutes les ouvertures ?",
+    "confirm": "Réinitialiser",
+    "cancel": "Annuler"
   }
 }

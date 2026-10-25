@@ -1,17 +1,17 @@
 import { Swords } from "lucide-react";
-import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { OPENING_COURSES, type Lang, type OpeningCourse } from "@/features/chess/openings";
-import { isMastered, loadProgress } from "@/features/chess/progress";
+import { ResetProgressButton } from "@/features/chess/components/ResetProgressButton";
+import { isCompleted, isMastered, useChessProgress } from "@/features/chess/progress";
 
 export function useLang(): Lang {
   const { i18n } = useTranslation();
   return i18n.language?.startsWith("fr") ? "fr" : "en";
 }
 
-function CourseCard({ course, mastered }: { course: OpeningCourse; mastered: number }) {
+function CourseCard({ course, completed, mastered }: { course: OpeningCourse; completed: number; mastered: number }) {
   const { t } = useTranslation("chess");
   const lang = useLang();
   const total = course.lines.length;
@@ -30,9 +30,15 @@ function CourseCard({ course, mastered }: { course: OpeningCourse; mastered: num
       <p className="mt-1 text-sm text-slate-600">{course.summary[lang]}</p>
       <div className="mt-3">
         <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(mastered / total) * 100}%` }} />
+          <div className="relative h-full">
+            <div className="absolute inset-y-0 left-0 rounded-full bg-primary/35 transition-all" style={{ width: `${(completed / total) * 100}%` }} />
+            <div className="absolute inset-y-0 left-0 rounded-full bg-primary transition-all" style={{ width: `${(mastered / total) * 100}%` }} />
+          </div>
         </div>
-        <p className="mt-1 text-xs text-slate-500">{t("home.linesDone", { done: mastered, total })}</p>
+        <p className="mt-1 text-xs text-slate-500">
+          {t("home.linesDone", { done: completed, total })}
+          {mastered > 0 && <span className="text-emerald-700"> · {t("home.linesMastered", { count: mastered })}</span>}
+        </p>
       </div>
     </Link>
   );
@@ -40,7 +46,8 @@ function CourseCard({ course, mastered }: { course: OpeningCourse; mastered: num
 
 export function ChessHomePage() {
   const { t } = useTranslation("chess");
-  const progress = useMemo(() => loadProgress(), []);
+  const { progress, reset } = useChessProgress();
+  const hasProgress = Object.keys(progress).length > 0;
 
   const section = (side: "w" | "b") => (
     <section className="mt-10">
@@ -52,6 +59,7 @@ export function ChessHomePage() {
           <CourseCard
             key={course.id}
             course={course}
+            completed={course.lines.filter((line) => isCompleted(progress, course.id, line.id)).length}
             mastered={course.lines.filter((line) => isMastered(progress, course.id, line.id)).length}
           />
         ))}
@@ -84,7 +92,12 @@ export function ChessHomePage() {
 
       {section("w")}
       {section("b")}
-      <p className="mt-8 text-xs text-slate-400">{t("home.engineLoading")}</p>
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs text-slate-400">{t("home.engineLoading")}</p>
+        {hasProgress && (
+          <ResetProgressButton label={t("progressReset.all")} question={t("progressReset.allQuestion")} onConfirm={() => reset()} />
+        )}
+      </div>
     </div>
   );
 }
