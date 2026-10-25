@@ -77,6 +77,9 @@ importers:
       up:
         specifier: ^1.0.2
         version: 1.0.2
+      workbox-window:
+        specifier: 7.4.1
+        version: 7.4.1
       zustand:
         specifier: ^4.5.5
         version: 4.5.7(@types/react@18.3.31)(react@18.3.1)

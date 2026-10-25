@@ -148,16 +148,25 @@ interface BoardStageProps {
 }
 
 
+// Like Flutter's SafeArea: keep the toolbar and board clear of the notch,
+// status bar and home indicator (needs viewport-fit=cover, set in index.html).
+const SAFE_AREA_PADDING = {
+  paddingTop: "max(0.75rem, env(safe-area-inset-top))",
+  paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+  paddingLeft: "max(0.75rem, env(safe-area-inset-left))",
+  paddingRight: "max(0.75rem, env(safe-area-inset-right))",
+};
+
 export function BoardStage({ fullscreen, onExit, toolbar, overlay, pill, board, footer }: BoardStageProps) {
   const { t } = useTranslation("chess");
   return (
     <div
       className={
         fullscreen
-          ? "fixed inset-0 z-50 flex flex-col items-center gap-3 overflow-hidden bg-slate-900 px-3 py-3"
+          ? "fixed inset-0 z-50 flex flex-col items-center gap-3 overflow-hidden bg-slate-900"
           : "mx-auto"
       }
-      style={fullscreen ? undefined : { maxWidth: BOARD_MAX_WIDTH }}
+      style={fullscreen ? SAFE_AREA_PADDING : { maxWidth: BOARD_MAX_WIDTH }}
     >
       {fullscreen && (
         <div className="flex w-full max-w-5xl items-center justify-between gap-2">
@@ -204,7 +213,7 @@ export function BoardStage({ fullscreen, onExit, toolbar, overlay, pill, board, 
         <div
           className={
             fullscreen
-              ? "relative w-full shrink-0 max-w-[min(calc(100vw_-_1.5rem),calc(100dvh_-_14.5rem))] [@media(min-aspect-ratio:4/3)]:max-w-[min(calc(100vw_-_23rem),calc(100dvh_-_5.5rem))]"
+              ? "relative w-full shrink-0 max-w-[min(calc(100vw_-_1.5rem_-_env(safe-area-inset-left)_-_env(safe-area-inset-right)),calc(100dvh_-_14.5rem_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom)))] [@media(min-aspect-ratio:4/3)]:max-w-[min(calc(100vw_-_23rem_-_env(safe-area-inset-left)_-_env(safe-area-inset-right)),calc(100dvh_-_5.5rem_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom)))]"
               : "relative w-full"
           }
         >
@@ -218,7 +227,7 @@ export function BoardStage({ fullscreen, onExit, toolbar, overlay, pill, board, 
         {fullscreen && (
           <div
             aria-live="polite"
-            className="min-h-0 w-full flex-1 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)] max-w-[min(calc(100vw_-_1.5rem),calc(100dvh_-_14.5rem))] [@media(min-aspect-ratio:4/3)]:w-80 [@media(min-aspect-ratio:4/3)]:max-h-full [@media(min-aspect-ratio:4/3)]:max-w-none [@media(min-aspect-ratio:4/3)]:flex-none"
+            className="min-h-0 w-full flex-1 overflow-y-auto overscroll-contain max-w-[min(calc(100vw_-_1.5rem_-_env(safe-area-inset-left)_-_env(safe-area-inset-right)),calc(100dvh_-_14.5rem_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom)))] [@media(min-aspect-ratio:4/3)]:w-80 [@media(min-aspect-ratio:4/3)]:max-h-full [@media(min-aspect-ratio:4/3)]:max-w-none [@media(min-aspect-ratio:4/3)]:flex-none"
           >
             {overlay ? (
               <OverlayCard key={overlay.id} message={overlay} />
