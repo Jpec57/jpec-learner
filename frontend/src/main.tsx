@@ -6,6 +6,9 @@ import { App } from "@/App";
 import "@/i18n/i18n";
 import "@/index.css";
 import { queryClient } from "@/lib/queryClient";
+import { registerServiceWorker } from "@/lib/registerServiceWorker";
+
+registerServiceWorker();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
