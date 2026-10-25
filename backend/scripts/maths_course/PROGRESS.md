@@ -3,7 +3,7 @@
 This file is the single source of truth for building the maths course. To resume in a new
 session, read it, then do the **Next step** below.
 
-**Next step:** Step 2a. Write lesson summaries and source links for chapters 01–06.
+**Next step:** Step 2b. Write lesson summaries and source links for chapters 07–12, with the same style and checks as 01–06.
 
 ## Programs followed (session 2027)
 - CAPES externe bac+3: https://www.devenirenseignant.gouv.fr/media/20674/download (published July 2026)
@@ -13,7 +13,7 @@ session, read it, then do the **Next step** below.
 | # | Step | Status |
 |---|------|--------|
 | 1 | Tooling: importer, figures, KaTeX check, 18-chapter outline | done |
-| 2a | Lesson summaries + sources, chapters 01–06 | todo |
+| 2a | Lesson summaries + sources, chapters 01–06 | done (2026-10-25) |
 | 2b | Lesson summaries + sources, chapters 07–12 | todo |
 | 2c | Lesson summaries + sources, chapters 13–18 | todo |
 | 3 | 05 Algèbre linéaire: cards + figures | todo |
@@ -24,12 +24,12 @@ session, read it, then do the **Next step** below.
 ## Per-chapter status
 | Chapter | Lessons | Summaries | Cards | Figures |
 |---------|---------|-----------|-------|---------|
-| 01 Fondements | 5 | – | 0 | 0 |
-| 02 Arithmétique | 7 | – | 0 | 0 |
-| 03 Groupes | 11 | – | 0 | 0 |
-| 04 Anneaux, corps, polynômes | 10 | – | 0 | 0 |
-| 05 Algèbre linéaire | 11 | – | 0 | 0 |
-| 06 Réduction | 8 | – | 0 | 0 |
+| 01 Fondements | 5 | done | 0 | 1 |
+| 02 Arithmétique | 7 | done | 0 | 1 |
+| 03 Groupes | 11 | done | 0 | 1 |
+| 04 Anneaux, corps, polynômes | 10 | done | 0 | 1 |
+| 05 Algèbre linéaire | 11 | done | 0 | 2 |
+| 06 Réduction | 8 | done | 0 | 1 |
 | 07 Espaces euclidiens | 11 | – | 0 | 0 |
 | 08 Complexes et géométrie | 12 | – | 0 | 0 |
 | 09 Suites et séries | 12 | – | 0 | 0 |
@@ -81,3 +81,10 @@ session, read it, then do the **Next step** below.
   - Cards are matched by their first line (the bold title + `· énoncé` / `· démonstration`). Renaming a card heading therefore creates a new card; delete the old one in the app.
 - Figures are uploaded to the card or lesson, and their links are rewritten to `/media/...`. After re-rendering a figure, run with `--refresh-figures`.
 - Review screens render the card Markdown only, so figures live inside the text. `MarkdownContent` resolves `/media/` links against the API origin.
+
+## Lessons learned
+- **Wikipédia links:** write parentheses in titles as `%28`/`%29`, e.g. `Groupe_%28math%C3%A9matiques%29`. Before committing, check every link returns 200:
+  `grep -oh '](https://[^ ]*)' NN-*.md | sed 's/^](//; s/)$//' | sort -u | while read u; do curl -s -o /dev/null -w "%{http_code} $u\n" -A linkcheck "$u"; done | grep -v ^200`
+- **Exo7 site:** still unreachable on 2026-10-25, so chapters 01–06 have no Exo7 links. They can be added later if it comes back.
+- **matplotlib mathtext:** it lacks `\frac32` (use `\frac{3}{2}`) and `\begin{pmatrix}` (write the map out instead).
+- **Figures:** look at every rendered PNG. Labels overlapping or overflowing shapes was the usual problem.
